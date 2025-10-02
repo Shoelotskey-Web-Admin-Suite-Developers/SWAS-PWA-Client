@@ -1,0 +1,201 @@
+/* BranchStorage.tsx styles */
+
+.admin-upper {
+  margin-top: 15px;
+}
+
+.branch-card {
+  width: 95%;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.branch-card:hover {
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+}
+
+.op-branch-card-contents {
+  margin: 10px;
+  margin-bottom: -10px;
+  display: flex;
+  justify-content: space-between;
+  color: #333;
+  gap: 16px;
+}
+
+.branch-storage-stats {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 2px;
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+}
+
+.branch-storage-stats:hover {
+  transform: scale(1.01);
+  background: #f0f2f5;
+}
+
+.warehouse:hover {
+  background: #e8eeff;
+}
+
+.branch-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0px;
+}
+
+.location-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  color: #555;
+}
+
+.location-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.stat-divider {
+  width: 1px;
+  background: #ddd;
+  margin: 0 16px;
+}
+
+.capacity-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.capacity-bar-container {
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.capacity-bar {
+  height: 100%;
+  transition: width 0.7s ease-out;
+}
+
+.capacity-bar.normal {
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
+}
+
+.capacity-bar.warning {
+  background: linear-gradient(90deg, #ff9800, #ffc107);
+}
+
+.capacity-bar.critical {
+  background: linear-gradient(90deg, #f44336, #ff5722);
+}
+
+/* Mobile styles */
+.mobile, .landscape-mobile {
+  display: none;
+}
+
+.mobile-card {
+  color: #333;
+  width: 97%;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.carousel {
+  margin: 15px;
+  padding: 10px 0;
+}
+
+.carousel-item {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 5px;
+}
+
+/* Media queries */
+@media (max-width: 1088px) {
+  .branch-card {
+    width: 97%;
+  }
+  
+  .stat-value {
+    font-size: 22px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 899px) {
+  .landscape-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .pc-tablet {
+    display: none;
+  }
+}
+
+@media (max-width: 465px) {
+  .mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .pc-tablet, .landscape-mobile {
+    display: none;
+  }
+  
+  .branch-storage-stats {
+    padding: 12px;
+  }
+}

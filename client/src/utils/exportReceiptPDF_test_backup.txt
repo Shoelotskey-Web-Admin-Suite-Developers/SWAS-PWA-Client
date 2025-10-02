@@ -1,0 +1,146 @@
+/* Backup of exportReceiptPDF(test).ts - moved out of TypeScript compilation.
+   Original file contained multiple duplicated exports and was causing tsc errors.
+   Kept here for reference. Do not restore to .ts without cleaning duplicates. */
+
+import jsPDF from 'jspdf';
+
+export type ReceiptType = 'request-summary' | 'acknowledgement-receipt';
+
+export interface ReceiptPDFOptions {
+  type: ReceiptType;
+  data: any; // Transaction/summary data (enriched)
+  branch?: string;
+}
+
+function formatCurrency(n: number) {
+  return '₱' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function formatDate(d: string | Date) {
+  const dateObj = new Date(d);
+  if (isNaN(dateObj.getTime())) return '';
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const year = dateObj.getFullYear();
+  return `${month}/${day}/${year}`;
+}
+
+export function exportReceiptPDF({ type, data, branch }: ReceiptPDFOptions) {
+  const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
+
+  const transaction_id = data?.transaction_id || '';
+  const cust_name = data?.cust_name || '';
+  const cust_id = data?.cust_id || '';
+  const cust_address = data?.cust_address || '';
+  const date_in = data?.date_in ? formatDate(data.date_in) : formatDate(new Date());
+  const date_out = data?.date_out ? formatDate(data.date_out) : '-';
+  const received_by = data?.received_by || '';
+  const payment_mode = data?.payment_mode || '';
+  const discountAmount = typeof data?.discountAmount === 'number' ? data.discountAmount : 0;
+  const totalAmount = typeof data?.total_amount === 'number' ? data.total_amount : 0;
+  const amountPaid = typeof data?.amount_paid === 'number' ? data.amount_paid : 0;
+  const change = typeof data?.change === 'number' ? data.change : 0;
+  const shoes = Array.isArray(data?.shoes) ? data.shoes : [];
+
+  let y = 10;
+
+  // Header
+  doc.setFontSize(11);
+  doc.text('SWAS', 40, y, { align: 'center' });
+  y += 6;
+  doc.setFontSize(9);
+  if (branch) {
+    doc.text(branch, 40, y, { align: 'center' });
+    y += 6;
+  }
+
+  doc.setFontSize(8);
+  doc.text(`Transaction: ${transaction_id}`, 10, y);
+  y += 4;
+  doc.text(`Customer: ${cust_name}`, 10, y);
+  y += 4;
+  if (cust_id) {
+    doc.text(`Cust ID: ${cust_id}`, 10, y);
+    y += 4;
+  }
+  if (cust_address) {
+    doc.text(String(cust_address).slice(0, 40), 10, y);
+    y += 4;
+  }
+
+  doc.text(`Date In: ${date_in}`, 10, y);
+  y += 5;
+
+  // Items
+  shoes.forEach((s: any) => {
+    doc.setFontSize(9);
+    doc.text(s.model || '-', 10, y);
+    y += 4;
+
+    // services
+    (s.services || []).forEach((svc: any) => {
+      const name = svc.service_name || svc.service_id || '';
+      const price = typeof svc.service_base_price === 'number' ? svc.service_base_price : 0;
+      doc.setFontSize(8);
+      doc.text(name, 10, y);
+      doc.text(formatCurrency(price), 70, y, { align: 'right' });
+      y += 4;
+    });
+
+    // additionals
+    (s.additionals || []).forEach((add: any) => {
+      const name = add.service_name || add.service_id || '';
+      const price = typeof add.service_base_price === 'number' ? add.service_base_price : 0;
+      const qty = add.quantity || 1;
+      doc.setFontSize(8);
+      doc.text(`${name}${qty > 1 ? ` x${qty}` : ''}`, 10, y);
+      doc.text(formatCurrency(price * qty), 70, y, { align: 'right' });
+      y += 4;
+    });
+
+    if (s.rush) {
+      doc.setFontSize(8);
+      doc.text('Rush Service', 10, y);
+      doc.text(formatCurrency(s.rushFee || 0), 70, y, { align: 'right' });
+      y += 4;
+    }
+
+    // subtotal
+    doc.setFontSize(9);
+    doc.text('Subtotal', 10, y);
+    doc.text(formatCurrency(s.subtotal || 0), 70, y, { align: 'right' });
+    y += 6;
+
+    // page break if near bottom
+    if (y > 180) {
+      doc.addPage([80, 200]);
+      y = 10;
+    }
+  });
+
+  // Totals
+  doc.setFontSize(9);
+  if (discountAmount > 0) {
+    doc.text('Discount:', 10, y);
+    doc.text(formatCurrency(discountAmount), 70, y, { align: 'right' });
+    y += 5;
+  }
+  doc.text('Total:', 10, y);
+  doc.text(formatCurrency(totalAmount), 70, y, { align: 'right' });
+  y += 5;
+  doc.text('Paid:', 10, y);
+  doc.text(formatCurrency(amountPaid), 70, y, { align: 'right' });
+  y += 5;
+  doc.text('Payment Mode:', 10, y);
+  doc.text(payment_mode || '-', 70, y, { align: 'right' });
+  y += 5;
+  doc.text('Change:', 10, y);
+  doc.text(formatCurrency(change), 70, y, { align: 'right' });
+  y += 8;
+
+  doc.setFontSize(8);
+  doc.text(`Received By: ${received_by || ''}`, 10, y);
+
+  // Save
+  doc.save(`${transaction_id || 'receipt'}.pdf`);
+}

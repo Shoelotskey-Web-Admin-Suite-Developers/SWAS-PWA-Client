@@ -1,0 +1,350 @@
+
+/* operations.tsx CSS styles */
+
+.main-div {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  
+}
+
+.admin-upper {
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.main-card {
+  display: flex;
+  flex-direction: column;
+  margin-top: -15px;
+  height: 100%;
+  width: 95%;
+  padding: 20px 0px;
+}
+
+@media (max-width: 1088px) {
+  .main-card {
+    width: 97%;
+    margin-top: -20px;
+    padding: 20px 0px;
+    @apply rounded-xl;
+  }
+}
+
+/* Service Queue CSS (Temporarily specific for now) */
+/* OPs Tables */
+
+/* Container */
+.op-container {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Table */
+.op-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+/* Header */
+.op-header {
+  background-color: #ffffff;
+}
+
+.op-header-row th {
+  border-bottom: none;
+  padding: 8px 12px;
+  text-align: center;
+  font-weight: bold;
+  color: #000000;
+}
+
+/* Body Rows */
+.op-body-row td {
+  border-bottom: 1px solid #C7C7C7;
+  padding: 8px 12px;
+  color: #444;
+}
+
+.op-body-row {
+  background-color: #f0f0f0;
+}
+
+.op-body-row.selected {
+  background-color: #fafafa !important; /* light blue highlight */
+}
+
+.op-body-row:hover {
+  background-color: #e6f3ff;
+}
+
+.op-btn {
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Buttons */
+/* Buttons - Unified Red */
+.op-btn-sq,
+.op-btn-rd,
+.op-btn-bd,
+.op-btn-wh,
+.op-btn-rb,
+.op-btn-is {
+  background-color: #CE1616;
+}
+
+.op-btn-sq:hover,
+.op-btn-rd:hover,
+.op-btn-bd:hover,
+.op-btn-wh:hover,
+.op-btn-rb:hover,
+.op-btn-is:hover {
+  background-color: #e04a4a; /* lighter version of #CE1616 */
+}
+
+
+/* Make table body scrollable */
+.op-body {
+  display: block;
+  flex: 1;
+  max-height: calc(100vh - var(--fillheight, 0px)); /* set desired height */
+  overflow-y: scroll; /* always scrollable */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Keep header aligned with body */
+.op-header, 
+.op-header-row {
+  display: table;
+  width: 100%;
+}
+
+/* Ensure body rows align with header */
+.op-body-row {
+  display: table;
+  width: 100%;
+  user-select: none; /* Prevents text from being highlighted */
+  cursor: pointer;   /* Optional: makes it feel clickable */
+}
+
+.op-header,
+.op-header-row,
+.op-body-row {
+  display: table;
+  width: 100%;
+  table-layout: auto; /* restore natural auto sizing */
+}
+
+.op-head-action, .op-body-action { width: 1%; }      
+.op-head-transact, .op-body-transact { width: 13%; }
+.op-head-date, .op-body-date { width: 6%; }
+.op-head-customer, .op-body-customer { width: 10%; }
+.op-head-shoe, .op-body-shoe { width: 15%; }
+.op-head-service, .op-body-service { width: 10%; }
+.op-head-branch, .op-body-branch { width: 10%; }
+.op-head-location, .op-body-location { width: 6%; }
+.op-head-status, .op-body-status { width: 6%; }
+.op-head-rush, .op-body-rush { width: 7%; }
+.op-head-due, .op-body-due { width: 8%; }           
+.op-head-mod, .op-body-mod { width: 7%; }             
+.op-head-chevron, .op-body-dropdown-toggle { width: 1%; }            
+
+/* Classes for Ready for Pickup */
+
+.op-pu-head-transact, .op-pu-body-transact { width: 12%; }
+.op-pu-head-date, .op-pu-body-date { width: 8%; }
+.op-pu-head-customer, .op-pu-body-customer { width: 12%; }
+.op-pu-head-shoe, .op-pu-body-shoe { width: 12%; }
+.op-pu-head-service, .op-pu-body-service { width: 10%; }
+.op-pu-head-branch, .op-pu-body-branch { width: 10%; }
+.op-pu-head-pickup-notice, .op-pu-body-pickup-notice { width: 12%; }
+.op-pu-head-payment-status, .op-pu-body-payment-status { width: 10%; }
+.op-pu-head-contact, .op-pu-body-contact { width: 13%; }
+.op-pu-head-chevron, .op-pu-body-dropdown-toggle { width: 1%; }
+
+
+.op-body-dropdown-toggle button {
+  width: -10px;
+  margin-left: -40px;
+  margin-right: -30px;
+}      
+
+.op-pu-body-dropdown-toggle button {
+  width: -10px;
+  margin-left: -40px;
+  margin-right: -30px;
+}      
+
+.op-status-sq {
+  color: #FF5E5E !important;
+}
+
+.op-status-rd {
+  color: #0E9CFF !important;
+}
+
+.op-status-bd {
+  color: #0D55F1 !important;
+}
+
+.op-status-wh {
+  color: #FACC15 !important;
+}
+
+.op-status-rb {
+  color: #FB923C !important;
+}
+
+.op-status-is {
+  color: #0BA471 !important;
+}
+
+.op-below-container {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  margin-top: 15px;
+  margin-right: auto;
+  margin-bottom: -10px;
+}
+
+.op-below-container p {
+  margin-right: 10px;
+}
+
+@media (max-width: 1312px) {
+  .op-head-location, .op-body-location, .op-head-status, .op-body-status {
+    display: none;
+  }
+
+  .op-pu-head-service, .op-pu-body-service, .op-pu-head-date, .op-pu-body-date {
+    display: none;
+  }
+
+  .op-head-action, .op-body-action { width: 1%; }      
+  .op-head-transact, .op-body-transact { width: 16%; }
+  .op-head-date, .op-body-date { width: 5%; }
+  .op-head-customer, .op-body-customer { width: 13%; }
+  .op-head-shoe, .op-body-shoe { width: 18%; }
+  .op-head-service, .op-body-service { width: 13%; }
+  .op-head-branch, .op-body-branch { width: 12%; }
+  .op-head-rush, .op-body-rush { width: 7%; }
+  .op-head-due, .op-body-due { width: 7%; }            
+  .op-head-mod, .op-body-mod { width: 7%; }         
+  .op-head-chevron, .op-body-dropdown-toggle { width: 1%; }             
+
+}
+
+@media (max-width: 1124px) {
+  .op-head-mod, .op-body-mod, .op-head-shoe, .op-body-shoe, .op-head-date, .op-body-date {
+    display: none;
+  }
+
+  .op-pu-head-shoe, .op-pu-body-shoe, .op-pu-head-customer, .op-pu-body-customer, .op-pu-head-contact, .op-pu-body-contact {
+    display: none;
+  }
+
+  .op-head-action, .op-body-action { width: 1%; }      
+  .op-head-transact, .op-body-transact { width: 23%; }
+  .op-head-customer, .op-body-customer { width: 19%; }
+  .op-head-service, .op-body-service { width: 19%; }
+  .op-head-branch, .op-body-branch { width: 17%; }
+  .op-head-rush, .op-body-rush { width: 10%; }
+  .op-head-due, .op-body-due { width: 10%; }                 
+  .op-head-chevron, .op-body-dropdown-toggle { width: 1%; } 
+
+}
+
+@media (max-width: 899px) {
+  .op-head-action, .op-body-action, .op-head-customer, .op-body-customer, .op-head-due, .op-body-due, .op-head-branch, .op-body-branch {
+    display: none;
+  }
+  
+  .op-head-transact, .op-body-transact { width: 32%; }
+  .op-head-service, .op-body-service { width: 32%; }
+  .op-head-branch, .op-body-branch { width: 30%; }           
+  .op-head-chevron, .op-body-dropdown-toggle { width: 6%; } 
+
+}
+
+/* Dropdown card style */
+.op-dropdown-card {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 6px 12px;
+  padding: 12px 16px;
+  background: #ffffff;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* Labels */
+.label {
+  margin: 0;
+  color: #555;
+}
+
+.name {
+  margin: 0;
+  color: #000000;
+}
+
+/* Values */
+.op-dropdown-card div {
+  display: contents;
+  position: relative;
+}
+
+.op-dropdown-card div:not(:last-child)::after {
+  content: "";
+  grid-column: 1 / -1;
+  border-bottom: 1px solid #e5e7eb;
+  margin: 0px 0;
+}
+
+.op-dropdown-card div span {
+  color: #111;
+  font-weight: 500;
+}
+
+/* Chevron button */
+.chevron-btn {
+  background: none;
+  font-size: 20px;
+  margin: -10px 0px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.chevron-btn:focus {
+  outline: none;
+}
+
+.chevron-btn.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* Optional: mobile-friendly dropdown row spacing */
+.op-body-dropdown-row td {
+  padding: 4px 0;
+  background: #fafafa;
+}

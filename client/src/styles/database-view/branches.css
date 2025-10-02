@@ -1,0 +1,163 @@
+/* Wrapper fills 100dvh - 77px */
+.branches-wrapper {
+  height: calc(100dvh - 77px);
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+/* Cards fill height and use flex column */
+.branches-cards {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  overflow: hidden; /* no container scrollbars */
+}
+
+.branch-card-contents {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin: 1rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Table container grows inside card */
+.branches-table-container {
+  flex: 1;
+  min-height: 0;
+  border-radius: 0.5rem;
+  background: #F0F0F0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* prevent container scrollbars */
+}
+
+/* === Table Base === */
+.branches-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+/* Sticky header */
+.branches-table thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  background: #fff;
+  z-index: 2;
+  position: sticky;
+  top: 0;
+}
+
+.branches-table thead th {
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Rows */
+.branches-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-bottom: 1px solid #C7C7C7;
+}
+
+.branches-table td {
+  padding: 10px 12px;
+  vertical-align: middle;
+  text-align: center;
+}
+
+/* Hover */
+.branches-row:hover {
+  background-color: #f8fafc;
+}
+
+/* === Branches Table Columns === */
+.branches-col-id { width: 27%; }
+.branches-col-name { width:27%; }
+.branches-col-location { width:21%; }
+.branches-col-action {
+  width: 25%;
+}
+.branches-col-action button {
+  min-width: 90px;
+}
+
+/* Buttons */
+.branches-btn {
+  transition: all 0.15s ease;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: transparent;
+  color: #111827;
+}
+.branches-btn-active {
+  background-color: #000 !important;
+  color: #fff !important;
+  border-color: #000 !important;
+}
+
+/* === Users Table Columns === */
+.users-col-id { width: 30%; }
+.users-col-branch { width: 40%; }
+.users-col-action {
+  width: 30%;
+  text-align: right;
+}
+
+/* === Scrollbar Hiding Utility (apply everywhere that can scroll) === */
+/* Hide scrollbars in all scrollable elements of branches page */
+.branches-wrapper,
+.branches-wrapper * {
+  scrollbar-width: none !important;      /* Firefox */
+  -ms-overflow-style: none !important;   /* IE/Edge */
+}
+
+.branches-wrapper::-webkit-scrollbar,
+.branches-wrapper *::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+}
+
+
+/* === Responsive rules === */
+
+/* Desktop: scrollable body only */
+@media (min-width: 1025px) {
+  .branches-table tbody {
+    display: block;
+    overflow-y: auto;
+    width: 100%;
+  }
+}
+
+/* Mobile: let it expand naturally */
+@media (max-width: 1024px) {
+  .branches-wrapper {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .branches-cards {
+    height: auto;
+  }
+  .branches-table-container {
+    flex: unset;
+    min-height: unset;
+    overflow: visible;
+  }
+  .branches-table tbody {
+    display: block;
+    max-height: none;
+    overflow: visible;
+  }
+}

@@ -1,0 +1,255 @@
+/* ========== Root Layout ========== */
+.cv-wrap {
+  padding: 24px 40px;
+  width: calc(100vw - 8px);
+  margin: 0 auto;
+  background-color: white;
+
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 77px); /* take full screen height */
+}
+
+.cv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cv-title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cv-kebab {
+  display: flex;
+  gap: 0;
+  color: #9ca3af; /* gray-400 */
+  margin: 0 -20px -8px -20px;
+}
+
+/* ========== Card & Controls ========== */
+.cv-card { margin-bottom: 18px; }
+
+.cv-card-header { padding: 16px 16px 0; }
+
+.cv-card-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280; /* gray-500 */
+}
+
+.cv-controls { padding-top: 8px; }
+
+.search-sorts {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-end;
+}
+@media (max-width: 767px) {
+  .search-sorts {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  .width-full-767 {
+    width: 100%;
+    align-self: flex-start;
+  }
+}
+
+.sort-kebab,
+.date-advanced,
+.date-filter,
+.cv-filter-row,
+.cv-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 2rem;
+}
+
+.sort-kebab { gap: 1rem; }
+
+@media (max-width: 1088px) {
+  .date-advanced {
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+  }
+  .width-full-1088 {
+    width: 100%;
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 767px) {
+  .date-filter {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+}
+
+@media (max-width: 465px) {
+  .cv-filter-row {
+    flex-direction: column;
+    width: 100%;
+  }
+  .width-full-465 { width: 100%; }
+}
+
+.cv-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cv-select { width: 100%; }
+
+.cv-date-btn {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  border-color: #111827;
+}
+
+.cv-date-icon { opacity: 0.8; }
+
+/* ========== Advanced Filters ========== */
+.cv-advanced-toggle {
+  display: flex;
+  align-items: flex-start;
+}
+@media (max-width: 1088px) {
+  .cv-advanced-toggle {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+.cv-advanced { display: flex; gap: 0.5rem; }
+
+.cv-advanced-checkbox {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1.5rem 0 1rem;
+}
+
+.cv-advanced-label {
+  font-size: 12px;
+  color: #111827;
+}
+
+/* Sort sits at far right on wide screens */
+.cv-sort { grid-column: span 1 / span 1; }
+
+/* Action buttons area */
+.cv-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ========== Table Styling ========== */
+.cv-table-card { overflow: hidden; }
+
+.cv-thead { background: white; }
+
+.cv-head-row th { white-space: nowrap; }
+
+/* Scrollable container */
+.cv-table-container {
+  width: 100%;
+  margin-top: 20px;
+  max-height: 100dvh;
+  overflow-y: none;
+  border-radius: 8px;
+}
+
+/* Table reset */
+.cv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+/* Sticky header */
+.cv-header { /* override flex header name collision */
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  margin:0px;
+}
+
+.cv-head-row th,
+.cv-header th {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #fff;
+  text-align: center;
+  padding: 8px 12px;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+  color: #111827;
+}
+
+/* Body */
+.cv-body {
+  display: block;
+  max-height: calc(100vh - 360px); /* subtract header height */
+  overflow-y: auto;
+  width: 100%;
+
+  
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.cv-row {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-bottom: 1px solid #dcfce7; /* green-100 */
+  background: #fff;
+}
+.cv-row:last-child { border-bottom: 1px solid #dcfce7; }
+
+.cv-row td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+/* Column widths */
+.cv-head-id, .cv-id { width: 11%; }
+.cv-head-action, .cv-action { width: 10%; }
+.cv-num { text-align: center; width: 6.5%; }
+
+/* Cell-specific */
+.cv-id {
+  font-weight: 700;
+  color: #111827;
+}
+
+.cv-received { white-space: nowrap; }
+
+.cv-num { text-align: center; tab-size: 2; }
+
+.cv-status { font-weight: 600; }
+
+.cv-action-col,
+.cv-action { text-align: center; }
+
+/* Edit button */
+.cv-edit-btn {
+  background: #CE1616;
+  color: white;
+  border-radius: 0.5rem;
+  padding: 0 18px;
+}
+.cv-edit-btn:hover { background: #E64040;}

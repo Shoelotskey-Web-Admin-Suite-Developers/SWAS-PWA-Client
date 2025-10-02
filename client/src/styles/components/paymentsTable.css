@@ -1,0 +1,187 @@
+/* src/styles/component/paymentsTable.css */
+
+/* Hide columns below 758px */
+@media (max-width: 1369px) {
+  .hide-below-1369 {
+    display: none;
+  }
+}
+
+@media (max-width: 1220px) {
+  .hide-below-1220 {
+    display: none;
+  }
+}
+
+@media (max-width: 1088px) {
+  .hide-below-1088 {
+    display: none;
+  }
+}
+
+/* responsive visibility rules are based on hide-below-* utility classes */
+
+@media (max-width: 899px) {
+  .hide-below-899 {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .hide-below-767 {
+    display: none;
+  }
+}
+
+@media (max-width: 535px) {
+  .hide-below-535 {
+    display: none;
+  }
+}
+
+
+.hide {
+  display: none;
+}
+
+/* Table layout and column width classes */
+.payment-table {
+  width: 100%;
+  table-layout: fixed; /* enforce column widths */
+}
+
+.payment-table th,
+.payment-table td {
+  /* allow content to wrap instead of ellipsizing */
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  /* src/styles/components/paymentsTable.css
+
+     Deterministic responsive visibility rules for the payments table.
+
+     Strategy:
+  - Default: "hide-below-*" classes are visible; the codebase uses only those now.
+     - Explicit hide rules for max-width breakpoints (scoped, !important).
+     - Explicit show windows use range media queries (min/max) so an element can
+       hide -> show -> hide across breakpoints predictably.
+
+     Breakpoints used (from largest to smallest):
+     - 1369, 1220, 1088, 1024, 899, 767
+  */
+
+  /* Base table behavior */
+  .payment-table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .payment-table th,
+  .payment-table td {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  /* Column widths (percent) */
+  .col-transaction { width: 16%; }
+  .col-pairs { width: 6%; }
+  .col-released { width: 6%; }
+  .col-lineitem { width: 16%; }
+  .col-customer { width: 12%; }
+  .col-shoe { width: 12%; }
+  .col-balance { width: 12%; }
+  .col-action { width: 20%; }
+
+  /* Default visibility: hide classes visible, show classes hidden */
+  .payment-table .hide-below-1369,
+  .payment-table .hide-below-1220,
+  .payment-table .hide-below-1088,
+  .payment-table .hide-below-1024,
+  .payment-table .hide-below-899,
+  .payment-table .hide-below-767,
+  .payment-table .hide-below-535 {
+    display: table-cell;
+  }
+
+
+  /* HIDE rules: hide at or below breakpoint (scoped, important) */
+  @media (max-width: 1369px) {
+    .payment-table .hide-below-1369 { display: none !important; }
+  }
+
+  @media (max-width: 1220px) {
+    .payment-table .hide-below-1220 { display: none !important; }
+  }
+
+  @media (max-width: 1088px) {
+    .payment-table .hide-below-1088 { display: none !important; }
+  }
+
+  @media (max-width: 1024px) {
+    .payment-table .hide-below-1024 { display: none !important; }
+  }
+
+  @media (max-width: 899px) {
+    .payment-table .hide-below-899 { display: none !important; }
+  }
+
+  @media (max-width: 767px) {
+    .payment-table .hide-below-767 { display: none !important; }
+  }
+
+  @media (max-width: 535px) {
+    .payment-table .hide-below-535 { display: none !important; }
+  }
+
+  }
+
+/* Accordion detail row styles */
+.accordion-row {
+  display: none; /* hidden by default */
+}
+
+.accordion-row.expanded {
+  /* Use block layout so the accordion detail spans the full width of the
+     scrollable tbody (which is display:block). This prevents the accordion
+     from being sized only to its content. */
+  display: block;
+  width: 100%;
+}
+
+.accordion-cell {
+  /* Make the accordion cell fill the width of the parent block and use
+     box-sizing to include padding in width calculations. */
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 1rem;
+  background-color: #bbf7d0; /* green-200 */
+  border-top: 1px solid #86efac; /* green-300 tint */
+}
+
+.accordion-content {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  text-align: left;
+}
+
+.accordion-left, .accordion-right {
+  min-width: 200px;
+  flex: 1 1 40%;
+}
+
+/* Accordion rows are hidden by default on all viewports. They will be shown
+   only when the row has the `.expanded` class (set by React state).
+   This keeps the table compact and ensures only the selected row shows details. */
+
+/* keep accordion hidden by default (already set above), but ensure cell padding is
+   reasonable on smaller viewports */
+@media (max-width: 1024px) {
+  .payment-table .accordion-cell {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
