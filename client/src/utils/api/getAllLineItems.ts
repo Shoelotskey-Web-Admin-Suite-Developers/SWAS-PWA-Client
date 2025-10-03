@@ -202,6 +202,20 @@ export async function getAllLineItems() {
             due_date: realLineItem.due_date,
             latest_update: realLineItem.latest_update,
             current_location: realLineItem.current_location,
+            // Preserve pickup notice fields so storage fee calculators receive the data
+            pickUpNotice:
+              realLineItem.pickUpNotice ??
+              realLineItem.pick_up_notice ??
+              realLineItem.pickupNotice ??
+              realLineItem.pickup_notice ??
+              null,
+            // Legacy aliases for downstream helpers that expect snake_case
+            pick_up_notice:
+              realLineItem.pick_up_notice ??
+              realLineItem.pickUpNotice ??
+              realLineItem.pickupNotice ??
+              realLineItem.pickup_notice ??
+              null,
             
             // Pre-populate transaction data to avoid additional API calls
             _transaction: transaction,

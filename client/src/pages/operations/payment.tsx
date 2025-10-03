@@ -1,7 +1,7 @@
 // src/pages/operations/payment.tsx
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { SearchBar } from "@/components/ui/searchbar"
 import { Label } from "@/components/ui/label"
@@ -28,10 +28,13 @@ import {
   RUSH_FEE,
   computeStorageFeeFromLineItems,
   getUpdatedStatus,
+  computeStorageFeeDiagnostics,
 } from "@/utils/paymentHelpers"
 import { updateLineItemStorageFee } from "@/utils/api/updateLineItemStorageFee"
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
+import { usePaymentsLineItemSocket } from "@/hooks/usePaymentsLineItemSocket"
+// (Removed socket diagnostics UI imports)
 
 type Shoe = {
   model: string
@@ -86,6 +89,60 @@ export default function Payments() {
   const [fetchedRequests, setFetchedRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState<boolean>(false)
 
+  // Real-time: remove line items that become Picked Up via socket
+  const handleLineItemPickedUp = useCallback((lineItemId: string) => {
+    if (!lineItemId) return;
+    setFetchedRequests((prev) => {
+      let changed = false;
+      const updated = prev.map(req => {
+        const remainingShoes = req.shoes.filter(s => s.lineItemId !== lineItemId);
+        if (remainingShoes.length !== req.shoes.length) {
+          changed = true;
+          return { ...req, shoes: remainingShoes };
+        }
+        return req;
+      }).filter(req => req.shoes.length > 0); // drop requests with no remaining shoes
+
+      if (changed) {
+        // If the currently selected line item was removed, clear selection
+        setSelectedRequest(sel => sel && !updated.find(r => r.receiptId === sel.receiptId) ? null : sel);
+        setSelectedLineItemId(prevLineId => prevLineId === lineItemId ? null : prevLineId);
+      }
+      return updated;
+    });
+  }, []);
+
+  usePaymentsLineItemSocket({
+    onPickedUp: handleLineItemPickedUp,
+    onUpdate: (lineItemId, _change, updatedFields, fullDocument) => {
+      // Update shoe model name in-place if changed
+      if (updatedFields.shoes || fullDocument?.shoes) {
+        const newModel = updatedFields.shoes || fullDocument?.shoes;
+        setFetchedRequests(prev => prev.map(req => {
+          let modified = false;
+          const newShoes = req.shoes.map(shoe => {
+            if (shoe.lineItemId === lineItemId) {
+              modified = true;
+              return { ...shoe, model: newModel };
+            }
+            return shoe;
+          });
+          return modified ? { ...req, shoes: newShoes } : req;
+        }));
+      }
+      // If status updated to Picked Up but race prevented onPickedUp earlier
+      const status = updatedFields.current_status || fullDocument?.current_status;
+      if (status === 'Picked Up') {
+        handleLineItemPickedUp(lineItemId);
+      }
+    },
+    onAnyChange: (evt) => {
+      if (evt.updateDescription?.updatedFields?.current_status === 'Picked Up') {
+        console.debug('Payments socket: line item picked up event received', evt.documentKey?._id);
+      }
+    }
+  });
+
   // Function to clear payment form fields
   const clearPaymentFields = () => {
     setDueNow(0);
@@ -103,6 +160,7 @@ export default function Payments() {
   // Loading states for payment operations
   const [isSavingPayment, setIsSavingPayment] = useState(false)
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false)
+
 
   // Build lookup maps for service prices (service_id -> price)
   const servicePriceByName = useMemo(() => {
@@ -220,9 +278,18 @@ export default function Payments() {
               }
             })
 
-            // compute storage fee using helper
+            // compute storage fee using helper + diagnostics
             try {
-              storageFeeTotal = computeStorageFeeFromLineItems(fullLineItems)
+              const diagnostics = computeStorageFeeDiagnostics(fullLineItems)
+              storageFeeTotal = diagnostics.totalIncremental
+              const debugMode = typeof window !== 'undefined' && window.location.search.includes('storageDebug')
+              if (debugMode) {
+                try {
+                  ;(window as any).storageFeeDiagnostics = (window as any).storageFeeDiagnostics || {}
+                  ;(window as any).storageFeeDiagnostics[txId] = diagnostics
+                  console.log('[storageFee][diag] tx', txId, diagnostics)
+                } catch(_){}
+              }
             } catch (e) {
               console.debug('Failed computing storage fees', e)
             }
@@ -395,6 +462,24 @@ export default function Payments() {
 
     return filtered
   }, [fetchedRequests, searchQuery, sortBy, sortOrder])
+
+  // Log diagnostics whenever selectedRequest changes
+  useEffect(() => {
+    if (!selectedRequest) {
+      try { console.log('[storageFee] selection cleared'); } catch(_){}
+      return
+    }
+    try {
+      console.log('[storageFee] selectedRequest', {
+        receiptId: selectedRequest.receiptId,
+        storageFee: selectedRequest.storageFee,
+        remainingBalanceBase: selectedRequest.remainingBalance,
+        displayedBalance: (selectedRequest.remainingBalance ?? 0) + (selectedRequest.storageFee ?? 0),
+        amountPaid: selectedRequest.amountPaid,
+        total: selectedRequest.total,
+      })
+    } catch(_){}
+  }, [selectedRequest])
 
   const handleCustomerPaid = (value: number) => {
     setCustomerPaid(value)
@@ -699,6 +784,9 @@ export default function Payments() {
       
       // Clear payment fields after successful save
       clearPaymentFields();
+      // Deselect current selection so UI reflects updated data and awaits fresh selection
+      setSelectedRequest(null)
+      setSelectedLineItemId(null)
     } catch (err) {
       console.error(err)
       toast.error(`Failed to save payment: ${err instanceof Error ? err.message : String(err)}`)
@@ -1000,6 +1088,23 @@ export default function Payments() {
       
       // Clear payment fields after successful confirm
       clearPaymentFields();
+      // Deselect after marking picked up so removed row doesn't stay highlighted
+      setSelectedRequest(null)
+      setSelectedLineItemId(null)
+      // Local removal workaround (no socket): remove picked up line item from table immediately
+      if (selectedRequest && selectedLineItemId) {
+        setFetchedRequests(prev => {
+          const updated = prev.map(r => {
+            if (r.receiptId !== selectedRequest.receiptId) return r
+            const remainingShoes = r.shoes.filter(s => s.lineItemId !== selectedLineItemId)
+            if (remainingShoes.length === 0) {
+              return { ...r, shoes: remainingShoes }
+            }
+            return { ...r, shoes: remainingShoes, pairsReleased: (r.pairsReleased + 1) }
+          }).filter(r => r.shoes.length > 0)
+          return updated
+        })
+      }
     } catch (err) {
       console.error(err)
       toast.error(`Failed to confirm payment: ${err instanceof Error ? err.message : String(err)}`)
@@ -1011,13 +1116,15 @@ export default function Payments() {
   // Validation is performed at save/confirm time via toast messages. Keep inputs permissive in the UI.
 
 
+  // Removed diagnostic state / effects
+
   return (
     <div className="payment-container">
       {/* Left: Form + Table */}
       <div className="payment-form-container">
         <div className="payment-form">
           <Card>
-            <CardContent className="pt-6 form-card-content">
+            <CardContent className="form-card-content">
               <h1>Update Payment</h1>
               <div className="customer-info-grid">
                 <div className="customer-info-pair flex items-end">
@@ -1122,7 +1229,7 @@ export default function Payments() {
 
           {/* Payment Section */}
           <Card className="payment-card">
-            <CardContent className="pt-6 payment-section">
+            <CardContent className="payment-section">
               {selectedRequest ? (
                 <div className="payment-update-section">
                   <div className="w-[40%]">
@@ -1206,7 +1313,7 @@ export default function Payments() {
       {/* Right: Request Summary */}
       <div className="payment-summary">
         <Card className="payment-summary-card">
-          <CardContent className="pt-6 payment-summary-content">
+          <CardContent className="payment-summary-content">
             <h1>Request Summary</h1>
             <hr className="section-divider" />
             {selectedRequest ? (
