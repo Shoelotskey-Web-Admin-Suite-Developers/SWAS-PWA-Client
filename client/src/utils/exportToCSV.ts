@@ -1,4 +1,5 @@
 import { getLineItemsByTransact } from "@/utils/api/getLineItemsByTransact";
+import type { Row as CentralRow } from "@/pages/database-view/CentralView"; // leverage existing Row shape
 import { toast } from "sonner";
 
 // Define service mappings (copy from EditReceiptDialog.tsx)
@@ -24,6 +25,10 @@ const ADDITIONAL_OPTIONS = [
   "Color Renewal (2 colors)",
   "Color Renewal (3 colors)",
 ];
+
+// Define a minimal copy of Row if import path type issues arise
+// (Using CentralRow alias from CentralView)
+type Row = CentralRow;
 
 export async function exportRecordsToCSV(rows: Row[]) {
   toast.info("Preparing export...");
@@ -85,7 +90,7 @@ export async function exportRecordsToCSV(rows: Row[]) {
     );
 
     // Now create flattened records from the complete data
-    const flattenedRecords = rowsWithLineItems.flatMap(row => {
+  const flattenedRecords = rowsWithLineItems.flatMap((row: Row) => {
       // If no transactions, return one row with transaction data only
       if (!row.transactions || row.transactions.length === 0) {
         return [{
@@ -111,7 +116,7 @@ export async function exportRecordsToCSV(rows: Row[]) {
       }
       
       // Otherwise, create one row for each line item
-      return row.transactions.map(tx => ({
+  return row.transactions.map((tx: any) => ({
         receiptId: row.id,
         customer: row.customer,
         dateIn: formatDate(row.dateIn),

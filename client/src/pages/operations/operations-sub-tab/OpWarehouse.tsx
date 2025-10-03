@@ -35,7 +35,6 @@ import {
   Clock, 
   AlertCircle,
   CheckCircle2,
-  Filter,
   SortAsc,
   SortDesc,
   ImageIcon // Add this import for the image icon
@@ -383,7 +382,7 @@ export default function OpWarehouse() {
 
   // Calculate statistics
   const rushCount = rows.filter(row => row.isRush).length;
-  const normalCount = rows.filter(row => !row.isRush).length;
+  // const normalCount = rows.filter(row => !row.isRush).length; // unused
   const overdueCount = rows.filter(row => row.dueDate < new Date()).length;
   
   // Add image statistics

@@ -24,7 +24,6 @@ import {
   Clock, 
   AlertCircle,
   CheckCircle2,
-  Filter,
   SortAsc,
   SortDesc
 } from "lucide-react";
@@ -346,7 +345,7 @@ export default function OpServiceQueue() {
 
   // Calculate statistics
   const rushCount = rows.filter(row => row.isRush).length;
-  const normalCount = rows.filter(row => !row.isRush).length;
+  // const normalCount = rows.filter(row => !row.isRush).length; // unused
   const overdueCount = rows.filter(row => row.dueDate < new Date()).length;
 
   return (

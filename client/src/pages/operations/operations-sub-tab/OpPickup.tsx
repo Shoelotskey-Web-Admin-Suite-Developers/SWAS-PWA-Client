@@ -28,8 +28,7 @@ import {
   Calendar,
   CreditCard,
   SortAsc,
-  SortDesc,
-  Filter
+  SortDesc
 } from "lucide-react"; // Added Lucide icons
 
 const SERVICE_ID_TO_NAME: Record<string, string> = {
@@ -45,7 +44,7 @@ const SERVICE_ID_TO_NAME: Record<string, string> = {
 };
 
 type Branch = "Valenzuela" | "SM Valenzuela" | "SM Grand";
-type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
+// type Location = "Branch" | "Hub" | "To Branch" | "To Hub"; // unused
 
 type Row = {
   lineItemId: string;

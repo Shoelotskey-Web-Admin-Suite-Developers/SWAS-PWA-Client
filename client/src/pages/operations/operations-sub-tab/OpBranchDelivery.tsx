@@ -35,7 +35,6 @@ import {
   Clock, 
   AlertCircle,
   CheckCircle2,
-  Filter,
   SortAsc,
   SortDesc,
   Image
@@ -401,7 +400,7 @@ export default function OpBranchDelivery() {
   
   // Calculate statistics
   const rushCount = rows.filter(row => row.isRush).length;
-  const normalCount = rows.filter(row => !row.isRush).length;
+  // const normalCount = rows.filter(row => !row.isRush).length; // unused
   const overdueCount = rows.filter(row => row.dueDate < new Date()).length;
   const withImagesCount = rows.filter(row => row.before_img).length;
   

@@ -27,10 +27,8 @@ import {
   Clock, 
   AlertCircle,
   CheckCircle2,
-  Filter,
   SortAsc,
-  SortDesc,
-  Warehouse
+  SortDesc
 } from "lucide-react";
 
 type Branch = "Valenzuela" | "SM Valenzuela" | "SM Grand";
@@ -354,10 +352,10 @@ export default function OpReadyDelivery({ readOnly = false }) {
   }, [changes]);
 
   // Calculate statistics for branches
-  const branchCounts = rows.reduce((counts, row) => {
-    counts[row.branch] = (counts[row.branch] || 0) + 1;
-    return counts;
-  }, {} as Record<Branch, number>);
+  // const branchCounts = rows.reduce((counts, row) => {
+  //   counts[row.branch] = (counts[row.branch] || 0) + 1;
+  //   return counts;
+  // }, {} as Record<Branch, number>); // unused currently
   
   const rushCount = rows.filter(row => row.isRush).length;
   const overdueCount = rows.filter(row => row.dueDate < new Date()).length;

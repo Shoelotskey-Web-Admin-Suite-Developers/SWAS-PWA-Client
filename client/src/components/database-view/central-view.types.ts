@@ -37,6 +37,7 @@ export type ReceiptRow = {
   email?: string
   contact?: string
   transactions?: Transaction[]
+  deleted?: boolean // Optional flag used when a receipt is deleted via dialogs
 }
 
 export type TxStatusDates = Record<string, string | null>

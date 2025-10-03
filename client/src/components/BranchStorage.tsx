@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import '@/styles/components/branchStorage.css'
 import { Card, CardContent } from '@/components/ui/card'
 import {

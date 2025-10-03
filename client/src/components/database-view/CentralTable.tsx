@@ -18,7 +18,7 @@ import type { ReceiptRow } from "@/components/database-view/central-view.types"
 
 interface CentralTableProps {
   rows: ReceiptRow[]
-  onReceiptUpdate?: (updatedReceipt: ReceiptRow) => void
+  onReceiptUpdate?: (updatedReceipt: Partial<ReceiptRow> & { id: string; deleted?: boolean }) => void
 }
 
 export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
@@ -154,7 +154,7 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
             if (!open) setSelectedReceipt(null)
           }}
           receipt={selectedReceipt}
-          onReceiptUpdate={onReceiptUpdate}
+          onReceiptUpdate={onReceiptUpdate as any}
         />
       )}
     </div>

@@ -67,7 +67,7 @@ export default function CustomerInformation() {
       try {
         const data = await getCustomers()
 
-        const mapped: CustomerRow[] = data.map((c: any, idx: number) => ({
+  const mapped: CustomerRow[] = data.map((c: any) => ({
           id: c.cust_id, // you can replace with c.cust_id if you prefer
           name: c.cust_name,
           birthday: c.cust_bdate ? new Date(c.cust_bdate).toISOString().split("T")[0] : "",

@@ -43,7 +43,7 @@ import OpBfrImg from "@/components/operations/modals/OpBfrImg";
 import OpAfrImg from "@/components/operations/modals/OpAfrImg";
 
 // ✅ Import shared types
-import { ReceiptRow, Branch, TxStatusDates, PaymentStatus, Transaction} from "./central-view.types"
+import { ReceiptRow, TxStatusDates, PaymentStatus, Transaction} from "./central-view.types"
 
 // Add this legend at the top of the file (or import from a shared file)
 const BRANCH_LEGEND: Record<

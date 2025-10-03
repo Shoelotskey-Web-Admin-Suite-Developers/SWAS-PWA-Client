@@ -20,8 +20,8 @@ export function useLineItemUpdates() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
-    let socket: Socket;
-    let reconnectTimer: NodeJS.Timeout;
+  let socket: Socket;
+  let reconnectTimer: NodeJS.Timeout | undefined;
 
     const connectSocket = () => {
       socket = io(BASE_URL, {
@@ -60,9 +60,7 @@ export function useLineItemUpdates() {
       if (socket) {
         socket.disconnect();
       }
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-      }
+      if (reconnectTimer !== undefined) clearTimeout(reconnectTimer);
     };
   }, []);
 

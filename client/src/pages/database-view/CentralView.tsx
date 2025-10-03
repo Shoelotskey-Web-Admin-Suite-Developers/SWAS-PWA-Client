@@ -21,6 +21,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+// Use shared types instead of redefining to ensure compatibility with dialog
+import type { Transaction as SharedTransaction } from "@/components/database-view/central-view.types"
 import { getTransactions } from "@/utils/api/getTransactions"
 import { exportRecordsToCSV } from "@/utils/exportToCSV"
 import { deleteAllData } from "@/utils/batchApi"
@@ -41,26 +43,7 @@ export type PaymentStatus = "PAID" | "PARTIAL" | "NP"
 export type Branch = "SM Valenzuela" | "Valenzuela" | "SM Grand"
 export type BranchLocation = "Valenzuela City" | "Caloocan City"
 
-export type Transaction = {
-  id: string
-  shoeModel: string
-  serviceNeeded: string[]
-  additional: string[]
-  rush: boolean
-  status: string
-  statusDates: {
-    queued: string | null
-    readyForDelivery: string | null
-    toWarehouse: string | null
-    inProcess: string | null
-    returnToBranch: string | null
-    received: string | null
-    readyForPickup: string | null
-    pickedUp: string | null
-  }
-  beforeImage?: string | null
-  afterImage?: string | null
-}
+// Transaction type comes from shared types file (SharedTransaction)
 
 export type Row = {
   id: string // receiptId
@@ -84,7 +67,7 @@ export type Row = {
 
   pairs: number
   released: number
-  transactions: Transaction[]
+  transactions: SharedTransaction[]
   
   deleted?: boolean // Add this property
 }
@@ -273,7 +256,8 @@ export default function CentralView() {
   }
 
   // Add a function to handle receipt updates
-  const handleReceiptUpdate = (updatedReceipt: Row) => {
+  // Accept wider type (ReceiptRow compatible) because dialog returns ReceiptRow shape
+  const handleReceiptUpdate = (updatedReceipt: Partial<Row> & { id: string; deleted?: boolean }) => {
     if (updatedReceipt.deleted) {
       // If the receipt was deleted, remove it from the rows
       setRows(prevRows => prevRows.filter(row => row.id !== updatedReceipt.id));
@@ -281,7 +265,7 @@ export default function CentralView() {
       // If the receipt was updated, replace it in the rows array
       setRows(prevRows => 
         prevRows.map(row => 
-          row.id === updatedReceipt.id ? updatedReceipt : row
+          row.id === updatedReceipt.id ? { ...row, ...updatedReceipt } as Row : row
         )
       );
     }
@@ -387,7 +371,7 @@ export default function CentralView() {
       />
 
       {/* Pass the update handler to CentralTable */}
-      <CentralTable rows={filtered} onReceiptUpdate={handleReceiptUpdate} />
+  <CentralTable rows={filtered} onReceiptUpdate={handleReceiptUpdate} />
 
       {/* Add confirmation dialog */}
       <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
