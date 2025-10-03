@@ -4,6 +4,20 @@ import react from '@vitejs/plugin-react'
 import path from 'path';
 import svgr from 'vite-plugin-svgr';
 
+const pageChunkPatterns = [
+  { name: 'page-analytics', regex: /[\\/]src[\\/]pages[\\/]analytics[\\/]analytics\.tsx$/ },
+  { name: 'page-operations', regex: /[\\/]src[\\/]pages[\\/]operations[\\/]operations\.tsx$/ },
+  { name: 'page-payment', regex: /[\\/]src[\\/]pages[\\/]operations[\\/]payment\.tsx$/ },
+  { name: 'page-database-central', regex: /[\\/]src[\\/]pages[\\/]database-view[\\/]CentralView\.tsx$/ },
+  { name: 'page-database-branches', regex: /[\\/]src[\\/]pages[\\/]database-view[\\/]Branches\.tsx$/ },
+  { name: 'page-database-customer', regex: /[\\/]src[\\/]pages[\\/]database-view[\\/]CustomerInformation\.tsx$/ },
+  { name: 'page-auth-login', regex: /[\\/]src[\\/]pages[\\/]auth[\\/]login\.tsx$/ },
+  { name: 'page-notifications', regex: /[\\/]src[\\/]pages[\\/]notifications\.tsx$/ },
+  { name: 'page-srm', regex: /[\\/]src[\\/]pages[\\/]srm\.tsx$/ },
+  { name: 'page-user-announcements', regex: /[\\/]src[\\/]pages[\\/]user-management[\\/]announcements\.tsx$/ },
+  { name: 'page-user-appointments', regex: /[\\/]src[\\/]pages[\\/]user-management[\\/]appointments\.tsx$/ },
+];
+
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,20 +30,36 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Vendor buckets
           if (id.includes('node_modules')) {
-            if (/react|react-dom|react-router-dom/.test(id)) return 'vendor';
-            if (id.includes('@radix-ui')) return 'ui';
-            if (id.includes('lucide-react')) return 'ui';
-            if (id.includes('html2canvas')) return 'pdf';
-            if (id.includes('dompurify')) return 'sanitize';
-            if (id.includes('socket.io')) return 'socket';
+            const reactVendor = /[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/;
+            if (reactVendor.test(id)) return 'vendor';
+
+            if (/[\\/]node_modules[\\/]@radix-ui[\\/]/.test(id)) return 'ui';
+            if (/[\\/]node_modules[\\/]lucide-react[\\/]/.test(id)) return 'ui';
+            // Ensure Radix-based companion libraries stay in the same chunk to avoid vendor<->ui cycles
+            if (/[\\/]node_modules[\\/](cmdk|@shadcn[\\/]ui)[\\/]/.test(id)) return 'ui';
+
+            if (/[\\/]node_modules[\\/]@tanstack[\\/]/.test(id)) return 'data-layer';
+            if (/[\\/]node_modules[\\/]recharts[\\/]/.test(id)) return 'charts';
+            if (/[\\/]node_modules[\\/]react-hook-form[\\/]/.test(id)) return 'forms';
+            if (/[\\/]node_modules[\\/]date-fns[\\/]/.test(id)) return 'date';
+
+            if (/[\\/]node_modules[\\/](exceljs|xlsx|xlsx-style)[\\/]/.test(id)) return 'spreadsheets';
+            if (/[\\/]node_modules[\\/](jspdf|jspdf-autotable)[\\/]/.test(id)) return 'pdf';
+            if (/[\\/]node_modules[\\/]html2canvas[\\/]/.test(id)) return 'pdf';
+
+            if (/[\\/]node_modules[\\/]dompurify[\\/]/.test(id)) return 'sanitize';
+            if (/[\\/]node_modules[\\/]socket.io[\\/]/.test(id)) return 'socket';
+            if (/[\\/]node_modules[\\/]sonner[\\/]/.test(id)) return 'notifications';
+
+            return 'vendor';
           }
-          // Page route groups
-          if (id.includes('/src/pages/operations/')) return 'page-operations';
-          if (id.includes('/src/pages/database-view/')) return 'page-database';
-          if (id.includes('/src/pages/analytics/')) return 'page-analytics';
-          if (id.includes('/src/pages/auth/')) return 'page-auth';
+          // Group only top-level page entry modules to avoid cross-import cycles
+          for (const { name, regex } of pageChunkPatterns) {
+            if (regex.test(id)) {
+              return name;
+            }
+          }
           return undefined;
         }
       }

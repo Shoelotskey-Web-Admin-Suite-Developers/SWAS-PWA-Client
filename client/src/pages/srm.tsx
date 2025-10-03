@@ -702,7 +702,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
           </div>
 
           <Card>
-            <CardContent className="form-card-content">
+            <CardContent className="pt-6 form-card-content">
               {/* Customer Info */}
               <div className="customer-info-grid">
                 <div className="customer-info-pair">
@@ -926,7 +926,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
 
           {/* Payment Section (Step 1: show totals computed) */}
           <Card>
-            <CardContent className="payment-section">
+            <CardContent className=" pt-6 payment-section">
               {/* Left: Discount Section */}
               <div className="discount-section">
                 <div className="flex flex-col gap-5">
@@ -1006,21 +1006,21 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
               <div className="payment-summary-section">
                 <div className="payment-type-buttons">
                   <Button
-                    className="payment-button"
+                    className="rounded-full payment-button"
                     variant={paymentType === 'full' ? 'selected' : 'unselected'}
                     onClick={() => setPaymentType('full')}
                   >
                     Full Payment
                   </Button>
                   <Button
-                    className="payment-button"
+                    className="rounded-full payment-button"
                     variant={paymentType === 'half' ? 'selected' : 'unselected'}
                     onClick={() => setPaymentType('half')}
                   >
                     50% Down
                   </Button>
                   <Button
-                    className="payment-button"
+                    className="rounded-full payment-button"
                     variant={paymentType === 'custom' ? 'selected' : 'unselected'}
                     onClick={() => setPaymentType('custom')}
                   >
@@ -1072,7 +1072,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
       {/* Right: Request Summary */}
       <div className="srm-summary">
         <Card className="srm-summary-card">
-          <CardContent className="srm-summary-content">
+          <CardContent className="pt-6 srm-summary-content">
             <h1>Request Summary</h1>
             <hr className="section-divider" />
             <div className="srm-summary-body">
