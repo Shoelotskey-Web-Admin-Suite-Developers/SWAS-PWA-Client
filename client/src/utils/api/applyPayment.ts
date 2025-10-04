@@ -1,3 +1,8 @@
+const API_BASE_URL =
+  (import.meta.env.VITE_API_BASE as string | undefined) ||
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+  "http://localhost:5000";
+
 export async function applyPayment(transactionId: string, payload: {
   dueNow: number;
   customerPaid: number;
@@ -9,10 +14,9 @@ export async function applyPayment(transactionId: string, payload: {
   // Optional: full list of payments (id + amount + optional mode/date) in date order
   provided_payments_list?: Array<{ payment_id: string; payment_amount: number; payment_mode?: string; payment_date?: string }>;
 }) {
-  const base = (import.meta.env.VITE_API_BASE as string) || "http://localhost:5000";
   const token = sessionStorage.getItem("token");
 
-  const res = await fetch(`${base}/api/transactions/${encodeURIComponent(transactionId)}/apply-payment`, {
+  const res = await fetch(`${API_BASE_URL}/api/transactions/${encodeURIComponent(transactionId)}/apply-payment`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
