@@ -467,6 +467,11 @@ export default function SRM() {
     });
 
     // --- 3. Prepare service request payload ---
+    if (amountDueNow > 0 && customerPaid < amountDueNow) {
+      toast.error('Amount paid cannot be lower than amount due now.');
+      return;
+    }
+
     const paymentMap: Record<string, "Cash" | "GCash" | "Bank" | "Other"> = {
       cash: "Cash",
       gcash: "GCash",
@@ -685,6 +690,8 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
               onClick={() => {
                 setCustomerType('new')
                 // Clear customer contact fields when switching to new customer
+                setName('')
+                setBirthdate('')
                 setAddress('')
                 setEmail('')
                 setPhone('')
