@@ -52,7 +52,7 @@ export type CustomerRow = {
   email: string
   contact: string
   balance: number
-  status: "Active" | "Stored"
+  status: "Active" | "Dormant"
   currentServiceCount: number
   totalServices: number
 }

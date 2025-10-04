@@ -25,13 +25,13 @@ import { MoreVertical } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast, Toaster } from "sonner"; // Add this import
 
-import { getCustomers } from "@/utils/api/getCustomers" // 👈 your API util
+import { getCustomerSummaries, type CustomerSummaryDto } from "@/utils/api/getCustomerSumamries"
 import { exportCSV } from "@/utils/exportCSV"
 import { deleteAllCustomers } from "@/utils/api/deleteAllCustomers";
 
 
 /* ----------------------------- types ----------------------------- */
-export type CustomerStatus = "Active" | "Stored"
+export type CustomerStatus = "Active" | "Dormant"
 
 export type CustomerRow = {
   id: string
@@ -65,20 +65,23 @@ export default function CustomerInformation() {
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getCustomers()
+        const data = await getCustomerSummaries()
 
-  const mapped: CustomerRow[] = data.map((c: any) => ({
-          id: c.cust_id, // you can replace with c.cust_id if you prefer
-          name: c.cust_name,
-          birthday: c.cust_bdate ? new Date(c.cust_bdate).toISOString().split("T")[0] : "",
-          address: c.cust_address || "",
-          email: c.cust_email || "",
-          contact: c.cust_contact || "",
-          balance: 0, // placeholder, not in schema
-          status: "Active", // placeholder, not in schema
-          currentServiceCount: 0, // placeholder, not in schema
-          totalServices: c.total_services || 0,
-        }))
+        const mapped: CustomerRow[] = data.map((c: CustomerSummaryDto) => {
+          const status = (c.status ?? "Dormant") as CustomerStatus
+          return {
+            id: c.cust_id,
+            name: c.cust_name,
+            birthday: c.cust_bdate ? new Date(c.cust_bdate).toISOString().split("T")[0] : "",
+            address: c.cust_address || "",
+            email: c.cust_email || "",
+            contact: c.cust_contact || "",
+            balance: Number(c.balance ?? 0),
+            status,
+            currentServiceCount: Number(c.currentServiceCount ?? 0),
+            totalServices: Number(c.total_services ?? 0),
+          }
+        })
 
         setRows(mapped)
       } catch (err) {
@@ -232,7 +235,7 @@ export default function CustomerInformation() {
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
                 <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Stored">Stored</SelectItem>
+                <SelectItem value="Dormant">Dormant</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -276,7 +279,7 @@ export default function CustomerInformation() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Stored">Stored</SelectItem>
+                    <SelectItem value="Dormant">Dormant</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
