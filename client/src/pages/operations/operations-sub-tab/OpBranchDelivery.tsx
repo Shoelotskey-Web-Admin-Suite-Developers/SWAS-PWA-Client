@@ -45,6 +45,7 @@ type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
 
 type Row = {
   lineItemId: string;
+  _id?: string;
   date: Date;
   customer: string;
   shoe: string;
@@ -96,6 +97,7 @@ export default function OpBranchDelivery() {
 
   const mapItem = (item: any): Row => ({
     lineItemId: item.line_item_id,
+    _id: item._id,
     date: new Date(item.latest_update),
     customer: item.cust_id,
     shoe: item.shoes,
@@ -261,7 +263,7 @@ export default function OpBranchDelivery() {
             ));
           } else {
             // Item is no longer incoming branch delivery, remove it
-            setRows(prev => prev.filter(r => r.lineItemId !== item.line_item_id));
+            setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== (item._id || item.line_item_id)));
           }
         } 
         else if (changes.updateDescription) {
@@ -270,7 +272,7 @@ export default function OpBranchDelivery() {
           
           // If status changed, we might need to remove the item
           if (updatedFields.current_status && updatedFields.current_status !== "Incoming Branch Delivery") {
-            setRows(prev => prev.filter(r => r.lineItemId !== itemId));
+            setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== itemId));
           } else {
             // For other field updates, fetch the complete data
             fetchData();
@@ -281,7 +283,8 @@ export default function OpBranchDelivery() {
     else if (changes.operationType === "delete") {
       // Handle deletions
       if (changes.documentKey && changes.documentKey._id) {
-        setRows(prev => prev.filter(r => r.lineItemId !== changes.documentKey._id));
+        const deletedId = changes.documentKey._id;
+        setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== deletedId));
       }
     } 
     else {

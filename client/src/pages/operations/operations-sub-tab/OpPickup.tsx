@@ -47,6 +47,7 @@ type Branch = "Valenzuela" | "SM Valenzuela" | "SM Grand";
 // type Location = "Branch" | "Hub" | "To Branch" | "To Hub"; // unused
 
 type Row = {
+  _id?: string;
   lineItemId: string;
   date: Date;
   customerId: string;
@@ -129,6 +130,7 @@ export default function OpPickup() {
           const allowanceDays = computePickupAllowance(pickupNotice);
 
           return {
+            _id: item._id,
             lineItemId: item.line_item_id,
             date: new Date(item.latest_update),
             customerId: item.cust_id,
@@ -253,7 +255,7 @@ export default function OpPickup() {
             fetchData();
           } else {
             // Item is no longer ready for pickup, remove it
-            setRows(prev => prev.filter(r => r.lineItemId !== item.line_item_id));
+            setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== (item._id || item.line_item_id)));
           }
         } 
         else if (changes.updateDescription) {
@@ -262,7 +264,7 @@ export default function OpPickup() {
           
           // If status changed, we might need to remove the item
           if (updatedFields.current_status && updatedFields.current_status !== "Ready for Pickup") {
-            setRows(prev => prev.filter(r => r.lineItemId !== itemId));
+            setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== itemId));
           } else {
             // For other field updates, fetch the complete data
             fetchData();
@@ -273,7 +275,8 @@ export default function OpPickup() {
     else if (changes.operationType === "delete") {
       // Handle deletions
       if (changes.documentKey && changes.documentKey._id) {
-        setRows(prev => prev.filter(r => r.lineItemId !== changes.documentKey._id));
+        const deletedId = changes.documentKey._id;
+        setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== deletedId));
       }
     } 
     else {

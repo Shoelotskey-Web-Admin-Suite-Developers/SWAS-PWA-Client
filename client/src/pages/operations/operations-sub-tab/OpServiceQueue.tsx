@@ -33,6 +33,7 @@ type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
 
 type Row = {
   lineItemId: string;
+  _id?: string;
   date: Date;
   customerId: string;
   customerName: string | null;
@@ -77,6 +78,7 @@ export default function OpServiceQueue() {
 
   // --- helpers ---
   const mapItem = (item: any): Row => ({
+    _id: item._id,
     lineItemId: item.line_item_id,
     date: new Date(item.latest_update),
     customerId: item.cust_id,
@@ -210,9 +212,9 @@ export default function OpServiceQueue() {
         }
         
         setRows(prev => {
-          const exists = prev.find(r => r.lineItemId === item.line_item_id);
+          const exists = prev.find(r => r._id === item._id || r.lineItemId === item.line_item_id);
           return exists 
-            ? sortByDueDate(prev.map(r => r.lineItemId === item.line_item_id ? newRow : r))
+            ? sortByDueDate(prev.map(r => (r._id === item._id || r.lineItemId === item.line_item_id) ? newRow : r))
             : sortByDueDate([...prev, newRow]);
         });
       }
@@ -237,11 +239,11 @@ export default function OpServiceQueue() {
             }
             
             setRows(prev => sortByDueDate(
-              prev.map(r => r.lineItemId === item.line_item_id ? updatedRow : r)
+              prev.map(r => (r._id === item._id || r.lineItemId === item.line_item_id) ? updatedRow : r)
             ));
           } else {
             // Item is no longer queued, remove it
-            setRows(prev => prev.filter(r => r.lineItemId !== item.line_item_id));
+            setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== (item._id || item.line_item_id)));
           }
         } 
         else if (changes.updateDescription) {
@@ -250,7 +252,7 @@ export default function OpServiceQueue() {
           
           // If status changed, we might need to remove the item
           if (updatedFields.current_status && updatedFields.current_status !== "Queued") {
-            setRows(prev => prev.filter(r => r.lineItemId !== itemId));
+            setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== itemId));
           } else {
             // For other field updates, fetch the complete data
             fetchData();
@@ -261,7 +263,8 @@ export default function OpServiceQueue() {
     else if (changes.operationType === "delete") {
       // Handle deletions
       if (changes.documentKey && changes.documentKey._id) {
-        setRows(prev => prev.filter(r => r.lineItemId !== changes.documentKey._id));
+        const deletedId = changes.documentKey._id;
+        setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== deletedId));
       }
     } 
     else {

@@ -36,6 +36,7 @@ type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
 
 type Row = {
   lineItemId: string;
+  _id?: string;
   date: Date;
   customer: string;
   shoe: string;
@@ -81,6 +82,7 @@ export default function OpReturnBranch({ readOnly = false }) {
 
   // --- helpers ---
   const mapItem = (item: any): Row => ({
+    _id: item._id,
     lineItemId: item.line_item_id,
     date: new Date(item.latest_update),
     customer: item.cust_id,
@@ -241,11 +243,11 @@ export default function OpReturnBranch({ readOnly = false }) {
             }
             
             setRows(prev => sortByDueDate(
-              prev.map(r => r.lineItemId === item.line_item_id ? updatedRow : r)
+              prev.map(r => (r._id === item._id || r.lineItemId === item.line_item_id) ? updatedRow : r)
             ));
           } else {
             // Item is no longer returning to branch, remove it
-            setRows(prev => prev.filter(r => r.lineItemId !== item.line_item_id));
+            setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== (item._id || item.line_item_id)));
           }
         } 
         else if (changes.updateDescription) {
@@ -254,7 +256,7 @@ export default function OpReturnBranch({ readOnly = false }) {
           
           // If status changed, we might need to remove the item
           if (updatedFields.current_status && updatedFields.current_status !== "Returning to Branch") {
-            setRows(prev => prev.filter(r => r.lineItemId !== itemId));
+            setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== itemId));
           } else {
             // For other field updates, fetch the complete data
             fetchData();
@@ -265,7 +267,8 @@ export default function OpReturnBranch({ readOnly = false }) {
     else if (changes.operationType === "delete") {
       // Handle deletions
       if (changes.documentKey && changes.documentKey._id) {
-        setRows(prev => prev.filter(r => r.lineItemId !== changes.documentKey._id));
+        const deletedId = changes.documentKey._id;
+        setRows(prev => prev.filter(r => (r._id || r.lineItemId) !== deletedId));
       }
     } 
     else {
