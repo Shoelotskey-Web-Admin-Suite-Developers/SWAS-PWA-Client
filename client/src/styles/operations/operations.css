@@ -153,8 +153,8 @@
   table-layout: auto; /* restore natural auto sizing */
 }
 
-.op-head-action, .op-body-action { width: 1%; }      
-.op-head-transact, .op-body-transact { width: 13%; }
+.op-head-action, .op-body-action { width: 3%; }      
+.op-head-transact, .op-body-transact { width: 11%; }
 .op-head-date, .op-body-date { width: 6%; }
 .op-head-customer, .op-body-customer { width: 10%; }
 .op-head-shoe, .op-body-shoe { width: 15%; }

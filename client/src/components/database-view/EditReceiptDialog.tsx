@@ -684,20 +684,7 @@ export function EditReceiptDialog({
                       <label key={opt} className="flex items-center space-x-2">
                         <Checkbox
                           checked={includesIgnoreCase(t.serviceNeeded, opt)}
-                          onCheckedChange={(checked) =>
-                            setForm((prev) => {
-                              const newTx = [...(prev.transactions ?? [])]
-                              const arr = newTx[idx].serviceNeeded || []
-                              if (checked) {
-                                if (!arr.includes(opt)) arr.push(opt)
-                              } else {
-                                const i = arr.findIndex(s => s.toLowerCase().trim() === opt.toLowerCase().trim())
-                                if (i > -1) arr.splice(i, 1)
-                              }
-                              newTx[idx].serviceNeeded = arr
-                              return { ...prev, transactions: newTx }
-                            })
-                          }
+                          disabled
                         />
                         <span>{opt}</span>
                       </label>
@@ -713,19 +700,7 @@ export function EditReceiptDialog({
                       <label key={opt} className="flex items-center space-x-2">
                         <Checkbox
                           checked={includesIgnoreCase(t.additional, opt)}
-                          onCheckedChange={(checked) =>
-                            setForm((prev) => {
-                              const newTx = [...(prev.transactions ?? [])]
-                              const arr = newTx[idx].additional
-                              if (checked) {
-                                if (!arr.includes(opt)) arr.push(opt)
-                              } else {
-                                const i = arr.indexOf(opt)
-                                if (i > -1) arr.splice(i, 1)
-                              }
-                              return { ...prev, transactions: newTx }
-                            })
-                          }
+                          disabled
                         />
                         <span>{opt}</span>
                       </label>
@@ -739,13 +714,7 @@ export function EditReceiptDialog({
                   <RadioGroup
                     value={t.rush ? "yes" : "no"}
                     className="mt-1"
-                    onValueChange={(v) =>
-                      setForm((prev) => {
-                        const newTx = [...(prev.transactions ?? [])]
-                        newTx[idx].rush = v === "yes"
-                        return { ...prev, transactions: newTx }
-                      })
-                    }
+                    disabled
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="yes" id={`rush-yes-${idx}`} />
