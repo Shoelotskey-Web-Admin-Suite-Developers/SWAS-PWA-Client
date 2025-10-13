@@ -1124,7 +1124,7 @@ export default function Payments() {
       <div className="payment-form-container">
         <div className="payment-form">
           <Card>
-            <CardContent className="form-card-content">
+            <CardContent className="pt-6 form-card-content">
               <h1>Update Payment</h1>
               <div className="customer-info-grid">
                 <div className="customer-info-pair flex items-end">
@@ -1229,7 +1229,7 @@ export default function Payments() {
 
           {/* Payment Section */}
           <Card className="payment-card">
-            <CardContent className="payment-section">
+            <CardContent className="pt-6 payment-section">
               {selectedRequest ? (
                 <div className="payment-update-section">
                   <div className="w-[40%]">
@@ -1313,7 +1313,7 @@ export default function Payments() {
       {/* Right: Request Summary */}
       <div className="payment-summary">
         <Card className="payment-summary-card">
-          <CardContent className="payment-summary-content">
+          <CardContent className="pt-6 payment-summary-content">
             <h1>Request Summary</h1>
             <hr className="section-divider" />
             {selectedRequest ? (

@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 
 // API Import
 import { getServices, IService } from "@/utils/api/getServices";
-import { getCustomerByNameAndBdate } from "@/utils/api/getCustByNameAndBdate";
+import { getCustomerByNameAndPhone } from "@/utils/api/getCustByNameAndPhone";
 import { addServiceRequest} from "@/utils/api/addServiceRequest";
 import { updateDates } from "@/utils/api/updateDates";
 
@@ -52,8 +52,9 @@ function todayISODate(): string {
 }
 
 const RUSH_FEE = 150 // default rush fee (change as required)
-// Rush reduces the total by these many days
-const RUSH_REDUCTION_DAYS = 2;
+// Rush reduces the total processing days by a percentage (40% of total days).
+// We compute reduction = max(1, floor(totalDays * 0.4)) to ensure at least 1 day is reduced.
+const RUSH_REDUCTION_PCT = 0.4
 
 function formatCurrency(n: number) {
   return '₱' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -211,23 +212,36 @@ export default function SRM() {
     shoe.additionals[serviceId] ?? 1;
 
 
-  // --- Auto-search logic (kept as you had it) ---
+  // --- Auto-search logic: Name + Phone (replaces Name + Birthdate) ---
   useEffect(() => {
     const n = name.trim();
-    const b = birthdate.trim();
+    const p = phone.trim();
 
-    if (!n || !b) {
+    if (!n || !p) {
       setCustomerId("NEW");
       return;
     }
 
     const handler = setTimeout(async () => {
       try {
-        const found = await getCustomerByNameAndBdate(n, b); // call backend
+        const found = await getCustomerByNameAndPhone(n, p);
 
         if (found) {
           setAddress(found.cust_address || "");
           setEmail(found.cust_email || "");
+          // If API returns ISO string for cust_bdate, set input-friendly YYYY-MM-DD
+          if (found.cust_bdate) {
+            try {
+              const iso = String(found.cust_bdate)
+              const d = new Date(iso)
+              if (!isNaN(d.getTime())) {
+                const y = d.getFullYear()
+                const m = String(d.getMonth() + 1).padStart(2, '0')
+                const dy = String(d.getDate()).padStart(2, '0')
+                setBirthdate(`${y}-${m}-${dy}`)
+              }
+            } catch(_) { /* ignore parse error */ }
+          }
           setPhone(found.cust_contact || "");
           setCustomerId(found.cust_id);
           if (customerType === "new") {
@@ -238,7 +252,7 @@ export default function SRM() {
         } else {
           setCustomerId("NEW");
           if (customerType === "old") {
-            toast.error("Old customer not found. Please check the entered name and birthdate.");
+            toast.error("Old customer not found. Please check the entered name and phone number.");
           }
         }
       } catch (err) {
@@ -249,7 +263,7 @@ export default function SRM() {
 
     return () => clearTimeout(handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, birthdate]);
+  }, [name, phone]);
 
 
 
@@ -330,9 +344,10 @@ export default function SRM() {
         shoeDays += getDuration(addId) * (qty || 1);
       });
 
-      // Apply rush reduction if applicable
+      // Apply rush reduction if applicable: subtract 40% of total days (minimum 1 day)
       if (shoe.rush === "yes") {
-        shoeDays = Math.max(1, shoeDays - RUSH_REDUCTION_DAYS);
+        const reduction = Math.max(1, Math.floor(shoeDays * RUSH_REDUCTION_PCT))
+        shoeDays = Math.max(1, shoeDays - reduction)
       }
 
       // Compute estimated completion date
@@ -374,7 +389,7 @@ export default function SRM() {
 
   const handleConfirmServiceRequest = async () => {
     // --- 1. Validate required fields ---
-    if (!name.trim() || !birthdate.trim() || !address.trim()) {
+    if (!name.trim() || !address.trim()) {
       toast.error("Please fill in all customer details.")
       return;
     }
@@ -721,12 +736,13 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                       placeholder="Enter full name"
                     />
                   </div>
-                  <div className="w-full">
-                    <Label>Customer Birthdate</Label>
+                  <div  className="w-full">
+                    <Label>Customer Phone Number</Label>
                     <Input
-                      type="date"
-                      value={birthdate}
-                      onChange={(e: any) => setBirthdate(e.target.value)}
+                      value={phone}
+                      onChange={(e: any) => setPhone(e.target.value)}
+                      readOnly={customerType === 'old'}
+                      placeholder="09XXXXXXXXX"
                     />
                   </div>
                 </div>
@@ -751,13 +767,12 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                       placeholder="email@example.com"
                     />
                   </div>
-                  <div  className="w-full">
-                    <Label>Customer Phone Number</Label>
+                  <div className="w-full">
+                    <Label>Customer Birthdate</Label>
                     <Input
-                      value={phone}
-                      onChange={(e: any) => setPhone(e.target.value)}
-                      readOnly={customerType === 'old'}
-                      placeholder="09XXXXXXXXX"
+                      type="date"
+                      value={birthdate}
+                      onChange={(e: any) => setBirthdate(e.target.value)}
                     />
                   </div>
                 </div>

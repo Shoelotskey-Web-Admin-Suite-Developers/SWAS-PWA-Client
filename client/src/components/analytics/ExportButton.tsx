@@ -121,7 +121,18 @@ export function ExportButton() {
       });
 
       // Sheet 1: Sales Over Time with Daily Performance (dynamic)
-      const salesData = salesOverTimeData.map((item:any) => {
+      // For export, only include the latest 31 days
+      const salesOverTimeExport = (() => {
+        try {
+          const copy = [...salesOverTimeData].filter((r:any) => r && (r.date || r.week_start));
+          copy.sort((a:any,b:any) => new Date(a.date || a.week_start).getTime() - new Date(b.date || b.week_start).getTime());
+          return copy.slice(-31);
+        } catch (e) {
+          return salesOverTimeData.slice(-31);
+        }
+      })();
+
+      const salesData = salesOverTimeExport.map((item:any) => {
         const dailyTotal = item.total || 0;
         const vsAverage = dailyTotal > 0 && dailyAverage > 0 ? ((dailyTotal - dailyAverage) / dailyAverage * 100) : 0;
         const performance = dailyTotal >= dailyAverage * 1.1 ? 'Above Average' : dailyTotal >= dailyAverage * 0.9 ? 'Average' : 'Below Average';
@@ -210,7 +221,7 @@ export function ExportButton() {
           }
         }
       }
-      XLSX.utils.book_append_sheet(workbook, salesWorksheet, 'Sales Over Time');
+  XLSX.utils.book_append_sheet(workbook, salesWorksheet, 'Sales Over Time (31 days)');
 
       // Monthly sheet dynamic (Excel) -- reuse monthlyGrowthData already shaped
       const monthlySheetDataExcel = monthlyGrowthData.map((item:any, index:number) => {
@@ -267,8 +278,10 @@ export function ExportButton() {
 
       // Forecast vs Actual dynamic sheet
       const forecastComparisonData = forecastData.map((item:any) => {
+        // Prefer week_start when available (weekly data), fallback to date for legacy
+        const weekLabel = item.week_start ?? item.date
         if (isSuper) {
-          const base:any = { 'Date': item.date };
+          const base:any = { 'Week Start': weekLabel };
           let actualSum = 0; let forecastSum = 0;
           meta.filter(m=> m.branch_id !== 'TOTAL').forEach(m => {
             const a = item[m.dataKey] || 0; const f = item[m.forecastKey] || 0;
@@ -288,7 +301,7 @@ export function ExportButton() {
           const f = targetMeta ? item[targetMeta.forecastKey] : null;
           const variance = (f && a) ? (((a - f)/f)*100).toFixed(2)+'%' : 'N/A';
           const accuracy = (f && a) ? (100 - Math.abs(((a-f)/f)*100)).toFixed(1)+'%' : 'N/A';
-          return { 'Date': item.date, 'Actual Revenue': a != null ? Number(a.toFixed?.(0) || a) : 'N/A', 'Forecast Revenue': f != null ? Number(f.toFixed?.(0) || f) : 'N/A', 'Variance': variance, 'Accuracy': accuracy };
+          return { 'Week Start': weekLabel, 'Actual Revenue': a != null ? Number(a.toFixed?.(0) || a) : 'N/A', 'Forecast Revenue': f != null ? Number(f.toFixed?.(0) || f) : 'N/A', 'Variance': variance, 'Accuracy': accuracy };
         }
       });
       const hasForecastData = forecastComparisonData.some((row:any) => {
@@ -538,15 +551,22 @@ export function ExportButton() {
         yPosition = 20
       }
 
-      // Sales Over Time - Complete Analysis (matching Excel export)
-      pdf.setTextColor(0, 0, 0)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(16)
-      pdf.text('SALES OVER TIME ANALYSIS', 15, yPosition)
+      // Sales Over Time - Complete Analysis (31 days, matching Excel export)
+  pdf.setTextColor(0, 0, 0)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(16)
+  pdf.text('SALES OVER TIME ANALYSIS (Last 31 days)', 15, yPosition)
       yPosition += 15
 
       // Calculate performance indicators for PDF table (same logic as Excel)
-      const recentDaily = validDailyData.slice(-15)
+      // Use the exported 31-day window for PDF table too
+      const recentDaily = (() => {
+        try {
+          const copy = [...validDailyData].filter((r:any)=> r && (r.date || r.week_start));
+          copy.sort((a:any,b:any) => new Date(a.date || a.week_start).getTime() - new Date(b.date || b.week_start).getTime());
+          return copy.slice(-31);
+        } catch (e) { return validDailyData.slice(-31) }
+      })()
       const salesTableData = recentDaily.map((item:any) => {
         const dailyTotal = item.total || 0
         const vsAverage = dailyAverage ? ((dailyTotal - dailyAverage) / dailyAverage * 100) : 0
@@ -695,14 +715,15 @@ export function ExportButton() {
 
       // Process forecast data dynamically per branch
       const forecastBranches = isSuper ? branchMetas : branchMetas.filter(m => forecastData.some((row:any) => row[m.dataKey] != null || row[m.forecastKey] != null))
-      for (const m of forecastBranches) {
+        for (const m of forecastBranches) {
         const branchForecastData = forecastData.map((row:any) => {
           const actual = row[m.dataKey]
           const forecast = row[m.forecastKey]
           const variance = (actual != null && forecast != null && forecast !== 0) ? (((actual - forecast)/forecast)*100).toFixed(1)+'%' : 'N/A'
           const accuracy = (actual != null && forecast != null && forecast !== 0) ? (100-Math.abs(((actual-forecast)/forecast)*100)).toFixed(1)+'%' : 'N/A'
+          const weekVal = row.week_start ?? row.date
           return [
-            row.date,
+            weekVal,
             actual != null ? `PHP ${Number(actual).toLocaleString('en-US',{maximumFractionDigits:0})}` : 'N/A',
             forecast != null ? `PHP ${Number(forecast).toLocaleString('en-US',{maximumFractionDigits:0})}` : 'N/A',
             variance,
@@ -715,7 +736,7 @@ export function ExportButton() {
         pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.text(m.branch_name,15,yPosition); yPosition += 10
         autoTable(pdf, {
           startY: yPosition,
-          head: [['Date','Actual','Forecast','Variance %','Accuracy %']],
+          head: [['Week Start','Actual','Forecast','Variance %','Accuracy %']],
           body: branchForecastData,
           theme: 'grid',
           headStyles: { fillColor:[206,22,22], textColor:[255,255,255], fontStyle:'bold', fontSize:11 },

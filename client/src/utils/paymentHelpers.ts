@@ -35,7 +35,7 @@ export function calculateTotal(
 /**
  * Compute storage fee from an array of line items.
  * For each line item, compute exceededDays using computePickupAllowance(pickUpNoticeDate).
- * If exceededDays > 0 then computed = exceededDays * 100. Subtract any existing stored storage_fee on that line item.
+ * If exceededDays > 0 then computed = exceededDays * 10. Subtract any existing stored storage_fee on that line item.
  * Only positive additions are summed and returned.
  */
 export function computeStorageFeeFromLineItems(lineItems: any[] | undefined | null): number {
@@ -49,7 +49,7 @@ export function computeStorageFeeFromLineItems(lineItems: any[] | undefined | nu
       const exceededDays = remaining < 0 ? Math.abs(remaining) : 0
       if (exceededDays > 0) {
         const existing = Number(li.storage_fee ?? li.storageFee ?? 0) || 0
-        const computed = exceededDays * 100
+        const computed = exceededDays * 10
         const add = Math.max(0, computed - existing)
         // Debug logging (guarded so noisy logs can be disabled easily if needed)
         try {
@@ -64,7 +64,7 @@ export function computeStorageFeeFromLineItems(lineItems: any[] | undefined | nu
           }
           console.debug('[storageFee] line_item', payload)
           console.log('[storageFee] line_item', payload)
-        } catch (_) { /* ignore logging errors */ }
+  } catch (_) { /* ignore logging errors */ }
         if (add > 0) storageFeeTotal += add
       } else {
         try {
@@ -103,7 +103,7 @@ export function computeStorageFeeFromLineItems(lineItems: any[] | undefined | nu
         const remaining = computePickupAllowance(pickUpNotice ? new Date(pickUpNotice) : null)
         const exceededDays = remaining < 0 ? Math.abs(remaining) : 0
         const existing = Number(li.storage_fee ?? li.storageFee ?? 0) || 0
-        const theoretical = exceededDays * 100
+  const theoretical = exceededDays * 10
         const incremental = exceededDays > 0 ? Math.max(0, theoretical - existing) : 0
         totalIncremental += incremental
         totalTheoretical += theoretical

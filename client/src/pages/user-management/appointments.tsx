@@ -389,7 +389,7 @@ export default function Appointments() {
         </div>
       )}
       {/* Calendar */}
-      <div className="md:col-span-2 w-full h-full">
+      <div className="md:col-span-2 w-full h-full flex flex-col gap-4">
         <Calendar
           mode="single"
           selected={calendarDate}
@@ -425,6 +425,49 @@ export default function Appointments() {
             },
           }}
         />
+        
+        {/* Calendar Legend */}
+        <Card className="p-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Calendar Legend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-white border border-gray-300 rounded"></div>
+                <span>Available (0 appointments)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-red-100 border border-gray-300 rounded"></div>
+                <span>Light booking (1-3 appointments)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-red-300 border border-gray-300 rounded"></div>
+                <span>Moderate booking (4-6 appointments)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-red-500 border border-gray-300 rounded"></div>
+                <span>Heavy booking (7+ appointments)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-white border border-gray-300 rounded opacity-60"></div>
+                <span>Partial unavailability</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-gray-300 border border-gray-300 rounded"></div>
+                <span>Full day unavailable</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-white border-2 border-[#FD8989] rounded-full"></div>
+                <span>Today</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-white border-2 border-[#CE1616] rounded"></div>
+                <span>Selected date</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Time Slots */}
@@ -438,7 +481,7 @@ export default function Appointments() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[300px]">
+          <ScrollArea className="h-[450px]">
             <div className="space-y-2">
               {timeSlots.map((slot, idx) => {
                 const slotStart24 = timeSlots24[idx];
@@ -597,6 +640,8 @@ export default function Appointments() {
           </div>
         </CardContent>
       </Card>
+
+      <hr className="mt-3" />
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>

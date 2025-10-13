@@ -26,7 +26,7 @@ interface ChartLineLinearProps {
   branchMeta: BranchMeta[]; // includes total meta
 }
 
-export const description = "A linear line chart"
+export const description = "Weekly revenue trend analysis showing actual performance versus forecasted growth, with highlighted current and upcoming weeks for strategic business planning"
 
 
 const hollowDot = (color: string) => (props: any) => {
@@ -52,10 +52,11 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
       try {
         const data = await getPairedRevenueDataDynamic(branchMeta)
         const sorted = [...data].sort((a: any, b: any) => {
-          const ta = Date.parse(a.date);
-          const tb = Date.parse(b.date);
+          // data now uses `week_start` instead of `date`
+          const ta = Date.parse(a.week_start ?? a.date ?? '')
+          const tb = Date.parse(b.week_start ?? b.date ?? '')
           if (!isNaN(ta) && !isNaN(tb)) return ta - tb;
-          return String(a.date).localeCompare(String(b.date));
+          return String(a.week_start ?? a.date ?? '').localeCompare(String(b.week_start ?? b.date ?? ''));
         })
         if (!cancelled) setChartData(sorted)
       } catch (err) {
@@ -67,7 +68,8 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
 
   const filteredData = chartData.map(item => {
     const showingAll = selectedBranches.length === 0
-    const out: any = { date: item.date }
+    // use week_start as x value
+    const out: any = { week_start: item.week_start ?? item.date }
     branchMeta.forEach(m => {
       if (showingAll || selectedBranches.includes(m.numericId)) {
         if (item[m.dataKey] != null) out[m.dataKey] = item[m.dataKey]
@@ -77,14 +79,60 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
     return out
   })
 
-  const solidPct = 7 / (chartData.length - 1)
-
+  // For weekly data, calculate how much of the line should remain solid before forecast begins
   const forecastStartIndex = chartData.findIndex(item => item.total === null)
-  const forecastStart = chartData[forecastStartIndex]?.date
-  const forecastEnd = chartData[chartData.length - 1]?.date
+  const forecastStart = chartData[forecastStartIndex]?.week_start ?? chartData[forecastStartIndex]?.date
+  const forecastEnd = chartData[chartData.length - 1]?.week_start ?? chartData[chartData.length - 1]?.date
 
-  const highlightStart = chartData[6]?.date
-  const highlightEnd = chartData[8]?.date
+  const solidPct = (() => {
+    if (chartData.length <= 1) return 0
+    const idx = forecastStartIndex >= 0 ? forecastStartIndex : (chartData.length - 1)
+    return idx / Math.max(1, chartData.length - 1)
+  })()
+
+  // Highlight current week and next week
+  const getCurrentWeekStart = () => {
+    const today = new Date()
+    const dayOfWeek = today.getDay() // 0 = Sunday
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek // Adjust to get Monday as start
+    const currentWeekStart = new Date(today)
+    currentWeekStart.setDate(today.getDate() + mondayOffset)
+    return currentWeekStart.toISOString().slice(0, 10)
+  }
+  
+  const getNextWeekStart = () => {
+    const currentWeekStart = new Date(getCurrentWeekStart())
+    const nextWeekStart = new Date(currentWeekStart)
+    nextWeekStart.setDate(currentWeekStart.getDate() + 7)
+    return nextWeekStart.toISOString().slice(0, 10)
+  }
+
+  const currentWeekStr = getCurrentWeekStart()
+  const nextWeekStr = getNextWeekStart()
+
+  // If today is exactly a week start (Monday), highlight the previous week instead
+  const today = new Date()
+  const isTodayWeekStart = (() => {
+    // Compare ISO date of today vs computed currentWeekStr
+    const todayStr = today.toISOString().slice(0,10)
+    return todayStr === currentWeekStr
+  })()
+
+  const previousWeekStr = (() => {
+    const d = new Date(currentWeekStr)
+    d.setDate(d.getDate() - 7)
+    return d.toISOString().slice(0,10)
+  })()
+
+  // Determine target weeks to highlight: if today is week start use previous+current, else current+next
+  const targetStart = isTodayWeekStart ? previousWeekStr : currentWeekStr
+  const targetEnd = isTodayWeekStart ? currentWeekStr : nextWeekStr
+
+  const targetStartInChart = chartData.find(d => (d.week_start ?? d.date) === targetStart)
+  const targetEndInChart = chartData.find(d => (d.week_start ?? d.date) === targetEnd)
+
+  const highlightStart = targetStartInChart ? targetStart : chartData[Math.max(0, chartData.length - 2)]?.week_start ?? chartData[Math.max(0, chartData.length - 2)]?.date
+  const highlightEnd = targetEndInChart ? targetEnd : chartData[chartData.length - 1]?.week_start ?? chartData[chartData.length - 1]?.date
 
   return (
     <Card className="rounded-3xl flex-[1_1_85%]">
@@ -92,7 +140,7 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            <h2>Daily Revenue Trend</h2>
+            <h2>Weekly Revenue Trend</h2>
           </CardTitle>
           
           {/* Chart Legend - moved to header */}
@@ -134,14 +182,14 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
               label={{ value: "Revenue", angle: -90, position: "insideLeft", style: { textAnchor: "middle", fill: "var(--foreground)", fontSize: 14 } }}
             />
             <XAxis
-              dataKey="date"
+              dataKey="week_start"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
               interval={0}
               tick={(props) => {
                 const { x, y, payload } = props;
-                const raw = payload.value as string // expected YYYY-MM-DD or similar
+                const raw = payload.value as string // expected YYYY-MM-DD (week start) or similar
                 let formatted = raw
                 try {
                   const d = new Date(raw)
@@ -171,7 +219,7 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
                   </g>
                 );
               }}
-              label={{ value: "Date", position: "insideBottom", offset: -20, style: { textAnchor: "middle", fill: "var(--foreground)", fontSize: 14 } }}
+              label={{ value: "Week", position: "insideBottom", offset: -20, style: { textAnchor: "middle", fill: "var(--foreground)", fontSize: 14 } }}
             />
             
             <ReferenceArea x1={forecastStart} x2={forecastEnd} strokeOpacity={0} fill="#F0F0F0" />
@@ -197,7 +245,7 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
           {chartData.length === 0 ? (
             <div className="flex items-center justify-center gap-3 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
               <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-              <span className="text-sm font-medium text-blue-700">Loading revenue data...</span>
+              <span className="text-sm font-medium text-blue-700">Loading weekly revenue data...</span>
             </div>
           ) : (
             (() => {
@@ -233,7 +281,7 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
                 contextLabel = `for ${metas.map(m=> m.branch_name).join(' & ')}`
               }
 
-              const avgDaily = actualRows.length ? Math.round(contextualRevenue / actualRows.length) : 0
+              const avgWeekly = actualRows.length ? Math.round(contextualRevenue / actualRows.length) : 0
               const pctChange = contextualRevenue ? Math.round(((contextualForecast - contextualRevenue) / contextualRevenue) * 100) : 0
 
               // Enhanced insights with better UX
@@ -244,16 +292,16 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
                   icon: "🏪",
                   title: "Branch Performance",
                   value: `₱${contextualRevenue.toLocaleString()}`,
-                  subtitle: `${contextLabel.replace("for ", "")} • ${actualRows.length} days`,
+                  subtitle: `${contextLabel.replace("for ", "")} • ${actualRows.length} weeks`,
                   bg: "bg-gradient-to-br from-green-50 to-emerald-50",
                   border: "border-green-200",
                   iconBg: "bg-green-100"
                 })
                 insightCards.push({
                   icon: "💰",
-                  title: "Daily Average",
-                  value: `₱${avgDaily.toLocaleString()}`,
-                  subtitle: "Average per day",
+                  title: "Weekly Average",
+                  value: `₱${avgWeekly.toLocaleString()}`,
+                  subtitle: "Average per week",
                   bg: "bg-gradient-to-br from-blue-50 to-cyan-50",
                   border: "border-blue-200",
                   iconBg: "bg-blue-100"
@@ -263,15 +311,15 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
                   icon: "🏢",
                   title: "Total Revenue",
                   value: `₱${contextualRevenue.toLocaleString()}`,
-                  subtitle: `All branches • ${actualRows.length} days`,
+                  subtitle: `All branches • ${actualRows.length} weeks`,
                   bg: "bg-gradient-to-br from-purple-50 to-violet-50",
                   border: "border-purple-200",
                   iconBg: "bg-purple-100"
                 })
                 insightCards.push({
                   icon: "📊",
-                  title: "Daily Average",
-                  value: `₱${avgDaily.toLocaleString()}`,
+                  title: "Weekly Average",
+                  value: `₱${avgWeekly.toLocaleString()}`,
                   subtitle: "Combined average",
                   bg: "bg-gradient-to-br from-indigo-50 to-blue-50",
                   border: "border-indigo-200",
@@ -282,15 +330,15 @@ export function DailyRevenueTrend({ selectedBranches, branchMeta }: ChartLineLin
                   icon: "🎯",
                   title: "Selected Revenue",
                   value: `₱${contextualRevenue.toLocaleString()}`,
-                  subtitle: `Multiple branches • ${actualRows.length} days`,
+                  subtitle: `Multiple branches • ${actualRows.length} weeks`,
                   bg: "bg-gradient-to-br from-orange-50 to-amber-50",
                   border: "border-orange-200",
                   iconBg: "bg-orange-100"
                 })
                 insightCards.push({
                   icon: "📈",
-                  title: "Daily Average",
-                  value: `₱${avgDaily.toLocaleString()}`,
+                  title: "Weekly Average",
+                  value: `₱${avgWeekly.toLocaleString()}`,
                   subtitle: "Combined average",
                   bg: "bg-gradient-to-br from-teal-50 to-cyan-50",
                   border: "border-teal-200",

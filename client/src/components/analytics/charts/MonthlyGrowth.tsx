@@ -207,7 +207,7 @@ export function MonthlyGrowthRate({ selectedBranches, branchMeta }: ChartBarMult
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          <h3>Monthly Growth Rate</h3>
+          <h2>Monthly Growth Rate</h2>
         </CardTitle>
       </CardHeader>
       <CardContent>

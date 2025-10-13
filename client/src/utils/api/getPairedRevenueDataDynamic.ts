@@ -1,20 +1,20 @@
 import { BranchMeta } from '@/utils/analytics/branchMeta';
 
 export interface DynamicPairedRow {
-  date: string;
+  week_start: string;
   [key: string]: any; // dynamic branch keys + totals
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export async function getPairedRevenueDataDynamic(branchMeta: BranchMeta[]): Promise<DynamicPairedRow[]> {
+export async function getPairedRevenueDataDynamic(branchMeta: BranchMeta[], limit = 5): Promise<DynamicPairedRow[]> {
   const base = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL.replace(/\/$/, '') : 'http://localhost:5000';
   const [actualRes, forecastRes] = await Promise.all([
-    fetch(`${base}/api/analytics/daily-revenue`),
-    fetch(`${base}/api/analytics/forecast`),
+    fetch(`${base}/api/analytics/weekly-revenue`),
+    fetch(`${base}/api/analytics/weekly-forecast`),
   ]);
-  if (!actualRes.ok) throw new Error('Failed to fetch daily revenue');
-  if (!forecastRes.ok) throw new Error('Failed to fetch forecast');
+  if (!actualRes.ok) throw new Error('Failed to fetch weekly revenue');
+  if (!forecastRes.ok) throw new Error('Failed to fetch weekly forecast');
   const actualRaw: any[] = await actualRes.json();
   const forecastRaw: any[] = await forecastRes.json();
   // forecastRaw now expected (after backend normalization) to be an array of
@@ -23,6 +23,7 @@ export async function getPairedRevenueDataDynamic(branchMeta: BranchMeta[]): Pro
 
   function extract(record: any, branch_id: string): number | null {
     if (!record) return null;
+    // Support top-level branch keys or map-like branches
     if (typeof record[branch_id] === 'number') return record[branch_id];
     if (record.branches) {
       const br = record.branches;
@@ -49,15 +50,29 @@ export async function getPairedRevenueDataDynamic(branchMeta: BranchMeta[]): Pro
     return null;
   }
 
-  const actualSorted = [...actualRaw].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const todayStr = new Date().toISOString().slice(0,10);
-  const priorActual = actualSorted.filter(r => new Date(r.date).toISOString().slice(0,10) < todayStr);
-  const latest7 = priorActual.slice(-7);
-  const forecastMap = new Map<string, any>();
-  forecastRaw.forEach(f => forecastMap.set(new Date(f.date).toISOString().slice(0,10), f));
+  // Normalize keys: weekly records use `week_start`; fallback to `date` if present
+  const normalizeDate = (r: any) => {
+    const raw = r.week_start ?? r.date;
+    return raw ? new Date(raw).toISOString().slice(0,10) : null;
+  }
 
-  function buildRow(dateStr: string, a?: any, f?: any): DynamicPairedRow {
-    const row: DynamicPairedRow = { date: dateStr };
+  const actualSorted = [...actualRaw].filter(a => normalizeDate(a)).sort((a,b) => {
+    const ta = new Date(normalizeDate(a)!).getTime();
+    const tb = new Date(normalizeDate(b)!).getTime();
+    return ta - tb;
+  });
+
+  // Take latest `limit` weeks from actuals
+  const latestActuals = actualSorted.slice(-Math.max(0, limit));
+
+  const forecastMap = new Map<string, any>();
+  forecastRaw.forEach(f => {
+    const k = normalizeDate(f);
+    if (k) forecastMap.set(k, f);
+  });
+
+  function buildRow(weekStr: string, a?: any, f?: any): DynamicPairedRow {
+    const row: DynamicPairedRow = { week_start: weekStr };
     let actualTotal = 0; let forecastTotal = 0;
     for (const meta of branchMeta) {
       if (meta.branch_id === 'TOTAL') continue;
@@ -84,14 +99,21 @@ export async function getPairedRevenueDataDynamic(branchMeta: BranchMeta[]): Pro
   }
 
   const rows: DynamicPairedRow[] = [];
-  latest7.forEach(a => {
-    const ds = new Date(a.date).toISOString().slice(0,10);
+
+  // Build rows from latest actuals
+  latestActuals.forEach(a => {
+    const ds = normalizeDate(a)!;
     rows.push(buildRow(ds, a, forecastMap.get(ds)));
   });
-  forecastRaw.forEach(f => {
-    const ds = new Date(f.date).toISOString().slice(0,10);
-    if (!rows.some(r => r.date === ds)) rows.push(buildRow(ds, undefined, f));
-  });
-  rows.sort((a,b) => a.date.localeCompare(b.date));
+
+  // Ensure forecast-only weeks (not in actuals) are included — e.g., future forecast weeks
+  for (const [k, f] of forecastMap.entries()) {
+    if (!rows.some(r => r.week_start === k)) {
+      rows.push(buildRow(k, undefined, f));
+    }
+  }
+
+  // Sort final rows by week_start ascending
+  rows.sort((a,b) => a.week_start.localeCompare(b.week_start));
   return rows;
 }
