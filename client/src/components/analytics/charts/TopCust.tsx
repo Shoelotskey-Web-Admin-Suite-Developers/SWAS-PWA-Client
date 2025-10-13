@@ -23,7 +23,8 @@ export function TopCustomers() {
       try {
         setLoading(true)
         setError(null)
-        const topCustomers = await getTopCust(10) // Get top 10 customers
+        // For analytics, include archived customers to get complete spending data
+        const topCustomers = await getTopCust(10, true) // Get top 10 customers including archived
         setCustomers(topCustomers)
       } catch (err) {
         console.error("Error fetching top customers:", err)
@@ -44,7 +45,7 @@ export function TopCustomers() {
           <h2 className="font-semibold">Top Customers</h2>
         </CardTitle>
         <CardDescription className="text-sm text-gray-600">
-          Highest spending customers ranked by total expenditure
+          Highest spending customers ranked by total expenditure (includes archived customers)
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pt-0">
@@ -92,8 +93,13 @@ export function TopCustomers() {
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 truncate text-sm">
+                      <div className="font-medium text-gray-900 truncate text-sm flex items-center gap-2">
                         {customer.cust_name}
+                        {customer.is_archive && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border">
+                            Archived
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-gray-500">
                         Customer ID: {customer.cust_id}

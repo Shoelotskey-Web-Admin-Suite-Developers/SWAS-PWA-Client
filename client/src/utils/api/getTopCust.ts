@@ -10,13 +10,17 @@ export interface TopCustomer {
   cust_contact?: string;
   total_services: number;
   total_expenditure: number;
+  is_archive?: boolean; // Archive status
 }
 
-export async function getTopCust(limit: number = 10): Promise<TopCustomer[]> {
+export async function getTopCust(limit: number = 10, includeArchived: boolean = true): Promise<TopCustomer[]> {
   const token = sessionStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
-  const res = await fetch(`${BASE_URL}/api/customers`, {
+  // For analytics purposes, include archived customers by default
+  const url = `${BASE_URL}/api/customers${includeArchived ? '?includeArchived=true' : ''}`;
+
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       "Authorization": `Bearer ${token}`,
