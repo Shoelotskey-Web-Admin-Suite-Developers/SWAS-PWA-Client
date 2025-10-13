@@ -28,6 +28,7 @@ type Branch = {
 type User = {
   id: string
   branchId: string
+  position?: string | null
 }
 
 export default function Branches() {
@@ -59,6 +60,7 @@ export default function Branches() {
         const mappedUsers: User[] = data.map(u => ({
           id: u.user_id,
           branchId: u.branch_id,
+          position: u.position ?? null,
         }))
         setUsers(mappedUsers)
       } catch (err) {
@@ -72,14 +74,21 @@ export default function Branches() {
   const selectedBranch = branches.find((b) => b.branch_id === selectedBranchId)
   const filteredUsers = users.filter((u) => u.branchId === selectedBranchId)
 
+  const formatPosition = (pos?: string | null) => {
+    if (!pos) return "—"
+    const lower = pos.toLowerCase()
+    return lower.charAt(0).toUpperCase() + lower.slice(1)
+  }
+
   // Add User handler
-  const handleAddUser = async (userId: string, branchId: string, password?: string) => {
+  const handleAddUser = async (userId: string, branchId: string, password?: string, position: string = "staff") => {
     try {
-      const newUser = await addUser({ userId, branchId, password: password! })
+      const newUser = await addUser({ userId, branchId, password: password!, position })
 
       const mappedUser: User = {
         id: newUser.user.user_id,
         branchId: newUser.user.branch_id,
+  position: newUser.user.position ?? position,
       }
 
       setUsers((prev) => [...prev, mappedUser])
@@ -103,7 +112,9 @@ export default function Branches() {
   const handleUserEdited = (updatedUser: User) => {
     setUsers((prev) =>
       prev.map((u) =>
-        u.id === updatedUser.id ? { ...u, branchId: updatedUser.branchId } : u
+        u.id === updatedUser.id
+          ? { ...u, branchId: updatedUser.branchId, position: updatedUser.position ?? u.position }
+          : u
       )
     )
   }
@@ -200,7 +211,10 @@ export default function Branches() {
                       <TableHead className="users-col-branch text-center text-black">
                         <h5>Branch ID</h5>
                       </TableHead>
-                      <TableHead className="users-col-action text-black">
+                      <TableHead className="users-col-position text-center text-black">
+                        <h5>Position</h5>
+                      </TableHead>
+                      <TableHead className="users-col-action text-black text-right">
                         <h5>Action</h5>
                       </TableHead>
                     </TableRow>
@@ -214,6 +228,9 @@ export default function Branches() {
                         </TableCell>
                         <TableCell className="users-col-branch text-center">
                           <small>{user.branchId}</small>
+                        </TableCell>
+                        <TableCell className="users-col-position text-center">
+                          <small>{formatPosition(user.position)}</small>
                         </TableCell>
                         <TableCell className="users-col-action">
                           <Button
@@ -246,6 +263,7 @@ export default function Branches() {
           user={{
             userId: editingUser.id, // map id -> userId
             branchId: editingUser.branchId,
+            position: editingUser.position ?? null,
           }}
           branchIds={branches.map((b) => b.branch_id)}
           onUserDeleted={handleUserDeleted}
@@ -254,6 +272,7 @@ export default function Branches() {
             handleUserEdited({
               id: updatedUserRow.userId,
               branchId: updatedUserRow.branchId,
+              position: updatedUserRow.position,
             })
           }}
         />

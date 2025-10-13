@@ -16,7 +16,8 @@ interface AddUserDialogProps {
   onAddUser: (
     userId: string,
     branchId: string,
-    password: string
+    password: string,
+    position: string
   ) => void
 }
 
@@ -31,6 +32,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
   const [branchId, setBranchId] = React.useState<string>(defaultBranchId || branchIds[0] || "")
   const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
+  const [position, setPosition] = React.useState<string>("staff")
 
   // Reset values when dialog opens
   React.useEffect(() => {
@@ -39,12 +41,13 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
       setBranchId(defaultBranchId || branchIds[0] || "")
       setPassword("")
       setShowPassword(false)
+      setPosition("staff")
     }
   }, [open, defaultBranchId, branchIds])
 
   const handleSubmit = () => {
-    if (!userId || !branchId || !password) return
-    onAddUser(userId, branchId, password)
+    if (!userId || !branchId || !password || !position) return
+    onAddUser(userId, branchId, password, position)
     onOpenChange(false)
   }
 
@@ -80,6 +83,20 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                     {id}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Position */}
+          <div>
+            <Label>Position</Label>
+            <Select value={position} onValueChange={(val) => setPosition(val)}>
+              <SelectTrigger className="bg-white text-black">
+                <SelectValue placeholder="Select Position" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="staff">Staff</SelectItem>
               </SelectContent>
             </Select>
           </div>

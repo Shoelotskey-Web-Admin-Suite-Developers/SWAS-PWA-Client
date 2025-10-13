@@ -13,8 +13,10 @@ export async function loginUser(userId: string, password: string) {
 }
 
 export function logoutUser() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user_id");
-  localStorage.removeItem("branch_id");
-  localStorage.removeItem("position");
+  // Use sessionStorage to align with login logic
+  sessionStorage.removeItem("token");
+  sessionStorage.removeItem("user_id");
+  sessionStorage.removeItem("branch_id");
+  sessionStorage.removeItem("position");
+  sessionStorage.removeItem("branch_type");
 }

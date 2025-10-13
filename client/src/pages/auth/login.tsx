@@ -6,6 +6,8 @@ import "@/styles/login.css";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginUser } from "@/utils/api/auth"; // 🔑 import login API
+import { getUserPosition } from "@/utils/api/getUserPosition";
+import { getBranchType } from "@/utils/api/getBranchType";
 import { toast, Toaster } from "sonner"; // ✅ import Sonner
 
 // ✅ Accept onLogin prop from App.tsx
@@ -29,16 +31,43 @@ function Login({ onLogin }: LoginProps) {
     setLoading(true);
 
     try {
-      const data = await loginUser(form.userId, form.password);
+  const data = await loginUser(form.userId, form.password);
 
       // Store token and user info
       sessionStorage.setItem("token", data.token);
       sessionStorage.setItem("user_id", data.user.user_id);
       sessionStorage.setItem("branch_id", data.user.branch_id);
-      sessionStorage.setItem("position", data.user.position);
+
+      // Ensure position is stored; if backend didn't include it for any reason, fetch it
+      let position = data.user.position ?? null;
+      if (!position) {
+        try {
+          const posRes = await getUserPosition(data.user.user_id);
+          position = posRes.position;
+        } catch (e) {
+          // swallow; position can remain null
+        }
+      }
+      if (position !== null && position !== undefined) {
+        sessionStorage.setItem("position", position);
+      } else {
+        sessionStorage.removeItem("position");
+      }
+
+      // Fetch and store branch type in session storage
+      try {
+        const branchType = await getBranchType(data.user.branch_id);
+        if (branchType) {
+          sessionStorage.setItem("branch_type", branchType);
+        } else {
+          sessionStorage.removeItem("branch_type");
+        }
+      } catch {
+        sessionStorage.removeItem("branch_type");
+      }
 
       toast.success("Login successful!"); // ✅ toast success
-      onLogin(data.user); // notify App.tsx
+  onLogin({ ...data.user, position: position ?? null } as any); // notify App.tsx
     } catch (err: any) {
       toast.error(err.message || "Login failed"); // ✅ toast error
     } finally {

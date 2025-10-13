@@ -37,6 +37,26 @@ export function NotifSheet({ children }: NotifSheetProps) {
   const [loadingAppointment, setLoadingAppointment] = useState<string | null>(null)
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(true)
 
+  // Determine visibility per role and branch type from session storage
+  const pos = (sessionStorage.getItem('position') || '').toLowerCase()
+  const bt = (sessionStorage.getItem('branch_type') || '').toUpperCase()
+
+  // Defaults
+  let showWarnings = true
+  let showPending = true
+
+  if ((pos === 'manager' && bt === 'W') || (pos === 'staff' && bt === 'W')) {
+    showWarnings = true
+    showPending = false
+  } else if (
+    (pos === 'superadmin' && bt === 'A') ||
+    (pos === 'manager' && bt === 'B') ||
+    (pos === 'staff' && bt === 'B')
+  ) {
+    showWarnings = true
+    showPending = true
+  } // else leave defaults (both true) as a safe fallback
+
   // --- PICKUP WARNINGS LOGIC ---
   const pickupRows = usePickupRows()
   // Filter for overdue or <= 3 days left
@@ -54,6 +74,12 @@ export function NotifSheet({ children }: NotifSheetProps) {
     }))
 
   const fetchPending = async () => {
+    if (!showPending) {
+      // If pending section is hidden, ensure state reflects no loading and no data
+      setAppointments([])
+      setIsLoadingAppointments(false)
+      return
+    }
     try {
       setIsLoadingAppointments(true)
       const data = await getAppointmentsPending();
@@ -91,17 +117,19 @@ export function NotifSheet({ children }: NotifSheetProps) {
 
   useEffect(() => {
     fetchPending()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPending])
 
   // subscribe to real-time appointment changes and refresh when they occur
   const { changes: appointmentChanges } = useAppointmentUpdates()
   useEffect(() => {
+    if (!showPending) return
     if (appointmentChanges) {
       // small debounce to avoid rapid repeated fetches
       const t = setTimeout(() => fetchPending(), 300)
       return () => clearTimeout(t)
     }
-  }, [appointmentChanges])
+  }, [appointmentChanges, showPending])
 
   const handleUpdateStatus = async (appointment_id: string, status: "Approved" | "Cancelled") => {
     try {
@@ -202,150 +230,155 @@ export function NotifSheet({ children }: NotifSheetProps) {
           </p>
         </div>
 
-        {/* Warnings Section */}
+        {/* Warnings and Pending Sections (filtered by role/branch type) */}
         <div className="mt-4 space-y-4">
-          <div className="flex items-center gap-2">
-            <h3>Warnings</h3>
-          </div>
-
-          <div className="space-y-2 max-h-[33vh] overflow-y-auto pr-2 scrollbar-thin">
-            {warnings.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No warnings 🎉</p>
-            ) : (
-              warnings.map((warning) => (
-                <div
-                  key={warning.transactId}
-                  className="flex items-center justify-between rounded-md border border-red-200 bg-red-50 p-3 cursor-pointer hover:bg-red-100 transition"
-                  onClick={() =>
-                    console.log("Go to transaction details", warning.transactId)
-                  }
-                >
-                  <div>
-                    <h3 className="text-sm font-medium">
-                      Line Item #{warning.transactId}
-                    </h3>
-                    {warning.daysOverdue > 0 ? (
-                      <p className="text-xs text-red-600 font-semibold">
-                        +{warning.daysOverdue} days overdue
-                      </p>
-                    ) : (
-                      <p className="text-xs text-yellow-600 font-semibold">
-                        {warning.daysLeft} days left for pickup
-                      </p>
-                    )}
-                  </div>
-                  
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Separator line */}
-          <Separator className="my-4" />
-
-          {/* Enhanced Pending Appointments Section */}
-          <div className="flex items-center gap-2">
-            <h3>Pending Appointments</h3>
-            {appointments.length > 0 && (
-              <span className="text-xs text-muted-foreground">({appointments.length})</span>
-            )}
-          </div>
-
-          <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2 scrollbar-thin">
-            {isLoadingAppointments ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                  <p className="text-sm text-muted-foreground">Loading appointments...</p>
-                </div>
+          {showWarnings && (
+            <>
+              <div className="flex items-center gap-2">
+                <h3>Warnings</h3>
               </div>
-            ) : appointments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No pending appointments 🎉</p>
-            ) : (
-              appointments.map((appt) => {
-                const isLoading = loadingAppointment === appt.appointment_id
 
-                return (
-                  <div
-                    key={appt.appointment_id}
-                    className={`rounded-md border p-3 flex justify-between items-start transition-all ${
-                      isLoading ? 'opacity-60 cursor-wait' : 'hover:bg-accent'
-                    }`}
-                  >
-                    <div>
-                      <h3 className="text-sm font-medium">
-                        {appt.name || appt.cust_id || appt.appointment_id}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {appt.date_for_inquiry ? new Date(appt.date_for_inquiry).toLocaleDateString() : ""}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {appt.time_start || ""}{appt.time_end ? ` - ${appt.time_end}` : ""}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2">
-                      {/* Branch in upper right */}
-                      <h4 className="text-xs font-medium text-muted-foreground bold">
-                        {(appt as any).branch_name || appt.branch_id}
-                      </h4>
-
-                      {/* Enhanced Action Buttons */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleUpdateStatus(appt.appointment_id, "Approved")}
-                          disabled={isLoading}
-                          className={`px-3 py-1 text-xs rounded-md transition-all ${
-                            isLoading
-                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              : "bg-green-100 text-green-700 hover:bg-green-200 hover:scale-105"
-                          }`}
-                          title="Acknowledge appointment and notify customer"
-                        >
-                          {isLoading ? (
-                            <div className="flex items-center gap-1">
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-700"></div>
-                              <span>Processing...</span>
-                            </div>
-                          ) : (
-                            "✓ Acknowledge"
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleUpdateStatus(appt.appointment_id, "Cancelled")}
-                          disabled={isLoading}
-                          className={`px-3 py-1 text-xs rounded-md transition-all ${
-                            isLoading
-                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              : "bg-red-100 text-red-700 hover:bg-red-200 hover:scale-105"
-                          }`}
-                          title="Cancel appointment and notify customer"
-                        >
-                          {isLoading ? (
-                            <div className="flex items-center gap-1">
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-700"></div>
-                              <span>Processing...</span>
-                            </div>
-                          ) : (
-                            "✗ Cancel"
-                          )}
-                        </button>
+              <div className="space-y-2 max-h-[33vh] overflow-y-auto pr-2 scrollbar-thin">
+                {warnings.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No warnings 🎉</p>
+                ) : (
+                  warnings.map((warning) => (
+                    <div
+                      key={warning.transactId}
+                      className="flex items-center justify-between rounded-md border border-red-200 bg-red-50 p-3 cursor-pointer hover:bg-red-100 transition"
+                      onClick={() =>
+                        console.log("Go to transaction details", warning.transactId)
+                      }
+                    >
+                      <div>
+                        <h3 className="text-sm font-medium">
+                          Line Item #{warning.transactId}
+                        </h3>
+                        {warning.daysOverdue > 0 ? (
+                          <p className="text-xs text-red-600 font-semibold">
+                            +{warning.daysOverdue} days overdue
+                          </p>
+                        ) : (
+                          <p className="text-xs text-yellow-600 font-semibold">
+                            {warning.daysLeft} days left for pickup
+                          </p>
+                        )}
                       </div>
                     </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
 
-          {/* Information Footer */}
-          {appointments.length > 0 && (
-            <div className="mt-4 p-2 bg-blue-50 rounded-md">
-              <p className="text-xs text-blue-700">
-                💡 <strong>Push notifications are sent automatically</strong> when you acknowledge or cancel appointments. 
-                Customers receive notifications on their mobile devices instantly.
-              </p>
-            </div>
+          {showWarnings && showPending && <Separator className="my-4" />}
+
+          {showPending && (
+            <>
+              <div className="flex items-center gap-2">
+                <h3>Pending Appointments</h3>
+                {appointments.length > 0 && (
+                  <span className="text-xs text-muted-foreground">({appointments.length})</span>
+                )}
+              </div>
+
+              <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2 scrollbar-thin">
+                {isLoadingAppointments ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                      <p className="text-sm text-muted-foreground">Loading appointments...</p>
+                    </div>
+                  </div>
+                ) : appointments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No pending appointments 🎉</p>
+                ) : (
+                  appointments.map((appt) => {
+                    const isLoading = loadingAppointment === appt.appointment_id
+
+                    return (
+                      <div
+                        key={appt.appointment_id}
+                        className={`rounded-md border p-3 flex justify-between items-start transition-all ${
+                          isLoading ? 'opacity-60 cursor-wait' : 'hover:bg-accent'
+                        }`}
+                      >
+                        <div>
+                          <h3 className="text-sm font-medium">
+                            {appt.name || appt.cust_id || appt.appointment_id}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {appt.date_for_inquiry ? new Date(appt.date_for_inquiry).toLocaleDateString() : ""}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {appt.time_start || ""}{appt.time_end ? ` - ${appt.time_end}` : ""}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                          {/* Branch in upper right */}
+                          <h4 className="text-xs font-medium text-muted-foreground bold">
+                            {(appt as any).branch_name || appt.branch_id}
+                          </h4>
+
+                          {/* Enhanced Action Buttons */}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleUpdateStatus(appt.appointment_id, "Approved")}
+                              disabled={isLoading}
+                              className={`px-3 py-1 text-xs rounded-md transition-all ${
+                                isLoading
+                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                  : "bg-green-100 text-green-700 hover:bg-green-200 hover:scale-105"
+                              }`}
+                              title="Acknowledge appointment and notify customer"
+                            >
+                              {isLoading ? (
+                                <div className="flex items-center gap-1">
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-700"></div>
+                                  <span>Processing...</span>
+                                </div>
+                              ) : (
+                                "✓ Acknowledge"
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleUpdateStatus(appt.appointment_id, "Cancelled")}
+                              disabled={isLoading}
+                              className={`px-3 py-1 text-xs rounded-md transition-all ${
+                                isLoading
+                                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                  : "bg-red-100 text-red-700 hover:bg-red-200 hover:scale-105"
+                              }`}
+                              title="Cancel appointment and notify customer"
+                            >
+                              {isLoading ? (
+                                <div className="flex items-center gap-1">
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-700"></div>
+                                  <span>Processing...</span>
+                                </div>
+                              ) : (
+                                "✗ Cancel"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+
+              {/* Information Footer */}
+              {appointments.length > 0 && (
+                <div className="mt-4 p-2 bg-blue-50 rounded-md">
+                  <p className="text-xs text-blue-700">
+                    💡 <strong>Push notifications are sent automatically</strong> when you acknowledge or cancel appointments. 
+                    Customers receive notifications on their mobile devices instantly.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </SheetContent>

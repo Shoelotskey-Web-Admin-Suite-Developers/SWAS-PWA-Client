@@ -42,6 +42,78 @@ export default function Navbar({ activePage, setActivePage, onLogout }: NavbarPr
     setUserDropdown(false)
   }, [activePage])
 
+  // Visibility rules based on sessionStorage values for position and branch type
+  const sessionPosition = (sessionStorage.getItem('position') || '').toLowerCase()
+  const sessionBranchType = (sessionStorage.getItem('branch_type') || '').toUpperCase()
+
+  const visibility = (() => {
+    // Defaults: show everything (fallback if combo not specified)
+    let showServiceRequest = true
+    let showOperations = true
+    let showPayments = true
+    let showDatabaseView = true
+    let showAnalytics = true
+    let showUserManagement = true
+    let showNotifSheet = true
+
+    const pos = sessionPosition
+    const bt = sessionBranchType
+
+    // Apply specified combos
+    if (pos === 'superadmin' && bt === 'A') {
+      // Show all main areas and payments
+      showServiceRequest = true
+      showOperations = true
+      showPayments = true
+      showDatabaseView = true
+      showAnalytics = true
+      showUserManagement = true
+      showNotifSheet = true
+    } else if (pos === 'manager' && bt === 'B') {
+      showServiceRequest = true
+      showOperations = true
+      showPayments = true
+      showDatabaseView = true
+      showAnalytics = true
+      showUserManagement = true
+      showNotifSheet = true
+    } else if (pos === 'staff' && bt === 'B') {
+      showServiceRequest = true
+      showOperations = true
+      showPayments = true
+      showDatabaseView = false
+      showAnalytics = true
+      showUserManagement = true
+      showNotifSheet = true
+    } else if (pos === 'manager' && bt === 'W') {
+      showServiceRequest = false
+      showOperations = true
+      showPayments = false
+      showDatabaseView = true
+      showAnalytics = true
+      showUserManagement = false
+      showNotifSheet = true
+    } else if (pos === 'staff' && bt === 'W') {
+      showServiceRequest = false
+      showOperations = true
+      showPayments = false
+      showDatabaseView = false
+      showAnalytics = true
+      showUserManagement = false
+      showNotifSheet = true
+    }
+
+    return {
+      showServiceRequest,
+      showOperations,
+      showPayments,
+      showDatabaseView,
+      showAnalytics,
+      showUserManagement,
+      showNotifSheet,
+    }
+  })()
+
   return (
     <PickupProvider>
       <div className='navBar'>
@@ -54,61 +126,77 @@ export default function Navbar({ activePage, setActivePage, onLogout }: NavbarPr
 
           <div className='navBar-contents-p2'>
             <ul>
-              <li>
-                <a href="#" onClick={e => { e.preventDefault(); setActivePage('serviceRequest') }}>
-                  <h3>Service Request</h3>
-                </a>
-              </li>
+              {visibility.showServiceRequest && (
+                <li>
+                  <a href="#" onClick={e => { e.preventDefault(); setActivePage('serviceRequest') }}>
+                    <h3>Service Request</h3>
+                  </a>
+                </li>
+              )}
 
               {/* Operations dropdown */}
-              <li className={`dropdown ${opDropdown ? "dropdown-open" : ""}`}>
-                <div {...opDropdownHandlers}>
-                  <h3>Operations</h3>
-                  {opDropdown && (
-                    <div className="dropdown-menu">
-                      <div className='dropdown-items'>
-                        <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('operations') }}><a href="">Operations</a></div>
-                        <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('payment') }}><a href="">Payment & Pickup</a></div>
+              {(visibility.showOperations || visibility.showPayments) && (
+                <li className={`dropdown ${opDropdown ? "dropdown-open" : ""}`}>
+                  <div {...opDropdownHandlers}>
+                    <h3>Operations</h3>
+                    {opDropdown && (
+                      <div className="dropdown-menu">
+                        <div className='dropdown-items'>
+                          {visibility.showOperations && (
+                            <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('operations') }}><a href="">Operations</a></div>
+                          )}
+                          {visibility.showPayments && (
+                            <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('payment') }}><a href="">Payment & Pickup</a></div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </li>
+                    )}
+                  </div>
+                </li>
+              )}
 
               {/* Database View dropdown */}
-              <li className={`dropdown ${dbDropdown ? "dropdown-open" : ""}`}>
-                <div {...dbDropdownHandlers}>
-                  <h3>Database View</h3>
-                  {dbDropdown && (
-                    <div className="dropdown-menu">
-                      <div className='dropdown-items'>
-                        <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('central-view') }}><a href="">Central View</a></div>
-                        <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('customer-information') }}><a href="">Customer Information</a></div>
-                        <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('branches') }}><a href="">Branches</a></div>
+              {visibility.showDatabaseView && (
+                <li className={`dropdown ${dbDropdown ? "dropdown-open" : ""}`}>
+                  <div {...dbDropdownHandlers}>
+                    <h3>Database View</h3>
+                    {dbDropdown && (
+                      <div className="dropdown-menu">
+                        <div className='dropdown-items'>
+                          <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('central-view') }}><a href="">Central View</a></div>
+                          <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('customer-information') }}><a href="">Customer Information</a></div>
+                          <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('branches') }}><a href="">Branches</a></div>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </li>
+                    )}
+                  </div>
+                </li>
+              )}
 
-              <li><a href="" onClick={e => { e.preventDefault(); setActivePage('analytics') }}><h3>Analytics</h3></a></li>
+              {visibility.showAnalytics && (
+                <li><a href="" onClick={e => { e.preventDefault(); setActivePage('analytics') }}><h3>Analytics</h3></a></li>
+              )}
 
               {/* User Management dropdown */}
-              <li className={`dropdown ${userDropdown ? "dropdown-open" : ""}`}>
-                <div {...userDropdownHandlers}>
-                  <h3>User Management</h3>
-                  {userDropdown && (
-                    <div className="dropdown-menu">
-                      <div className='dropdown-items'>
-                        <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('appointments') }}><a href="">Appointments</a></div>
-                        <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('announcements') }}><a href="">Announcements</a></div>
+              {visibility.showUserManagement && (
+                <li className={`dropdown ${userDropdown ? "dropdown-open" : ""}`}>
+                  <div {...userDropdownHandlers}>
+                    <h3>User Management</h3>
+                    {userDropdown && (
+                      <div className="dropdown-menu">
+                        <div className='dropdown-items'>
+                          <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('appointments') }}><a href="">Appointments</a></div>
+                          <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('announcements') }}><a href="">Announcements</a></div>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </li>
+                    )}
+                  </div>
+                </li>
+              )}
 
-              <li><NotifSheet><a href="#"><NotifIcon /></a></NotifSheet></li>
+              {visibility.showNotifSheet && (
+                <li><NotifSheet><a href="#"><NotifIcon /></a></NotifSheet></li>
+              )}
             </ul>
           </div>
 
@@ -118,23 +206,33 @@ export default function Navbar({ activePage, setActivePage, onLogout }: NavbarPr
           <div className='navBar-contents-p2-tablet'>
             <div>
               <ul>
-                <li><a href="" onClick={e => { e.preventDefault(); setActivePage('serviceRequest'); setIsOpen(false);   }}><h3>Service Request</h3></a></li>
+                {visibility.showServiceRequest && (
+                  <li><a href="" onClick={e => { e.preventDefault(); setActivePage('serviceRequest'); setIsOpen(false);   }}><h3>Service Request</h3></a></li>
+                )}
 
-                <li className={`dropdown ${opDropdown ? "dropdown-open" : ""}`}>
-                  <div {...opDropdownHandlers}>
-                    <h3>Operations</h3>
-                    {opDropdown && (
-                      <div className="dropdown-menu">
-                        <div className='dropdown-items'>
-                          <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('operations'); setIsOpen(false); }}><a href="">Operations</a></div>
-                          <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('payment'); setIsOpen(false); }}><a href="">Payment & Pickup</a></div>
+                {(visibility.showOperations || visibility.showPayments) && (
+                  <li className={`dropdown ${opDropdown ? "dropdown-open" : ""}`}>
+                    <div {...opDropdownHandlers}>
+                      <h3>Operations</h3>
+                      {opDropdown && (
+                        <div className="dropdown-menu">
+                          <div className='dropdown-items'>
+                            {visibility.showOperations && (
+                              <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('operations'); setIsOpen(false); }}><a href="">Operations</a></div>
+                            )}
+                            {visibility.showPayments && (
+                              <div className='dropdown-item' onClick={e => { e.preventDefault(); setActivePage('payment'); setIsOpen(false); }}><a href="">Payment & Pickup</a></div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </li>
+                      )}
+                    </div>
+                  </li>
+                )}
 
-                <li><NotifSheet><a href="#"><NotifIcon /></a></NotifSheet></li>
+                {visibility.showNotifSheet && (
+                  <li><NotifSheet><a href="#"><NotifIcon /></a></NotifSheet></li>
+                )}
 
                 <li>
                   <div className={`burger-icon ${isOpen ? 'open' : ''}`} onClick={toggleMenu}>
@@ -146,30 +244,36 @@ export default function Navbar({ activePage, setActivePage, onLogout }: NavbarPr
                   {isOpen && (
                     <div className="burger-dropdown">
                       <ul>
-                        <li className={`dropdown ${dbDropdown ? "dropdown-open" : ""}`}>
-                          <div onClick={() => setDbDropdown(prev => !prev)}>
-                            <h3>Database View</h3>
-                            {dbDropdown && (
-                              <div className='dropdown-tablet'>
-                                <a href="" onClick={e => { e.preventDefault(); setActivePage('central-view'); setIsOpen(false); }}>Central View</a>
-                                <a href="" onClick={e => { e.preventDefault(); setActivePage('customer-information'); setIsOpen(false); }}>Customer Information</a>
-                                <a href="" onClick={e => { e.preventDefault(); setActivePage('branches'); setIsOpen(false); }}>Branches</a>
-                              </div>
-                            )}
-                          </div>
-                        </li>
-                        <li><a href="#" onClick={e => { e.preventDefault(); setActivePage('analytics'); setIsOpen(false); }}><h3>Analytics</h3></a></li>
-                        <li className={`dropdown ${userDropdown ? "dropdown-open" : ""}`}>
-                          <div onClick={() => setUserDropdown(prev => !prev)}>
-                            <h3>User Management</h3>
-                            {userDropdown && (
-                              <div className='dropdown-tablet'>
-                                <a href="" onClick={e => { e.preventDefault(); setActivePage('appointments'); setIsOpen(false); }}>Appointments</a>
-                                <a href="" onClick={e => { e.preventDefault(); setActivePage('announcements'); setIsOpen(false); }}>Announcements</a>
-                              </div>
-                            )}
-                          </div>
-                        </li>
+                        {visibility.showDatabaseView && (
+                          <li className={`dropdown ${dbDropdown ? "dropdown-open" : ""}`}>
+                            <div onClick={() => setDbDropdown(prev => !prev)}>
+                              <h3>Database View</h3>
+                              {dbDropdown && (
+                                <div className='dropdown-tablet'>
+                                  <a href="" onClick={e => { e.preventDefault(); setActivePage('central-view'); setIsOpen(false); }}>Central View</a>
+                                  <a href="" onClick={e => { e.preventDefault(); setActivePage('customer-information'); setIsOpen(false); }}>Customer Information</a>
+                                  <a href="" onClick={e => { e.preventDefault(); setActivePage('branches'); setIsOpen(false); }}>Branches</a>
+                                </div>
+                              )}
+                            </div>
+                          </li>
+                        )}
+                        {visibility.showAnalytics && (
+                          <li><a href="#" onClick={e => { e.preventDefault(); setActivePage('analytics'); setIsOpen(false); }}><h3>Analytics</h3></a></li>
+                        )}
+                        {visibility.showUserManagement && (
+                          <li className={`dropdown ${userDropdown ? "dropdown-open" : ""}`}>
+                            <div onClick={() => setUserDropdown(prev => !prev)}>
+                              <h3>User Management</h3>
+                              {userDropdown && (
+                                <div className='dropdown-tablet'>
+                                  <a href="" onClick={e => { e.preventDefault(); setActivePage('appointments'); setIsOpen(false); }}>Appointments</a>
+                                  <a href="" onClick={e => { e.preventDefault(); setActivePage('announcements'); setIsOpen(false); }}>Announcements</a>
+                                </div>
+                              )}
+                            </div>
+                          </li>
+                        )}
                       </ul>
                     </div>
                   )}
@@ -187,7 +291,9 @@ export default function Navbar({ activePage, setActivePage, onLogout }: NavbarPr
 
           <div className='navBar-contents-p2-mobile'>
             <ul>
-              <li><NotifSheet><a href="#"><NotifIcon /></a></NotifSheet></li>
+              {visibility.showNotifSheet && (
+                <li><NotifSheet><a href="#"><NotifIcon /></a></NotifSheet></li>
+              )}
               <li>
                 <div className={`burger-icon ${isOpen ? 'open' : ''}`} onClick={toggleMenu}>
                   <div className="line"></div>
@@ -198,58 +304,72 @@ export default function Navbar({ activePage, setActivePage, onLogout }: NavbarPr
                 {isOpen && (
                   <div className="burger-dropdown">
                     <ul>
-                      <li><a href="" onClick={e => { 
-                        e.preventDefault(); 
-                        setActivePage('serviceRequest');
-                        setIsOpen(false); 
-                        }}><h3>Service Request</h3></a></li>
+                      {visibility.showServiceRequest && (
+                        <li><a href="" onClick={e => { 
+                          e.preventDefault(); 
+                          setActivePage('serviceRequest');
+                          setIsOpen(false); 
+                          }}><h3>Service Request</h3></a></li>
+                      )}
 
-                      <li className={`dropdown ${opDropdown ? "dropdown-open" : ""}`}>
-                        <div onClick={() => setOpDropdown(prev => !prev)}>
-                          <h3>Operations</h3>
-                          {opDropdown && (
-                            <div className='dropdown-tablet'>
-                              <a href="" onClick={e => { 
-                                e.preventDefault(); 
-                                setActivePage('operations');
-                                setIsOpen(false); 
-                                }}>Operations</a>
-                              <a href="" onClick={e => { 
-                                e.preventDefault(); 
-                                setActivePage('payment');
-                                setIsOpen(false);  
-                                }}>Payment & Pickup</a>
-                            </div>
-                          )}
-                        </div>
-                      </li>
+                      {(visibility.showOperations || visibility.showPayments) && (
+                        <li className={`dropdown ${opDropdown ? "dropdown-open" : ""}`}>
+                          <div onClick={() => setOpDropdown(prev => !prev)}>
+                            <h3>Operations</h3>
+                            {opDropdown && (
+                              <div className='dropdown-tablet'>
+                                {visibility.showOperations && (
+                                  <a href="" onClick={e => { 
+                                    e.preventDefault(); 
+                                    setActivePage('operations');
+                                    setIsOpen(false); 
+                                    }}>Operations</a>
+                                )}
+                                {visibility.showPayments && (
+                                  <a href="" onClick={e => { 
+                                    e.preventDefault(); 
+                                    setActivePage('payment');
+                                    setIsOpen(false);  
+                                    }}>Payment & Pickup</a>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      )}
 
-                      <li className={`dropdown ${dbDropdown ? "dropdown-open" : ""}`}>
-                        <div onClick={() => setDbDropdown(prev => !prev)}>
-                          <h3>Database View</h3>
-                          {dbDropdown && (
-                            <div className='dropdown-tablet'>
-                              <a href="" onClick={e => { e.preventDefault(); setActivePage('central-view'); setIsOpen(false); }}>Central View</a>
-                              <a href="" onClick={e => { e.preventDefault(); setActivePage('customer-information'); setIsOpen(false); }}>Customer Information</a>
-                              <a href="" onClick={e => { e.preventDefault(); setActivePage('branches'); setIsOpen(false); }}>Branches</a>
-                            </div>
-                          )}
-                        </div>
-                      </li>
+                      {visibility.showDatabaseView && (
+                        <li className={`dropdown ${dbDropdown ? "dropdown-open" : ""}`}>
+                          <div onClick={() => setDbDropdown(prev => !prev)}>
+                            <h3>Database View</h3>
+                            {dbDropdown && (
+                              <div className='dropdown-tablet'>
+                                <a href="" onClick={e => { e.preventDefault(); setActivePage('central-view'); setIsOpen(false); }}>Central View</a>
+                                <a href="" onClick={e => { e.preventDefault(); setActivePage('customer-information'); setIsOpen(false); }}>Customer Information</a>
+                                <a href="" onClick={e => { e.preventDefault(); setActivePage('branches'); setIsOpen(false); }}>Branches</a>
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      )}
 
-                      <li><a href="#" onClick={e => { e.preventDefault(); setActivePage('analytics'); setIsOpen(false);  }}><h3>Analytics</h3></a></li>
+                      {visibility.showAnalytics && (
+                        <li><a href="#" onClick={e => { e.preventDefault(); setActivePage('analytics'); setIsOpen(false);  }}><h3>Analytics</h3></a></li>
+                      )}
 
-                      <li className={`dropdown ${userDropdown ? "dropdown-open" : ""}`}>
-                        <div onClick={() => setUserDropdown(prev => !prev)}>
-                          <h3>User Management</h3>
-                          {userDropdown && (
-                            <div className='dropdown-tablet'>
-                              <a href="" onClick={e => { e.preventDefault(); setActivePage('appointments'); setIsOpen(false); }}>Appointments</a>
-                              <a href="" onClick={e => { e.preventDefault(); setActivePage('announcements'); setIsOpen(false); }}>Announcements</a>
-                            </div>
-                          )}
-                        </div>
-                      </li>
+                      {visibility.showUserManagement && (
+                        <li className={`dropdown ${userDropdown ? "dropdown-open" : ""}`}>
+                          <div onClick={() => setUserDropdown(prev => !prev)}>
+                            <h3>User Management</h3>
+                            {userDropdown && (
+                              <div className='dropdown-tablet'>
+                                <a href="" onClick={e => { e.preventDefault(); setActivePage('appointments'); setIsOpen(false); }}>Appointments</a>
+                                <a href="" onClick={e => { e.preventDefault(); setActivePage('announcements'); setIsOpen(false); }}>Announcements</a>
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      )}
 
                       <li><a onClick={onLogout} href="">Log Out</a></li>
                     </ul>

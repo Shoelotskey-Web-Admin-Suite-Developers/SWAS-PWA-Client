@@ -4,10 +4,12 @@ export async function addUser({
   userId,
   branchId,
   password,
+  position,
 }: {
   userId: string
   branchId: string
   password: string
+  position: string
 }) {
   const token = sessionStorage.getItem("token")
   if (!token) throw new Error("No token found")
@@ -18,7 +20,7 @@ export async function addUser({
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ user_id: userId, branch_id: branchId, password }),
+  body: JSON.stringify({ user_id: userId, branch_id: branchId, password, position }),
   })
 
   if (!res.ok) {

@@ -14,6 +14,7 @@ import { uploadToCloudinary } from "@/utils/api/cloudinaryUpload";
 import { saveLineItemImage } from "@/utils/api/editImageLink";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner"; // <-- import toast
+import { processImageToJpg, validateImageFile } from "@/utils/imageProcessing";
 
 // Add to props:
 interface OpBfrImgProps {
@@ -27,27 +28,77 @@ export default function OpBfrImg({ open, onOpenChange, lineItemId, onImageUpload
   const [step, setStep] = useState<"choose" | "upload" | "camera">("choose");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [cameraImg, setCameraImg] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
 
   const handleChooseLocal = () => setStep("upload");
   const handleChooseCamera = () => setStep("camera");
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (e.target.files && e.target.files[0]) {
+        const raw = e.target.files[0];
+        // Preliminary size check: 5 MB max before processing
+        if (raw.size > 5 * 1024 * 1024) {
+          toast.error('File too large. Please select an image under 5 MB.');
+          return;
+        }
+
+        const processed = await processImageToJpg(raw, {
+          width: 300,
+          height: 300,
+          mime: 'image/jpeg',
+          quality: 0.9,
+          maxBytes: 300 * 1024 * 1024, // 300 MB
+          fileName: 'before.jpg',
+        });
+        // Final sanity check
+        const check = await validateImageFile(processed, 300, 300, 'image/jpeg', 300 * 1024 * 1024);
+        if (!check.valid) {
+          toast.error(`Image invalid: ${check.reasons.join('; ')}`);
+          return;
+        }
+        setSelectedFile(processed);
+        // Make a safe object URL for preview of the processed (compressed) file
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(URL.createObjectURL(processed));
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to process image');
     }
   };
 
-  const handleCapture = () => {
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setCameraImg(imageSrc);
-      fetch(imageSrc)
-        .then((res) => res.blob())
-        .then((blob) => {
-          const file = new File([blob], "camera.jpg", { type: "image/jpeg" });
-          setSelectedFile(file);
+  const handleCapture = async () => {
+    try {
+      const imageSrc = webcamRef.current?.getScreenshot();
+      if (imageSrc) {
+        setCameraImg(imageSrc);
+        // Preliminary size check for camera capture: ensure data URL blob <= 5 MB
+        const blob = await (await fetch(imageSrc)).blob();
+        if (blob.size > 5 * 1024 * 1024) {
+          toast.error('Captured image is larger than 5 MB. Please retake a smaller image.');
+          return;
+        }
+
+        const processed = await processImageToJpg(blob, {
+          width: 300,
+          height: 300,
+          mime: 'image/jpeg',
+          quality: 0.9,
+          maxBytes: 300 * 1024 * 1024,
+          fileName: 'before.jpg',
         });
+        const check = await validateImageFile(processed, 300, 300, 'image/jpeg', 300 * 1024 * 1024);
+        if (!check.valid) {
+          toast.error(`Image invalid: ${check.reasons.join('; ')}`);
+          return;
+        }
+        setSelectedFile(processed);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(URL.createObjectURL(processed));
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to capture/process image');
     }
   };
 
@@ -79,6 +130,8 @@ export default function OpBfrImg({ open, onOpenChange, lineItemId, onImageUpload
     setStep("choose");
     setSelectedFile(null);
     setCameraImg(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
   };
 
   return (
@@ -91,6 +144,9 @@ export default function OpBfrImg({ open, onOpenChange, lineItemId, onImageUpload
           <AlertDialogDescription>
             <p className="mb-2">
               Line Item ID: <span className="font-mono">{lineItemId}</span>
+            </p>
+            <p className="text-xs text-gray-600 mb-3">
+              Note: Only images up to 5 MB are accepted. Accepted images will be resized and center-cropped to 300x300 pixels and converted to JPG before upload.
             </p>
             {step === "choose" && (
               <div className="flex flex-col gap-4">
@@ -111,11 +167,11 @@ export default function OpBfrImg({ open, onOpenChange, lineItemId, onImageUpload
             {step === "upload" && (
               <div className="flex flex-col gap-2">
                 <input type="file" accept="image/*" onChange={handleFileChange} />
-                {selectedFile && (
+                {previewUrl && (
                   <img
-                    src={URL.createObjectURL(selectedFile)}
+                    src={previewUrl}
                     alt="Preview"
-                    className="mt-2 max-h-40 rounded"
+                    className="mt-2 max-h-40 rounded w-auto max-w-full object-contain"
                   />
                 )}
               </div>
@@ -128,9 +184,14 @@ export default function OpBfrImg({ open, onOpenChange, lineItemId, onImageUpload
                       audio={false}
                       ref={webcamRef}
                       screenshotFormat="image/jpeg"
+                      screenshotQuality={0.7}
                       width={320}
                       height={240}
-                      videoConstraints={{ facingMode: "environment" }}
+                      videoConstraints={{
+                        facingMode: { ideal: "environment" },
+                        width: { ideal: 1280, max: 1280 },
+                        height: { ideal: 720, max: 720 },
+                      }}
                     />
                     <Button
                       className="bg-blue-600 text-white py-2 rounded mt-2"
@@ -141,12 +202,17 @@ export default function OpBfrImg({ open, onOpenChange, lineItemId, onImageUpload
                   </>
                 ) : (
                   <>
-                    <img src={cameraImg} alt="Captured" className="max-h-40 rounded" />
+                    {/* Show processed (compressed) preview instead of raw camera image */}
+                    {previewUrl && (
+                      <img src={previewUrl} alt="Preview" className="max-h-40 rounded w-auto max-w-full object-contain" />
+                    )}
                     <Button
                       className="bg-gray-600 text-white py-2 rounded mt-2"
                       onClick={() => {
                         setCameraImg(null);
                         setSelectedFile(null);
+                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                        setPreviewUrl(null);
                       }}
                     >
                       <h3>Retake</h3>

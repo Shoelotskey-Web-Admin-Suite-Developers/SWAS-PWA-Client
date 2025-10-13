@@ -4,6 +4,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL
 export interface User {
   user_id: string
   branch_id: string
+  position?: string | null
 }
 
 export async function getUsers(): Promise<User[]> {

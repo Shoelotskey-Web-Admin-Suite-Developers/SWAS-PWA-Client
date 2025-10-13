@@ -18,6 +18,7 @@ import { editUser } from "@/utils/api/editUser"
 export type UserRow = {
   userId: string
   branchId: string
+  position?: string | null
 }
 
 export function EditUserDialog({
@@ -35,14 +36,14 @@ export function EditUserDialog({
   onUserDeleted: (userId: string) => void
   onUserEdited: (updatedUser: UserRow) => void
 }) {
-  const [form, setForm] = React.useState<UserRow>(user)
+  const [form, setForm] = React.useState<UserRow>({ ...user, position: user.position ?? "staff" })
   const [newPassword, setNewPassword] = React.useState("")
   const [confirmPassword, setConfirmPassword] = React.useState("")
   const [showNewPassword, setShowNewPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
 
   React.useEffect(() => {
-    setForm(user)
+  setForm({ ...user, position: user.position ?? "staff" })
     setNewPassword("")
     setConfirmPassword("")
     setShowNewPassword(false)
@@ -58,9 +59,11 @@ export function EditUserDialog({
     }
 
     try {
-      const updatedData: { branch_id?: string; password?: string } = {
+      const updatedData: { branch_id?: string; password?: string; position?: string | null } = {
         branch_id: form.branchId,
       }
+
+      updatedData.position = form.position ?? null
 
       if (newPassword) updatedData.password = newPassword
 
@@ -72,6 +75,7 @@ export function EditUserDialog({
       onUserEdited({
         userId: updatedUser.user.user_id,
         branchId: updatedUser.user.branch_id,
+        position: updatedUser.user.position ?? form.position ?? null,
       })
 
       onOpenChange(false)
@@ -142,6 +146,23 @@ export function EditUserDialog({
                       {id}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Position</Label>
+              <Select
+                value={form.position ?? "staff"}
+                onValueChange={(val) =>
+                  setForm((prev) => ({ ...prev, position: val }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="staff">Staff</SelectItem>
                 </SelectContent>
               </Select>
             </div>

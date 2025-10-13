@@ -32,6 +32,7 @@ function Analytics() {
   const [branchOptions, setBranchOptions] = useState<{ value: string; label: string; color?: string }[]>([])
   const [branchMeta, setBranchMeta] = useState<BranchMeta[]>([])
   const [isAdminBranch, setIsAdminBranch] = useState(false)
+  const [isWarehouseBranch, setIsWarehouseBranch] = useState(false)
   const [currentBranchId, setCurrentBranchId] = useState<string | null>(null)
   const [branchIdToNumericMap, setBranchIdToNumericMap] = useState<Record<string, string>>({})
 
@@ -47,9 +48,11 @@ function Analytics() {
         const branchType = await getBranchType()
         if (!mounted) return
         setIsAdminBranch(branchType === "A")
+        setIsWarehouseBranch(branchType === "W")
       } catch (err) {
         console.error("Failed to get branch type", err)
         setIsAdminBranch(false)
+        setIsWarehouseBranch(false)
       }
     }
 
@@ -83,13 +86,23 @@ function Analytics() {
 
   // Auto-select branch for non-admin users
   useEffect(() => {
+    // For warehouse-type branches, force "Total of Branches" selection only
+    if (!isAdminBranch && isWarehouseBranch) {
+      const totalNumeric = branchMeta.find(m => m.branch_id === 'TOTAL')?.numericId
+      if (totalNumeric) {
+        setSelectedBranches([totalNumeric])
+      }
+      return
+    }
+
+    // For regular non-admin branches, auto-select their own branch
     if (!isAdminBranch && currentBranchId && Object.keys(branchIdToNumericMap).length > 0) {
       const numericId = branchIdToNumericMap[currentBranchId]
       if (numericId) {
         setSelectedBranches([numericId])
       }
     }
-  }, [isAdminBranch, currentBranchId, branchIdToNumericMap])
+  }, [isAdminBranch, isWarehouseBranch, currentBranchId, branchIdToNumericMap, branchMeta])
 
 
 
@@ -113,11 +126,14 @@ function Analytics() {
   };
 
   // For non-admin branches, filter to show only their branch data
+  const totalNumericId = branchMeta.find(m => m.branch_id === 'TOTAL')?.numericId || 'total'
   const effectiveSelectedBranches = isAdminBranch
     ? selectedBranches
-    : (currentBranchId && branchIdToNumericMap[currentBranchId]
-        ? [branchIdToNumericMap[currentBranchId]]
-        : selectedBranches);
+    : isWarehouseBranch
+      ? [totalNumericId]
+      : (currentBranchId && branchIdToNumericMap[currentBranchId]
+          ? [branchIdToNumericMap[currentBranchId]]
+          : selectedBranches);
 
 
 
@@ -128,7 +144,7 @@ function Analytics() {
       {/* Controls Section */}
       <div className="w-full px-8 mb-6">
         {/* Branch Selector - Only for admin */}
-        {isAdminBranch && (
+        {isAdminBranch && !isWarehouseBranch && (
           <Card className="rounded-3xl w-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -210,7 +226,7 @@ function Analytics() {
         )}
         
         {/* For non-admin users, show export button in top right */}
-        {!isAdminBranch && (
+        {!isAdminBranch && !isWarehouseBranch && (
           <div className="flex justify-end">
             <ExportButton />
           </div>

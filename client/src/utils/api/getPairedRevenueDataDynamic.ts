@@ -73,7 +73,7 @@ export async function getPairedRevenueDataDynamic(branchMeta: BranchMeta[], limi
 
   function buildRow(weekStr: string, a?: any, f?: any): DynamicPairedRow {
     const row: DynamicPairedRow = { week_start: weekStr };
-    let actualTotal = 0; let forecastTotal = 0;
+  let actualTotal = 0; let forecastTotal = 0;
     for (const meta of branchMeta) {
       if (meta.branch_id === 'TOTAL') continue;
       const val = a ? extract(a, meta.branch_id) : null;
@@ -82,12 +82,14 @@ export async function getPairedRevenueDataDynamic(branchMeta: BranchMeta[], limi
       if (fval != null) { row[meta.forecastKey] = fval; forecastTotal += Number(fval)||0; }
     }
     // Only show total for rows that have actual data; hide (null) for forecast-only rows
+    const actualSourceTotal = a && typeof a.total === 'number' ? a.total : actualTotal;
+    const forecastSourceTotal = f && typeof f.total === 'number' ? f.total : forecastTotal;
     if (a) {
-      row.total = actualTotal; // allow zero
+      row.total = actualSourceTotal; // allow zero
     } else {
       row.total = null;
     }
-    row.totalFC = forecastTotal;
+    row.totalFC = forecastSourceTotal;
     // Legacy compatibility
     const legacy: Record<string,string> = { 'SMVAL-B-NCR':'SMVal','VAL-B-NCR':'Val','SMGRA-B-NCR':'SMGra' };
     for (const meta of branchMeta) {

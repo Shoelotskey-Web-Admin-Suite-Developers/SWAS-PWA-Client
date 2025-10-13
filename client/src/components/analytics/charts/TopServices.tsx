@@ -136,8 +136,9 @@ export function TopServices({ selectedBranches = [] }: TopServicesProps) {
             <h2 className="font-semibold">Top Services</h2>
           </CardTitle>
           <CardDescription className="text-sm text-gray-600">
-            {selectedBranches.length === 0 || selectedBranches.includes("4") 
-              ? "Service usage across all branches" 
+            {/* Treat selecting total as all-branches mode; 'total' may be 'total' or meta-derived id upstream */}
+            {selectedBranches.length === 0 || selectedBranches.includes('total')
+              ? "Service usage across all branches"
               : `Service usage - ${selectedBranches.length} branch${selectedBranches.length > 1 ? 'es' : ''}`}
           </CardDescription>
           {dateRange && dateRange.earliest && dateRange.latest && (

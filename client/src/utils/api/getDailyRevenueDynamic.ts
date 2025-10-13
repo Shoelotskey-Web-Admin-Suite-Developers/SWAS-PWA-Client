@@ -38,20 +38,21 @@ export async function getDailyRevenueDynamic(branchMeta: BranchMeta[]): Promise<
   const rows = raw.map(r => {
     const date = new Date(r.date).toISOString().slice(0,10);
     const row: DynamicDailyItem = { date };
-    let total = 0;
+    let computedTotal = 0;
     for (const meta of branchMeta) {
       if (meta.branch_id === 'TOTAL') continue;
       const val = extract(r, meta.branch_id);
       if (val != null) {
         row[meta.dataKey] = val; 
-        total += Number(val)||0; 
+        computedTotal += Number(val)||0; 
       } else if (r.branches && typeof r.branches === 'object') {
         // attempt second-chance fetch from Map-like object
         const mv = r.branches[meta.branch_id] ?? r.branches[meta.branch_id.toLowerCase()] ?? r.branches[meta.branch_id.toUpperCase()];
-        if (typeof mv === 'number') { row[meta.dataKey] = mv; total += Number(mv)||0; }
+        if (typeof mv === 'number') { row[meta.dataKey] = mv; computedTotal += Number(mv)||0; }
       }
     }
-    row.total = total >= 0 ? total : null; // keep zero instead of null so charts show baseline
+    const sourceTotal = typeof r.total === 'number' ? r.total : computedTotal;
+    row.total = sourceTotal >= 0 ? sourceTotal : null; // keep zero instead of null so charts show baseline
     const legacy: Record<string,string> = { 'SMVAL-B-NCR':'SMVal','VAL-B-NCR':'Val','SMGRA-B-NCR':'SMGra' };
     for (const meta of branchMeta) {
       const lk = legacy[meta.branch_id];

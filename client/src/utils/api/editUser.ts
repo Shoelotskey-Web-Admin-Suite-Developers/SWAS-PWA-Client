@@ -1,7 +1,7 @@
 // utils/api/editUser.ts
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
-export const editUser = async (user_id: string, data: { branch_id?: string; password?: string }) => {
+export const editUser = async (user_id: string, data: { branch_id?: string; password?: string; position?: string | null }) => {
   try {
     const token = sessionStorage.getItem("token");
     if (!token) throw new Error("No token found");

@@ -141,7 +141,7 @@ export function SalesBreakdown({ selectedBranches = [] }: SalesBreakdownProps) {
             <h2 className="font-semibold">Sales Breakdown</h2>
           </CardTitle>
           <CardDescription className="text-sm text-gray-600">
-            {selectedBranches.length === 0 || selectedBranches.includes("4") 
+            {selectedBranches.length === 0 || selectedBranches.includes('total') 
               ? "Payment status across all branches" 
               : `Payment status - ${selectedBranches.length} branch${selectedBranches.length > 1 ? 'es' : ''}`}
           </CardDescription>
