@@ -17,8 +17,8 @@ import { getLineItems } from "@/utils/api/getLineItems";
 import { editLineItemStatus } from "@/utils/api/editLineItemStatus";
 import { getUpdateColor } from "@/utils/getUpdateColor";
 import { updateDates } from "@/utils/api/updateDates";
-import { getCustomerName } from "@/utils/api/getCustomerName";
 import { useLineItemUpdates } from "@/hooks/useLineItemUpdates";
+import { useCustomerNames } from "@/context/CustomerNamesContext";
 import { 
   Search, 
   RefreshCw, 
@@ -70,14 +70,17 @@ export default function OpInStore() {
   const [expanded, setExpanded] = useState<string[]>([]); 
   const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
   const [modalOpen, setModalOpen] = useState(false);
-  const [customerNames, setCustomerNames] = useState<Record<string, string | null>>({});
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<keyof Row | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filterPriority, setFilterPriority] = useState<'all' | 'rush' | 'normal'>('all');
+
   
   const { changes, isConnected, lastUpdate } = useLineItemUpdates();
+  const { getCustomerDisplayName } = useCustomerNames();
+  const [showCustomerNames, setShowCustomerNames] = useState(false);
 
   // --- helpers ---
   const mapItem = (item: any): Row => ({
@@ -94,7 +97,7 @@ export default function OpInStore() {
     dueDate: item.due_date ? new Date(item.due_date) : new Date(),
     updated: new Date(item.latest_update),
     customerId: item.cust_id,
-    customerName: customerNames[item.cust_id] || null,
+    customerName: null, // Will be handled by getCustomerDisplayName
   });
 
   const mapItems = (items: any[]): Row[] => items.map(mapItem);
@@ -108,13 +111,14 @@ export default function OpInStore() {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(row =>
-        row.lineItemId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (row.customerName || row.customerId).toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.shoe.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.branch.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      filtered = filtered.filter(row => {
+        const customerDisplay = getCustomerDisplayName(row.customerId, true); // Search both names and IDs
+        return row.lineItemId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               customerDisplay.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               row.shoe.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               row.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               row.branch.toLowerCase().includes(searchTerm.toLowerCase());
+      });
     }
 
     // Apply priority filter
@@ -146,31 +150,12 @@ export default function OpInStore() {
     setFilteredRows(filtered);
   }, [rows, searchTerm, filterPriority, sortField, sortDirection]);
 
-  // Fetch customer names for all displayed rows
-  const fetchCustomerNames = async (items: Row[]) => {
-    const uniqueCustomerIds = [...new Set(items.map(item => item.customerId))];
-    const newCustomerNames: Record<string, string | null> = {...customerNames};
-    
-    await Promise.all(uniqueCustomerIds.map(async (custId) => {
-      // Skip already fetched names
-      if (newCustomerNames[custId] !== undefined) return;
-      
-      const name = await getCustomerName(custId);
-      newCustomerNames[custId] = name;
-    }));
-    
-    setCustomerNames(newCustomerNames);
-  };
-
   // Update fetchData function to include loading state
   const fetchData = async () => {
     try {
       const data = await getLineItems("To Pack");
       const mappedItems = mapItems(data);
       setRows(sortByDueDate(mappedItems));
-      
-      // Fetch customer names
-      void fetchCustomerNames(mappedItems);
     } catch (error) {
       console.error("Failed to fetch line items:", error);
       toast.error("Failed to load in store data. Please try refreshing.");
@@ -184,13 +169,7 @@ export default function OpInStore() {
     fetchData();
   }, []);
 
-  // Update rows when customer names are fetched
-  useEffect(() => {
-    setRows(prev => prev.map(row => ({
-      ...row,
-      customerName: customerNames[row.customerId] || null
-    })));
-  }, [customerNames]);
+
 
   // Add real-time updates handling
   useEffect(() => {
@@ -208,12 +187,7 @@ export default function OpInStore() {
         const item = changes.fullDocument;
         const newRow = mapItem(item);
         
-        // Fetch customer name if needed
-        if (!customerNames[item.cust_id]) {
-          getCustomerName(item.cust_id).then(name => {
-            setCustomerNames(prev => ({...prev, [item.cust_id]: name}));
-          });
-        }
+
         
         setRows(prev => {
           const exists = prev.find(r => r._id === item._id || r.lineItemId === item.line_item_id);
@@ -235,12 +209,7 @@ export default function OpInStore() {
           if (item.current_status === "To Pack") {
             const updatedRow = mapItem(item);
             
-            // Fetch customer name if needed
-            if (!customerNames[item.cust_id]) {
-              getCustomerName(item.cust_id).then(name => {
-                setCustomerNames(prev => ({...prev, [item.cust_id]: name}));
-              });
-            }
+
             
             setRows(prev => sortByDueDate(
               prev.map(r => (r._id === item._id || r.lineItemId === item.line_item_id) ? updatedRow : r)
@@ -275,7 +244,7 @@ export default function OpInStore() {
       // For other operations or cases we can't handle specifically, refresh all data
       fetchData();
     }
-  }, [changes, customerNames]);
+  }, [changes]);
 
   // update windowWidth on resize
   useEffect(() => {
@@ -459,7 +428,7 @@ export default function OpInStore() {
                   <TableCell className={`op-body-transact ${getUpdateColor(row.updated)}`}><h5>{row.lineItemId}</h5></TableCell>
                   <TableCell className={`op-body-date ${getUpdateColor(row.updated)}`}><small>{row.date.toLocaleDateString()}</small></TableCell>
                   <TableCell className={`op-body-customer ${getUpdateColor(row.updated)}`}>
-                    <small>{row.customerName || row.customerId}</small>
+                    <small>{getCustomerDisplayName(row.customerId, showCustomerNames)}</small>
                   </TableCell>
                   <TableCell className={`op-body-shoe ${getUpdateColor(row.updated)}`}><small>{row.shoe}</small></TableCell>
                   <TableCell className={`op-body-service ${getUpdateColor(row.updated)}`}><small>{row.service}</small></TableCell>
@@ -500,7 +469,7 @@ export default function OpInStore() {
                           <div><h5 className="label">Date</h5> <h5 className="name">{row.date.toLocaleDateString()}</h5></div>
                         )}
                         {hiddenColumns.includes("Customer") && (
-                          <div><h5 className="label">Customer</h5> <h5 className="name">{row.customerName || row.customerId}</h5></div>
+                          <div><h5 className="label">Customer</h5> <h5 className="name">{getCustomerDisplayName(row.customerId, showCustomerNames)}</h5></div>
                         )}
                         {hiddenColumns.includes("Shoe") && (
                           <div><h5 className="label">Shoe</h5> <h5 className="name">{row.shoe}</h5></div>
@@ -561,6 +530,20 @@ export default function OpInStore() {
             <option value="rush">Rush Only</option>
             <option value="normal">Normal Only</option>
           </select>
+
+          {/* Customer Display Toggle */}
+          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border">
+            <input
+              type="checkbox"
+              id="show-customer-names-is"
+              checked={showCustomerNames}
+              onChange={(e) => setShowCustomerNames(e.target.checked)}
+              className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
+            />
+            <label htmlFor="show-customer-names-is" className="text-xs font-medium text-gray-700 cursor-pointer select-none">
+              Show Names
+            </label>
+          </div>
 
           {/* Modern Stats with Text Labels */}
           <div className="flex items-center gap-3 text-sm bg-gray-50 px-3 py-1 rounded-md border">

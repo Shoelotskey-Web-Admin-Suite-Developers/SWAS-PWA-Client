@@ -18,8 +18,8 @@ import { editLineItemStatus } from "@/utils/api/editLineItemStatus";
 import { updateDates } from "@/utils/api/updateDates";
 import { getUpdateColor } from "@/utils/getUpdateColor";
 import { updateLineItemLocation } from "@/utils/api/editLocation";
-import { getCustomerName } from "@/utils/api/getCustomerName";
 import { useLineItemUpdates } from "@/hooks/useLineItemUpdates";
+import { useCustomerNames } from "@/context/CustomerNamesContext";
 import { 
   Search, 
   RefreshCw, 
@@ -71,14 +71,15 @@ export default function OpReadyDelivery({ readOnly = false }) {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
   const [modalOpen, setModalOpen] = useState(false);
-  const [customerNames, setCustomerNames] = useState<Record<string, string | null>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<keyof Row | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filterBranch, setFilterBranch] = useState<'all' | Branch>('all');
+  const [showCustomerNames, setShowCustomerNames] = useState(false); // Start unchecked for faster loading
   
   const { changes, isConnected, lastUpdate } = useLineItemUpdates();
+  const { getCustomerDisplayName } = useCustomerNames();
 
   // --- helpers ---
   const mapItem = (item: any): Row => ({
@@ -95,7 +96,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
     dueDate: item.due_date ? new Date(item.due_date) : new Date(),
     updated: new Date(item.latest_update),
     customerId: item.cust_id,
-    customerName: customerNames[item.cust_id] || null,
+    customerName: null, // Will be handled by getCustomerDisplayName
   });
 
   const mapItems = (items: any[]): Row[] => items.map(mapItem);
@@ -109,13 +110,14 @@ export default function OpReadyDelivery({ readOnly = false }) {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(row =>
-        row.lineItemId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (row.customerName || row.customerId).toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.shoe.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        row.branch.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      filtered = filtered.filter(row => {
+        const customerDisplay = getCustomerDisplayName(row.customerId, true); // Search both names and IDs
+        return row.lineItemId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               customerDisplay.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               row.shoe.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               row.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               row.branch.toLowerCase().includes(searchTerm.toLowerCase());
+      });
     }
 
     // Apply branch filter
@@ -145,21 +147,6 @@ export default function OpReadyDelivery({ readOnly = false }) {
     setFilteredRows(filtered);
   }, [rows, searchTerm, filterBranch, sortField, sortDirection]);
 
-  const fetchCustomerNames = async (items: Row[]) => {
-    const uniqueCustomerIds = [...new Set(items.map(item => item.customerId))];
-    const newCustomerNames: Record<string, string | null> = {...customerNames};
-    
-    await Promise.all(uniqueCustomerIds.map(async (custId) => {
-      // Skip already fetched names
-      if (newCustomerNames[custId] !== undefined) return;
-      
-      const name = await getCustomerName(custId);
-      newCustomerNames[custId] = name;
-    }));
-    
-    setCustomerNames(newCustomerNames);
-  };
-
   // Fetch line items from API -- Initial fetch
   const fetchData = async () => {
     try {
@@ -167,9 +154,6 @@ export default function OpReadyDelivery({ readOnly = false }) {
       const mappedItems = mapItems(data);
       const sortedItems = sortByDueDate(mappedItems);
       setRows(sortedItems);
-      
-      // Fetch customer names
-      void fetchCustomerNames(mappedItems);
     } catch (error) {
       console.error("Failed to fetch line items:", error);
       toast.error("Failed to load ready for delivery data. Please try refreshing.");
@@ -189,13 +173,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Update rows when customer names are fetched
-  useEffect(() => {
-    setRows(prev => prev.map(row => ({
-      ...row,
-      customerName: customerNames[row.customerId] || null
-    })));
-  }, [customerNames]);
+
 
   // Select all functionality
   const toggleSelectAll = () => {
@@ -285,13 +263,6 @@ export default function OpReadyDelivery({ readOnly = false }) {
         const item = changes.fullDocument;
         const newRow = mapItem(item);
         
-        // Fetch customer name if needed
-        if (!customerNames[item.cust_id]) {
-          getCustomerName(item.cust_id).then(name => {
-            setCustomerNames(prev => ({...prev, [item.cust_id]: name}));
-          });
-        }
-        
         setRows(prev => {
           const exists = prev.find(r => r._id === item._id || r.lineItemId === item.line_item_id);
           return exists 
@@ -311,13 +282,6 @@ export default function OpReadyDelivery({ readOnly = false }) {
           
           if (item.current_status === "Ready for Delivery") {
             const updatedRow = mapItem(item);
-            
-            // Fetch customer name if needed
-            if (!customerNames[item.cust_id]) {
-              getCustomerName(item.cust_id).then(name => {
-                setCustomerNames(prev => ({...prev, [item.cust_id]: name}));
-              });
-            }
             
             setRows(prev => sortByDueDate(
               prev.map(r => (r._id === item._id || r.lineItemId === item.line_item_id) ? updatedRow : r)
@@ -352,7 +316,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
       // For other operations or cases we can't handle specifically, refresh all data
       fetchData();
     }
-  }, [changes]);
+  }, [changes]); // Removed customerNames and showCustomerNames since context handles this
 
   // Calculate statistics for branches
   // const branchCounts = rows.reduce((counts, row) => {
@@ -466,7 +430,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
                   <TableCell className={`op-body-transact ${getUpdateColor(row.updated)}`}><h5>{row.lineItemId}</h5></TableCell>
                   <TableCell className={`op-body-date ${getUpdateColor(row.updated)}`}><small>{row.date.toLocaleDateString()}</small></TableCell>
                   <TableCell className={`op-body-customer ${getUpdateColor(row.updated)}`}>
-                    <small>{row.customerName || row.customerId}</small>
+                    <small>{getCustomerDisplayName(row.customerId, showCustomerNames)}</small>
                   </TableCell>
                   <TableCell className={`op-body-shoe ${getUpdateColor(row.updated)}`}><small>{row.shoe}</small></TableCell>
                   <TableCell className={`op-body-service ${getUpdateColor(row.updated)}`}><small>{row.service}</small></TableCell>
@@ -507,7 +471,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
                           <div><h5 className="label">Date</h5> <h5 className="name">{row.date.toLocaleDateString()}</h5></div>
                         )}
                         {hiddenColumns.includes("Customer") && (
-                          <div><h5 className="label">Customer</h5> <h5 className="name">{row.customerName || row.customerId}</h5></div>
+                          <div><h5 className="label">Customer</h5> <h5 className="name">{getCustomerDisplayName(row.customerId, showCustomerNames)}</h5></div>
                         )}
                         {hiddenColumns.includes("Shoe") && (
                           <div><h5 className="label">Shoe</h5> <h5 className="name">{row.shoe}</h5></div>
@@ -571,6 +535,20 @@ export default function OpReadyDelivery({ readOnly = false }) {
                 <option value="SMVAL-B-NCR">SM Valenzuela</option>
                 <option value="SMGRA-B-NCR">SM Grand</option>
               </select>
+
+              {/* Customer Display Toggle */}
+              <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border">
+                <input
+                  type="checkbox"
+                  id="show-customer-names-rd"
+                  checked={showCustomerNames}
+                  onChange={(e) => setShowCustomerNames(e.target.checked)}
+                  className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
+                />
+                <label htmlFor="show-customer-names-rd" className="text-xs font-medium text-gray-700 cursor-pointer select-none">
+                  Show Names
+                </label>
+              </div>
             </>
           )}
 

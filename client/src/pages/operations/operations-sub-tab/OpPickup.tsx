@@ -15,8 +15,8 @@ import { getCustomerContact } from "@/utils/api/getCustomerContact";
 import { getPaymentStatus } from "@/utils/api/getPaymentStatus";
 import { computePickupAllowance } from "@/utils/computePickupAllowance";
 import { getUpdateColor } from "@/utils/getUpdateColor";
-import { getCustomerName } from "@/utils/api/getCustomerName";
 import { useLineItemUpdates } from "@/hooks/useLineItemUpdates";
+import { useCustomerNames } from "@/context/CustomerNamesContext";
 import { 
   Search, 
   RefreshCw, 
@@ -51,7 +51,7 @@ type Row = {
   lineItemId: string;
   date: Date;
   customerId: string;
-  customerName: string | null;
+
   shoe: string;
   service: string;
   branch: Branch;
@@ -68,7 +68,7 @@ export default function OpPickup() {
   const [lastIndex, setLastIndex] = useState<number | null>(null);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
-  const [customerNames, setCustomerNames] = useState<Record<string, string | null>>({});
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<keyof Row | null>("pickupNotice");
@@ -76,22 +76,10 @@ export default function OpPickup() {
   const [filterPayment, setFilterPayment] = useState<'all' | 'paid' | 'unpaid' | 'partial'>('all');
   
   const { changes, isConnected, lastUpdate } = useLineItemUpdates();
+  const { getCustomerDisplayName } = useCustomerNames();
+  const [showCustomerNames, setShowCustomerNames] = useState(false);
 
-  // Fetch customer names for all displayed rows
-  const fetchCustomerNames = async (items: Row[]) => {
-    const uniqueCustomerIds = [...new Set(items.map(item => item.customerId))];
-    const newCustomerNames: Record<string, string | null> = {...customerNames};
-    
-    await Promise.all(uniqueCustomerIds.map(async (custId) => {
-      // Skip already fetched names
-      if (newCustomerNames[custId] !== undefined) return;
-      
-      const name = await getCustomerName(custId);
-      newCustomerNames[custId] = name;
-    }));
-    
-    setCustomerNames(newCustomerNames);
-  };
+
 
   // Sort by pickup notice date
   const sortByPickupNotice = (items: Row[]) => {
@@ -134,7 +122,7 @@ export default function OpPickup() {
             lineItemId: item.line_item_id,
             date: new Date(item.latest_update),
             customerId: item.cust_id,
-            customerName: null, // Will be populated later
+
             shoe: item.shoes,
             // Updated service mapping to use friendly names
             service: Array.isArray(item.services) && item.services.length > 0
@@ -154,7 +142,7 @@ export default function OpPickup() {
       setRows(sortedRows);
       
       // Fetch customer names
-      void fetchCustomerNames(mappedRows);
+
     } catch (error) {
       console.error("Failed to fetch pickup items:", error);
       toast.error("Failed to load pickup data. Please try refreshing.");
@@ -168,13 +156,7 @@ export default function OpPickup() {
     fetchData();
   }, []);
   
-  // Update rows when customer names are fetched
-  useEffect(() => {
-    setRows(prev => prev.map(row => ({
-      ...row,
-      customerName: customerNames[row.customerId] || null
-    })));
-  }, [customerNames]);
+
 
   // Filtering and searching logic
   useEffect(() => {
@@ -184,7 +166,7 @@ export default function OpPickup() {
     if (searchTerm) {
       filtered = filtered.filter(row =>
         row.lineItemId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (row.customerName || row.customerId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        getCustomerDisplayName(row.customerId, showCustomerNames).toLowerCase().includes(searchTerm.toLowerCase()) ||
         row.shoe.toLowerCase().includes(searchTerm.toLowerCase()) ||
         row.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
         row.branch.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -396,11 +378,8 @@ export default function OpPickup() {
                 {getSortIcon('date')}
               </div>
             </TableHead>
-            <TableHead className="op-pu-head-customer cursor-pointer hover:bg-gray-50" onClick={() => handleSort('customerName')}>
-              <div className="flex items-center gap-1">
-                <h5>Customer</h5>
-                {getSortIcon('customerName')}
-              </div>
+            <TableHead className="op-pu-head-customer">
+              <h5>Customer</h5>
             </TableHead>
             <TableHead className="op-pu-head-shoe"><h5>Shoe</h5></TableHead>
             <TableHead className="op-pu-head-service"><h5>Service</h5></TableHead>
@@ -460,7 +439,7 @@ export default function OpPickup() {
                   <TableCell className={`op-pu-body-transact ${getUpdateColor(row.date)}`}><h5>{row.lineItemId}</h5></TableCell>
                   <TableCell className={`op-pu-body-date ${getUpdateColor(row.date)}`}><small>{row.date.toLocaleDateString()}</small></TableCell>
                   <TableCell className={`op-pu-body-customer ${getUpdateColor(row.date)}`}>
-                    <small>{row.customerName || row.customerId}</small>
+                    <small>{getCustomerDisplayName(row.customerId, showCustomerNames)}</small>
                   </TableCell>
                   <TableCell className={`op-pu-body-shoe ${getUpdateColor(row.date)}`}><small>{row.shoe}</small></TableCell>
                   <TableCell className={`op-pu-body-service ${getUpdateColor(row.date)}`}><small>{row.service}</small></TableCell>
@@ -532,7 +511,7 @@ export default function OpPickup() {
                           <div><h5 className="label">Date</h5> <h5 className="name">{row.date.toLocaleDateString()}</h5></div>
                         )}
                         {hiddenColumns.includes("Customer") && (
-                          <div><h5 className="label">Customer</h5> <h5 className="name">{row.customerName || row.customerId}</h5></div>
+                          <div><h5 className="label">Customer</h5> <h5 className="name">{getCustomerDisplayName(row.customerId, showCustomerNames)}</h5></div>
                         )}
                         {hiddenColumns.includes("Shoe") && (
                           <div><h5 className="label">Shoe</h5> <h5 className="name">{row.shoe}</h5></div>
@@ -582,6 +561,20 @@ export default function OpPickup() {
             <option value="partial">Partial Only</option>
             <option value="unpaid">Unpaid Only</option>
           </select>
+
+          {/* Customer Display Toggle */}
+          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border">
+            <input
+              type="checkbox"
+              id="show-customer-names-pickup"
+              checked={showCustomerNames}
+              onChange={(e) => setShowCustomerNames(e.target.checked)}
+              className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
+            />
+            <label htmlFor="show-customer-names-pickup" className="text-xs font-medium text-gray-700 cursor-pointer select-none">
+              Show Names
+            </label>
+          </div>
 
           {/* Modern Stats with Text Labels */}
           <div className="flex items-center gap-3 text-sm bg-gray-50 px-3 py-1 rounded-md border">

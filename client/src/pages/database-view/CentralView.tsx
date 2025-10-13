@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select"
 import "@/styles/database-view/central-view.css"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Filters } from "@/components/database-view/Filters"
 import { CentralTable } from "@/components/database-view/CentralTable"
 import {
@@ -24,6 +25,7 @@ import {
 // Use shared types instead of redefining to ensure compatibility with dialog
 import type { Transaction as SharedTransaction } from "@/components/database-view/central-view.types"
 import { getTransactions } from "@/utils/api/getTransactions"
+import { getCustomerName } from "@/utils/api/getCustomerName"
 import { exportRecordsToCSV } from "@/utils/exportToCSV"
 import { deleteAllData } from "@/utils/batchApi"
 import { toast } from "sonner"
@@ -85,6 +87,10 @@ export default function CentralView() {
   const [rows, setRows] = React.useState<Row[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  
+  // Customer name state
+  const [customerNames, setCustomerNames] = React.useState<Record<string, string | null>>({})
+  const [showCustomerNames, setShowCustomerNames] = React.useState(false)
 
   // filters
   const [search, setSearch] = React.useState("")
@@ -134,6 +140,11 @@ export default function CentralView() {
           }
         })
         setRows(mapped)
+        
+        // Fetch customer names for all transactions
+        const uniqueCustomerIds = [...new Set(mapped.map(row => row.customerId))]
+        fetchCustomerNames(uniqueCustomerIds)
+        
         setLoading(false)
       })
       .catch((err) => {
@@ -141,6 +152,31 @@ export default function CentralView() {
         setLoading(false)
       })
   }, [])
+
+  // Fetch customer names function
+  const fetchCustomerNames = async (customerIds: string[]) => {
+    const newCustomerNames: Record<string, string | null> = {...customerNames}
+    
+    await Promise.all(customerIds.map(async (custId) => {
+      // Skip already fetched names
+      if (newCustomerNames[custId] !== undefined) return
+      
+      const name = await getCustomerName(custId)
+      newCustomerNames[custId] = name
+    }))
+    
+    setCustomerNames(newCustomerNames)
+  }
+
+  // Update rows when customer names are fetched
+  React.useEffect(() => {
+    setRows(prev => prev.map(row => ({
+      ...row,
+      customer: showCustomerNames && customerNames[row.customerId] 
+        ? customerNames[row.customerId] || row.customerId
+        : row.customerId
+    })))
+  }, [customerNames, showCustomerNames])
 
   const filtered = React.useMemo(() => {
     let data = [...rows]
@@ -321,6 +357,18 @@ export default function CentralView() {
                 <Label htmlFor="desc">Descending</Label>
               </div>
             </RadioGroup>
+          </div>
+
+          {/* Customer Display Toggle */}
+          <div className="flex items-center space-x-2 mt-4">
+            <Checkbox 
+              id="show-customer-names"
+              checked={showCustomerNames}
+              onCheckedChange={(checked) => setShowCustomerNames(checked === true)}
+            />
+            <Label htmlFor="show-customer-names" className="text-sm font-medium">
+              Show customer names
+            </Label>
           </div>
 
           <DropdownMenu>
