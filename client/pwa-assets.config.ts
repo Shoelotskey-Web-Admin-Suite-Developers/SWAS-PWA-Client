@@ -8,5 +8,6 @@ export default defineConfig({
         preset: '2023',
     },
     preset,
-    images: ['public/favicon.svg'],
+    // Use only favicon-swas.png as requested (place it at client/public/favicon-swas.png)
+    images: ['public/favicon-swas.png'],
 })
