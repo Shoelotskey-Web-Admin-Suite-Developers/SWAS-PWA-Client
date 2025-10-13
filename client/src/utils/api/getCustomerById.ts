@@ -9,6 +9,7 @@ export interface CustomerData {
   cust_contact?: string;
   total_services: number;
   total_expenditure: number;
+  is_archive?: boolean;
 }
 
 export async function getCustomerById(custId: string): Promise<CustomerData> {

@@ -18,16 +18,16 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
-import { Trash2, X } from "lucide-react"
+import { Archive, X, RotateCcw } from "lucide-react"
 import { getLineItemsByTransact } from "@/utils/api/getLineItemsByTransact" // 👈 Import the utility
 import { getDatesByLineItem } from "@/utils/api/getDatesByLineItem" // 👈 Add this import
 import { getCustomerById } from "@/utils/api/getCustomerById" // 👈 Import the customer fetch utility
 import { updateTransaction } from "@/utils/api/updateTransaction"
 import { updateLineItem } from "@/utils/api/updateLineItem"
 import { updateDates } from "@/utils/api/updateDates" // 👈 Add this import
-import { deleteTransaction } from "@/utils/api/deleteTransaction"
-import { deleteLineItemsByTransactionId } from "@/utils/api/deleteLineItemsByTransactionId"
-import { deleteDatesByLineItemId } from "@/utils/api/deleteDatesByLineItemId"
+import { archiveTransaction } from "@/utils/api/archiveTransaction"
+import { restoreTransaction } from "@/utils/api/restoreTransaction"
+import { getTransactionById } from "@/utils/api/getTransactionById"
 import { toast } from "sonner" // Assuming you have toast set up
 import {
   AlertDialog,
@@ -74,8 +74,8 @@ export function EditReceiptDialog({
   const [customerLoading, setCustomerLoading] = React.useState(false)
   const [customerError, setCustomerError] = React.useState<string | null>(null)
   const [isSaving, setIsSaving] = React.useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false) // Add this state
-  const [isDeleting, setIsDeleting] = React.useState(false) // Add this state
+  const [showArchiveRestoreConfirm, setShowArchiveRestoreConfirm] = React.useState(false) // Add this state
+  const [isArchivingRestoring, setIsArchivingRestoring] = React.useState(false) // Add this state
   const [beforeImgModal, setBeforeImgModal] = React.useState<{ open: boolean; lineItemId: string | null }>({ open: false, lineItemId: null });
   const [afterImgModal, setAfterImgModal] = React.useState<{ open: boolean; lineItemId: string | null }>({ open: false, lineItemId: null });
 
@@ -292,6 +292,36 @@ export function EditReceiptDialog({
     setForm(receipt)
   }, [receipt])
 
+  // Fetch complete transaction data including archive status when dialog opens
+  React.useEffect(() => {
+    async function fetchCompleteTransactionData() {
+      if (!open || !receipt.id) return
+      
+      try {
+        const completeTransactionData = await getTransactionById(receipt.id)
+        
+        // Update form with archive status from the transaction data
+        if (completeTransactionData.transaction) {
+          setForm(prev => ({
+            ...prev,
+            is_archive: completeTransactionData.transaction.is_archive || false
+          }))
+          
+          console.log("Transaction archive status:", completeTransactionData.transaction.is_archive)
+        }
+      } catch (error) {
+        console.error("Failed to fetch complete transaction data:", error)
+        // If fetch fails, assume not archived
+        setForm(prev => ({
+          ...prev,
+          is_archive: false
+        }))
+      }
+    }
+    
+    fetchCompleteTransactionData()
+  }, [open, receipt.id])
+
   const remainingBalance = (form?.total ?? 0) - (form?.amountPaid ?? 0)
 
   const fmtDateInput = (d?: Date | null) => {
@@ -400,44 +430,38 @@ export function EditReceiptDialog({
     }
   }
 
-  // Add this function to handle deletion
-  const handleDelete = async () => {
+  // Add this function to handle archiving and restoring
+  const handleArchiveRestore = async () => {
     if (!form.id) return
     
-    setIsDeleting(true)
+    const isArchived = form.is_archive === true
+    const action = isArchived ? "restore" : "archive"
+    
+    setIsArchivingRestoring(true)
     setError(null)
     
     try {
-      // 1. Delete associated dates for each line item first
-      if (form.transactions && form.transactions.length > 0) {
-        await Promise.all(
-          form.transactions.map(async (tx) => {
-            await deleteDatesByLineItemId(tx.id);
-          })
-        );
+      if (isArchived) {
+        await restoreTransaction(form.id);
+        toast.success("Receipt restored successfully")
+      } else {
+        await archiveTransaction(form.id);
+        toast.success("Receipt archived successfully")
       }
       
-      // 2. Delete all line items for this transaction
-      await deleteLineItemsByTransactionId(form.id);
-      
-      // 3. Finally delete the transaction itself
-      await deleteTransaction(form.id);
-      
-      toast.success("Receipt and all related records deleted successfully")
-      
-      // Call the update callback with null to indicate deletion
+      // Call the update callback to indicate archiving/restoring
       if (onReceiptUpdate) {
         onReceiptUpdate({...receipt, deleted: true});
       }
       
       onOpenChange(false) // Close dialog
     } catch (err: any) {
-      console.error("Failed to delete receipt:", err)
-      setError(err.message || "Failed to delete receipt and related records")
-      toast.error(err.message || "An error occurred while deleting")
+      console.error(`Failed to ${action} receipt:`, err)
+      setError(err.message || `Failed to ${action} receipt`)
+      toast.error(err.message || `An error occurred while ${action.slice(0, -1)}ing`)
     } finally {
-      setIsDeleting(false)
-      setShowDeleteConfirm(false)
+      setIsArchivingRestoring(false)
+      setShowArchiveRestoreConfirm(false)
     }
   }
 
@@ -464,14 +488,20 @@ export function EditReceiptDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[80vh] mt-[50px] overflow-y-auto [&>button]:hidden">
-        {/* Delete button */}
+        {/* Archive/Restore button */}
         <div className="absolute right-5 top-3 flex gap-2">
           <Button
             variant="destructive"
             size="icon"
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={() => setShowArchiveRestoreConfirm(true)}
+            title={form.is_archive ? "Restore receipt" : "Archive receipt"}
           >
-            <Trash2 className="w-5 h-5" />
+            {/* Debug: show both states clearly */}
+            {form.is_archive ? (
+              <RotateCcw className="w-5 h-5" />
+            ) : (
+              <Archive className="w-5 h-5" />
+            )}
           </Button>
         </div>
 
@@ -844,7 +874,7 @@ export function EditReceiptDialog({
                   }}
                 />
                 <Button variant="outline" size="icon">
-                  <Trash2 className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
 
@@ -862,7 +892,7 @@ export function EditReceiptDialog({
                   }}
                 />
                 <Button variant="outline" size="icon">
-                  <Trash2 className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
 
@@ -901,53 +931,31 @@ export function EditReceiptDialog({
           </Button>
         </div>
 
-        {/* Delete Confirmation Dialog */}
-        {showDeleteConfirm && (
-          <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-            <DialogContent className="max-w-md mx-auto p-6">
-              <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Are you sure you want to delete this receipt? This action cannot be undone.
-              </p>
-              
-              {/* Show error message if any */}
-              {error && <p className="text-red-500 text-sm mb-4">Error: {error}</p>}
-              
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? "Deleting..." : "Delete Receipt"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
       </DialogContent>
       
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      {/* Archive/Restore confirmation dialog */}
+      <AlertDialog open={showArchiveRestoreConfirm} onOpenChange={setShowArchiveRestoreConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete receipt #{form.id}, all its line items,
-              and all associated date records. This action cannot be undone.
+              {form.is_archive 
+                ? `This will restore receipt #${form.id} and move it back to active records.`
+                : `This will archive receipt #${form.id} and move it to the archived records. You can restore it later if needed.`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isArchivingRestoring}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
+              onClick={handleArchiveRestore}
+              disabled={isArchivingRestoring}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Yes, delete everything"}
+              {isArchivingRestoring 
+                ? (form.is_archive ? "Restoring..." : "Archiving...") 
+                : (form.is_archive ? "Yes, restore receipt" : "Yes, archive receipt")
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

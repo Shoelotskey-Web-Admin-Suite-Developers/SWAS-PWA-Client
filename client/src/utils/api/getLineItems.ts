@@ -20,11 +20,14 @@ export async function getLineItems(status: string) {
 
   const data = await res.json();
 
+  // First filter out archived items
+  const nonArchivedItems = data.filter((item: { is_archive?: boolean }) => !item.is_archive);
+
   if (currentBranchId === "SWAS-SUPERADMIN" || "HUBV-W-NCR") {
-    // Super admin → return all line items
-    return data;
+    // Super admin → return all non-archived line items
+    return nonArchivedItems;
   } else {
-    // Regular branch → return only their branch's line items
-    return data.filter((item: { branch_id: string }) => item.branch_id === currentBranchId);
+    // Regular branch → return only their branch's non-archived line items
+    return nonArchivedItems.filter((item: { branch_id: string }) => item.branch_id === currentBranchId);
   }
 }

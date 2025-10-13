@@ -10,9 +10,11 @@ import {
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Trash2, Save } from "lucide-react"
-import { deleteCustomer } from "@/utils/api/deleteCustomer"
+import { Archive, Save, RotateCcw } from "lucide-react"
+import { archiveCustomer } from "@/utils/api/archiveCustomer"
+import { restoreCustomer } from "@/utils/api/restoreCustomer"
 import { editCustomer } from "@/utils/api/editCustomer"
+import { getCustomerById } from "@/utils/api/getCustomerById"
 import type { CustomerRow } from "@/components/database-view/central-view.types"
 
 type Props = {
@@ -33,12 +35,40 @@ export function EditCustomerDialog({
   onSave,
 }: Props) {
   const [form, setForm] = React.useState<CustomerRow>(customer)
-  const [loadingDelete, setLoadingDelete] = React.useState(false)
+  const [loadingArchiveRestore, setLoadingArchiveRestore] = React.useState(false)
   const [loadingSave, setLoadingSave] = React.useState(false)
 
   React.useEffect(() => {
     if (open) setForm(customer)
   }, [customer, open])
+
+  // Fetch complete customer data including archive status when dialog opens
+  React.useEffect(() => {
+    async function fetchCompleteCustomerData() {
+      if (!open || !customer.id) return
+      
+      try {
+        const completeCustomerData = await getCustomerById(customer.id)
+        
+        // Update form with complete data including archive status
+        setForm(prev => ({
+          ...prev,
+          is_archive: completeCustomerData.is_archive || false
+        }))
+        
+        console.log("Customer archive status:", completeCustomerData.is_archive)
+      } catch (error) {
+        console.error("Failed to fetch complete customer data:", error)
+        // If fetch fails, assume not archived
+        setForm(prev => ({
+          ...prev,
+          is_archive: false
+        }))
+      }
+    }
+    
+    fetchCompleteCustomerData()
+  }, [open, customer.id])
 
   const handleField =
     <K extends keyof CustomerRow>(key: K) =>
@@ -75,23 +105,32 @@ export function EditCustomerDialog({
     }
   }
 
-  const handleDelete = async () => {
+  const handleArchiveRestore = async () => {
     const displayName = form.name || form.id
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${displayName}? This action cannot be undone.`
-    )
+    const isArchived = form.is_archive === true
+    const action = isArchived ? "restore" : "archive"
+    const message = isArchived 
+      ? `Are you sure you want to restore ${displayName}? This will move the customer back to active records.`
+      : `Are you sure you want to archive ${displayName}? This will move the customer to the archived records.`
+    
+    const confirmed = window.confirm(message)
     if (!confirmed) return
 
-    setLoadingDelete(true)
+    setLoadingArchiveRestore(true)
     try {
-      await deleteCustomer(form.id)
+      if (isArchived) {
+        await restoreCustomer(form.id)
+      } else {
+        await archiveCustomer(form.id)
+      }
+      
       onCustomerDeleted && onCustomerDeleted(form.id)
       onOpenChange(false)
     } catch (err) {
-      console.error("Failed to delete customer:", err)
-      alert("Failed to delete customer. Check console for details.")
+      console.error(`Failed to ${action} customer:`, err)
+      alert(`Failed to ${action} customer. Check console for details.`)
     } finally {
-      setLoadingDelete(false)
+      setLoadingArchiveRestore(false)
     }
   }
 
@@ -102,11 +141,16 @@ export function EditCustomerDialog({
           <Button
             className="bg-transparent hover:bg-[#CE1616] active:bg-[#E64040] text-black hover:text-white extra-bold"
             size="icon"
-            onClick={handleDelete}
-            disabled={loadingDelete || loadingSave}
-            title="Delete customer"
+            onClick={handleArchiveRestore}
+            disabled={loadingArchiveRestore || loadingSave}
+            title={form.is_archive ? "Restore customer" : "Archive customer"}
           >
-            <Trash2 className="w-6 h-6" />
+            {/* Debug: show both states clearly */}
+            {form.is_archive ? (
+              <RotateCcw className="w-6 h-6" />
+            ) : (
+              <Archive className="w-6 h-6" />
+            )}
           </Button>
         </div>
 
@@ -168,7 +212,7 @@ export function EditCustomerDialog({
             className="extra-bold"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={loadingDelete || loadingSave}
+            disabled={loadingArchiveRestore || loadingSave}
           >
             Cancel
           </Button>
@@ -176,7 +220,7 @@ export function EditCustomerDialog({
           <Button
             className="bg-[#CE1616] hover:bg-[#E64040] text-white extra-bold"
             onClick={handleSave}
-            disabled={loadingSave || loadingDelete}
+            disabled={loadingSave || loadingArchiveRestore}
           >
             <Save className="w-4 h-4 mr-2" />
             {loadingSave ? "Saving..." : "Save Changes"}

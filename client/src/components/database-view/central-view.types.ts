@@ -38,6 +38,7 @@ export type ReceiptRow = {
   contact?: string
   transactions?: Transaction[]
   deleted?: boolean // Optional flag used when a receipt is deleted via dialogs
+  is_archive?: boolean
 }
 
 export type TxStatusDates = Record<string, string | null>
@@ -55,6 +56,7 @@ export type CustomerRow = {
   status: "Active" | "Dormant"
   currentServiceCount: number
   totalServices: number
+  is_archive?: boolean
 }
 
 
