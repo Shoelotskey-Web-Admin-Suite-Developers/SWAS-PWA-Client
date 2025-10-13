@@ -12,13 +12,18 @@ export type CustomerSummaryDto = {
   balance?: number;
   currentServiceCount?: number;
   status?: "Active" | "Dormant";
+  is_archive?: boolean;
 };
 
-export async function getCustomerSummaries(): Promise<CustomerSummaryDto[]> {
+export async function getCustomerSummaries(includeArchived = false): Promise<CustomerSummaryDto[]> {
   const token = sessionStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
-  const res = await fetch(`${BASE_URL}/api/customers/summary`, {
+  const url = includeArchived 
+    ? `${BASE_URL}/api/customers/summary?includeArchived=true`
+    : `${BASE_URL}/api/customers/summary`;
+
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,

@@ -27,7 +27,7 @@ import type { Transaction as SharedTransaction } from "@/components/database-vie
 import { getTransactions } from "@/utils/api/getTransactions"
 import { getCustomerName } from "@/utils/api/getCustomerName"
 import { exportRecordsToCSV } from "@/utils/exportToCSV"
-import { deleteAllData } from "@/utils/batchApi"
+import { archiveAllData } from "@/utils/batchApi"
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -105,10 +105,11 @@ export default function CentralView() {
   const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc")
   const [advanced, setAdvanced] = React.useState<boolean>(false)
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = React.useState(false)
+  const [showArchivedItems, setShowArchivedItems] = React.useState(false)
 
   React.useEffect(() => {
     setLoading(true)
-    getTransactions()
+    getTransactions(showArchivedItems)
       .then((data) => {
         // Map backend transactions to Row[]
         const mapped: Row[] = data.map((tx: any) => {
@@ -151,7 +152,7 @@ export default function CentralView() {
         setError(err.message || "Failed to fetch transactions")
         setLoading(false)
       })
-  }, [])
+  }, [showArchivedItems])
 
   // Fetch customer names function
   const fetchCustomerNames = async (customerIds: string[]) => {
@@ -264,16 +265,41 @@ export default function CentralView() {
       
       // Call the batch API to delete records
       // You might want to pass a confirmation code if your API requires it
-      const result = await deleteAllData("CONFIRM_DELETE")
+      const result = await archiveAllData("CONFIRM_DELETE")
       
       if (result.success) {
-        // Clear the local state to reflect the changes
-        setRows([])
+        // Refresh the data to reflect the changes (this will hide archived items unless checkbox is checked)
+        const data = await getTransactions(showArchivedItems);
+        const mapped: Row[] = data.map((tx: any) => {
+          const legend = BRANCH_LEGEND[tx.branch_id] || { branch: tx.branch_id, location: "" }
+          return {
+            id: tx.transaction_id,
+            customerId: tx.cust_id,
+            customer: tx.cust_id,
+            customerBirthday: undefined,
+            address: undefined,
+            email: undefined,
+            contact: undefined,
+            branch: legend.branch as Branch,
+            branchLocation: legend.location as BranchLocation,
+            receivedBy: tx.received_by,
+            dateIn: new Date(tx.date_in),
+            dateOut: tx.date_out ? new Date(tx.date_out) : null,
+            status: tx.payment_status as PaymentStatus,
+            total: tx.total_amount,
+            amountPaid: tx.amount_paid,
+            remaining: tx.total_amount - tx.amount_paid,
+            pairs: tx.no_pairs,
+            released: tx.no_released,
+            transactions: [],
+          }
+        });
+        setRows(mapped);
         
         // Show success toast
         toast.success("Records archived successfully", {
           id: "archive", // This will replace the loading toast
-          description: "All records have been removed from the database"
+          description: "All records have been archived and are now hidden from the main view"
         })
       } else {
         // Show error toast
@@ -416,6 +442,8 @@ export default function CentralView() {
         setReceivedBy={setReceivedBy}
         advanced={advanced}
         setAdvanced={setAdvanced}
+        showArchivedItems={showArchivedItems}
+        setShowArchivedItems={setShowArchivedItems}
       />
 
       {/* Pass the update handler to CentralTable */}
@@ -427,8 +455,8 @@ export default function CentralView() {
           <AlertDialogHeader>
             <AlertDialogTitle>Archive All Records</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will export all records to CSV and then delete them from the database.
-              This cannot be undone. Are you sure you want to continue?
+              This action will export all records to CSV and then archive them by hiding them from the main view.
+              You can still access archived records by checking "Show Archived Items". Are you sure you want to continue?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

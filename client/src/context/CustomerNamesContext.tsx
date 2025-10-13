@@ -27,7 +27,7 @@ export const CustomerNamesProvider: React.FC<CustomerNamesProviderProps> = ({ ch
         // Get customer IDs from multiple sources
         const [lineItemsData, transactionsData] = await Promise.all([
           getLineItems("Queued").catch(() => []), // Get from line items
-          getTransactions().catch(() => [])        // Get from transactions
+          getTransactions(false).catch(() => [])  // Get from transactions (exclude archived)
         ]);
 
         // Extract unique customer IDs

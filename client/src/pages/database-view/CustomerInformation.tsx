@@ -44,6 +44,7 @@ export type CustomerRow = {
   status: CustomerStatus
   currentServiceCount: number
   totalServices: number
+  isArchive?: boolean
 }
 
 /* ----------------------------- component ----------------------------- */
@@ -60,12 +61,14 @@ export default function CustomerInformation() {
   const [sortKey, setSortKey] = React.useState<SortKey | "">("")
   const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc")
   const [showFilters, setShowFilters] = React.useState(false)
+  const [showArchivedItems, setShowArchivedItems] = React.useState(false)
 
   /* ----------------------------- fetch customers ----------------------------- */
   React.useEffect(() => {
     const fetchData = async () => {
+      setLoading(true)
       try {
-        const data = await getCustomerSummaries()
+        const data = await getCustomerSummaries(showArchivedItems)
 
         const mapped: CustomerRow[] = data.map((c: CustomerSummaryDto) => {
           const status = (c.status ?? "Dormant") as CustomerStatus
@@ -80,6 +83,7 @@ export default function CustomerInformation() {
             status,
             currentServiceCount: Number(c.currentServiceCount ?? 0),
             totalServices: Number(c.total_services ?? 0),
+            isArchive: c.is_archive || false,
           }
         })
 
@@ -92,7 +96,7 @@ export default function CustomerInformation() {
     }
 
     fetchData()
-  }, [])
+  }, [showArchivedItems])
 
   /* ----------------------------- filtering & sorting ----------------------------- */
   const filtered = React.useMemo(() => {
@@ -202,16 +206,34 @@ export default function CustomerInformation() {
               <DropdownMenuItem
               className="text-red-600"
               onClick={async () => {
-                if (!confirm("Are you sure you want to archive all customers? This cannot be undone.")) return;
+                if (!confirm("Are you sure you want to archive all visible customers? This will hide them from the main view.")) return;
 
                 try {
                   await exportCSV(filtered);
                   await deleteAllCustomers();
-                  setRows([]);
-                  toast.success("All customers archived successfully"); // Success toast
+                  // Refresh the data after archiving
+                  const data = await getCustomerSummaries(showArchivedItems);
+                  const mapped: CustomerRow[] = data.map((c: CustomerSummaryDto) => {
+                    const status = (c.status ?? "Dormant") as CustomerStatus;
+                    return {
+                      id: c.cust_id,
+                      name: c.cust_name,
+                      birthday: c.cust_bdate ? new Date(c.cust_bdate).toISOString().split("T")[0] : "",
+                      address: c.cust_address || "",
+                      email: c.cust_email || "",
+                      contact: c.cust_contact || "",
+                      balance: Number(c.balance ?? 0),
+                      status,
+                      currentServiceCount: Number(c.currentServiceCount ?? 0),
+                      totalServices: Number(c.total_services ?? 0),
+                      isArchive: c.is_archive || false,
+                    };
+                  });
+                  setRows(mapped);
+                  toast.success("All customers archived successfully");
                 } catch (err) {
                   console.error(err);
-                  toast.error("Failed to archive customers. Export may have failed."); // Error toast
+                  toast.error("Failed to archive customers. Export may have failed.");
                 }
               }}
             >
@@ -256,10 +278,30 @@ export default function CustomerInformation() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Archive Filter - Desktop */}
+          <div className="flex items-center gap-2 ml-auto">
+            <Checkbox
+              id="show-archived"
+              checked={showArchivedItems}
+              onCheckedChange={(checked) => setShowArchivedItems(!!checked)}
+            />
+            <Label htmlFor="show-archived">Show Archived Items</Label>
+          </div>
         </div>
 
         {/* Mobile */}
         <div className="ci-show-767 ci-width-full-465">
+          {/* Archive Filter - Mobile */}
+          <div className="flex items-center gap-2 pb-4">
+            <Checkbox
+              id="show-archived-mobile"
+              checked={showArchivedItems}
+              onCheckedChange={(checked) => setShowArchivedItems(!!checked)}
+            />
+            <Label htmlFor="show-archived-mobile">Show Archived Items</Label>
+          </div>
+
           <div className="flex items-center gap-2 pt-[1.5rem] pb-[1rem]">
             <Checkbox
               id="advanced-filters"

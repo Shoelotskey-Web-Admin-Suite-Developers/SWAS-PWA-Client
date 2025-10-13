@@ -9,12 +9,12 @@ export const deleteAllCustomers = async () => {
 
     if (!res.ok) {
       const errorText = await res.text();
-      throw new Error(`Failed to delete all customers: ${errorText}`);
+      throw new Error(`Failed to archive all customers: ${errorText}`);
     }
 
     return true; // 🔹 success confirmation
   } catch (err) {
-    console.error("Error deleting all customers:", err);
+    console.error("Error archiving all customers:", err);
     throw err;
   }
 };

@@ -33,6 +33,8 @@ type FiltersProps = {
   setReceivedBy: (r: string) => void
   advanced: boolean
   setAdvanced: (v: boolean) => void
+  showArchivedItems?: boolean
+  setShowArchivedItems?: (v: boolean) => void
 }
 
 export function Filters({
@@ -51,6 +53,8 @@ export function Filters({
   setReceivedBy,
   advanced,
   setAdvanced,
+  showArchivedItems = false,
+  setShowArchivedItems,
 }: FiltersProps) {
   const isMobile = useMediaQuery("(max-width: 767px)")
 
@@ -125,17 +129,33 @@ export function Filters({
         </div>
       )}
 
-      {/* Advanced Filters (mobile: includes all, desktop: only extra ones) */}
+      {/* Advanced Filters and Archive Toggle (mobile: includes all, desktop: only extra ones) */}
       <div className="cv-advanced-toggle gap-0 w-[30%] width-full-1088">
-        <div className="cv-advanced-checkbox w-fit">
-          <Checkbox
-            id="advanced"
-            checked={advanced}
-            onCheckedChange={(v) => setAdvanced(!!v)}
-          />
-          <Label htmlFor="advanced" className="cv-advanced-label">
-            Advanced Filters
-          </Label>
+        <div className="flex flex-row gap-4 flex-wrap">
+          <div className="cv-advanced-checkbox w-fit">
+            <Checkbox
+              id="advanced"
+              checked={advanced}
+              onCheckedChange={(v) => setAdvanced(!!v)}
+            />
+            <Label htmlFor="advanced" className="cv-advanced-label">
+              Advanced Filters
+            </Label>
+          </div>
+          
+          {/* Archive toggle */}
+          {setShowArchivedItems && (
+            <div className="cv-advanced-checkbox w-fit">
+              <Checkbox
+                id="show-archived"
+                checked={showArchivedItems}
+                onCheckedChange={(checked) => setShowArchivedItems(!!checked)}
+              />
+              <Label htmlFor="show-archived" className="cv-advanced-label">
+                Show Archived Items
+              </Label>
+            </div>
+          )}
         </div>
 
         {advanced && (
