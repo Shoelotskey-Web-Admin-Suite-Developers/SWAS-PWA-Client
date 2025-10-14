@@ -23,7 +23,7 @@ export async function getLineItems(status: string) {
   // First filter out archived items
   const nonArchivedItems = data.filter((item: { is_archive?: boolean }) => !item.is_archive);
 
-  if (currentBranchId === "SWAS-SUPERADMIN" || "HUBV-W-NCR") {
+  if (currentBranchId === "SWAS-SUPERADMIN" || currentBranchId === "HUBV-W-NCR") {
     // Super admin → return all non-archived line items
     return nonArchivedItems;
   } else {
