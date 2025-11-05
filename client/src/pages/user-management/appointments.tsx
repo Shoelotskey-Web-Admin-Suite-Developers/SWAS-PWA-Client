@@ -18,7 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog"
-import { Trash2 } from "lucide-react"
+import { Trash2, Phone } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Simple Tooltip component
@@ -49,6 +49,7 @@ import { toast } from "sonner"
 import { addUnavailability } from "@/utils/api/addUnavailability"
 import { cancelAppointmentOnUnavailability } from "@/utils/api/editAppointmentOnUnavailability"
 import { getCustomerName } from "@/utils/api/getCustomerName";
+import { getCustomerContact } from "@/utils/api/getCustomerContact";
 import { getUnavailabilityWhole } from "@/utils/api/getUnavailabilityFullDay"
 import { getUnavailabilityPartial } from "@/utils/api/getUnavailabilityPartialDay"
 import { deleteUnavailability } from "@/utils/api/deleteUnavailability"
@@ -61,6 +62,7 @@ interface Appointment {
   id: number
   name: string
   time: string
+  contact?: string
 }
 
 interface Unavailability {
@@ -131,6 +133,7 @@ export default function Appointments() {
 
       // Prepare a cache so we don't fetch the same customer multiple times
       const customerCache: Record<string, string> = {};
+      const contactCache: Record<string, string> = {};
 
       for (const appt of data) {
         const dateStr = appt.date_for_inquiry?.split("T")[0] || "";
@@ -143,10 +146,18 @@ export default function Appointments() {
           customerCache[appt.cust_id] = custName || appt.cust_id; // fallback to id if name not found
         }
 
+        // Get customer contact from cache or API
+        let custContact = contactCache[appt.cust_id];
+        if (!custContact) {
+          custContact = await getCustomerContact(appt.cust_id) || "";
+          contactCache[appt.cust_id] = custContact;
+        }
+
         formatted[dateStr].push({
           id: appt.appointment_id,
           name: custName,
           time: appt.time_start,
+          contact: custContact,
         });
       }
 
@@ -539,8 +550,17 @@ export default function Appointments() {
                       <span>{todaysAppointments.length}/3</span>
                     </div>
                     {todaysAppointments.length > 0 && (
-                      <div className="text-xs mt-1">
-                        {todaysAppointments.map(a => a.name).join(", ")}
+                      <div className="text-xs mt-1 space-y-1">
+                        {todaysAppointments.map(a => (
+                          <div key={a.id} className="flex items-center gap-1.5">
+                            <span className="font-medium">{a.name}</span>
+                            <span className="text-gray-500">•</span>
+                            <div className="flex items-center gap-1 text-gray-600">
+                              <Phone className="w-3 h-3" />
+                              <span>{a.contact || "No contact"}</span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
