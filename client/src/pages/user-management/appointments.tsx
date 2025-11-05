@@ -20,6 +20,29 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+// Simple Tooltip component
+function Tooltip({ children, content }: { children: React.ReactNode, content: React.ReactNode }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <span
+      className="relative"
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+      onFocus={() => setVisible(true)}
+      onBlur={() => setVisible(false)}
+      tabIndex={0}
+      style={{ outline: "none" }}
+    >
+      {children}
+      {visible && (
+        <div className="absolute z-50 left-1/2 -translate-x-1/2 top-full mt-2 min-w-[180px] bg-white border border-gray-300 shadow-lg rounded p-2 text-xs text-gray-800 whitespace-pre-wrap pointer-events-none">
+          {content}
+        </div>
+      )}
+    </span>
+  );
+}
 import { toast } from "sonner"
 
 // API imports
@@ -403,26 +426,43 @@ export default function Appointments() {
             day_outside: "text-gray-400 opacity-50",
           }}
           components={{
-            DayButton: ({ day, modifiers, className, ...props }) => {
-              const date = "date" in day ? day.date : day
-              const bgClass = getDayBg(date)
-              return (
-                <button
-                  className={cn(
-                    "h-full w-full text-sm p-0 flex items-center justify-center rounded relative",
-                    bgClass,
-                    modifiers.today && !modifiers.selected
-                      ? "before:absolute before:-inset-0.5 before:rounded-full before:border-2 before:border-[#FD8989]"
-                      : "",
-                    modifiers.selected ? "border-2 border-[#CE1616]" : "",
-                    className
-                  )}
-                  {...props}
-                >
-                  {date.getDate()}
-                </button>
-              )
-            },
+              DayButton: ({ day, modifiers, className, ...props }) => {
+                const date = "date" in day ? day.date : day;
+                const bgClass = getDayBg(date);
+                const dateStr = toLocalDateString(date);
+                const todaysAppointments = appointments[dateStr] || [];
+                // Tooltip content
+                const tooltipContent = todaysAppointments.length > 0
+                  ? (
+                      <div>
+                        <div className="font-semibold mb-1">Appointments:</div>
+                        <ul className="list-disc pl-4">
+                          {todaysAppointments.map(a => (
+                            <li key={a.id}>{a.name} <span className="text-gray-500">({a.time})</span></li>
+                          ))}
+                        </ul>
+                      </div>
+                    )
+                  : <span className="text-gray-500">No appointments</span>;
+                return (
+                  <Tooltip content={tooltipContent}>
+                    <button
+                      className={cn(
+                        "h-full w-full text-sm p-0 flex items-center justify-center rounded relative",
+                        bgClass,
+                        modifiers.today && !modifiers.selected
+                          ? "before:absolute before:-inset-0.5 before:rounded-full before:border-2 before:border-[#FD8989]"
+                          : "",
+                        modifiers.selected ? "border-2 border-[#CE1616]" : "",
+                        className
+                      )}
+                      {...props}
+                    >
+                      {date.getDate()}
+                    </button>
+                  </Tooltip>
+                );
+              },
           }}
         />
         
