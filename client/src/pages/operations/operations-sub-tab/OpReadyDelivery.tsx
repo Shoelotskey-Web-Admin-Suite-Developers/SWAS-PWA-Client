@@ -31,7 +31,7 @@ import {
   SortDesc
 } from "lucide-react";
 
-type Branch = "Valenzuela" | "SM Valenzuela" | "SM Grand";
+type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand";
 type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
 
 type Row = {
@@ -531,7 +531,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
                 className="px-2 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
               >
                 <option value="all">All Branches</option>
-                <option value="VAL-B-NCR">Valenzuela</option>
+                <option value="SMBAL-B-NCR">SM Baliwag</option>
                 <option value="SMVAL-B-NCR">SM Valenzuela</option>
                 <option value="SMGRA-B-NCR">SM Grand</option>
               </select>

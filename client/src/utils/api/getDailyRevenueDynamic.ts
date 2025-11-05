@@ -53,7 +53,7 @@ export async function getDailyRevenueDynamic(branchMeta: BranchMeta[]): Promise<
     }
     const sourceTotal = typeof r.total === 'number' ? r.total : computedTotal;
     row.total = sourceTotal >= 0 ? sourceTotal : null; // keep zero instead of null so charts show baseline
-    const legacy: Record<string,string> = { 'SMVAL-B-NCR':'SMVal','VAL-B-NCR':'Val','SMGRA-B-NCR':'SMGra' };
+    const legacy: Record<string,string> = { 'SMVAL-B-NCR':'SMVal','SMBAL-B-NCR':'SMBal','SMGRA-B-NCR':'SMGra' };
     for (const meta of branchMeta) {
       const lk = legacy[meta.branch_id];
       if (lk && row[meta.dataKey] != null) row[lk] = row[meta.dataKey];

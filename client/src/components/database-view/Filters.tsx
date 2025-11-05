@@ -14,8 +14,8 @@ import {
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 
 type PaymentStatus = "PAID" | "PARTIAL" | "NP"
-type Branch = "SM Valenzuela" | "Valenzuela" | "SM Grand"
-type BranchLocation = "Valenzuela City" | "Caloocan City"
+type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand"
+type BranchLocation = "Baliwag City" | "Valenzuela City" | "Caloocan City"
 
 type FiltersProps = {
   dateIn?: Date
@@ -99,8 +99,8 @@ export function Filters({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">All</SelectItem>
+                  <SelectItem value="SM Baliwag">SM Baliwag</SelectItem>
                   <SelectItem value="SM Valenzuela">SM Valenzuela</SelectItem>
-                  <SelectItem value="Valenzuela">Valenzuela</SelectItem>
                   <SelectItem value="SM Grand">SM Grand</SelectItem>
                 </SelectContent>
               </Select>
@@ -199,8 +199,8 @@ export function Filters({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">All</SelectItem>
+                          <SelectItem value="SM Baliwag">SM Baliwag</SelectItem>
                           <SelectItem value="SM Valenzuela">SM Valenzuela</SelectItem>
-                          <SelectItem value="Valenzuela">Valenzuela</SelectItem>
                           <SelectItem value="SM Grand">SM Grand</SelectItem>
                         </SelectContent>
                       </Select>

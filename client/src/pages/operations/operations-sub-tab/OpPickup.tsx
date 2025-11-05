@@ -43,7 +43,7 @@ const SERVICE_ID_TO_NAME: Record<string, string> = {
   "SERVICE-9": "Color Renewal (3 colors)",
 };
 
-type Branch = "Valenzuela" | "SM Valenzuela" | "SM Grand";
+type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand";
 // type Location = "Branch" | "Hub" | "To Branch" | "To Hub"; // unused
 
 type Row = {

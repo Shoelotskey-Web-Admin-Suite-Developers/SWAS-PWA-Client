@@ -4,7 +4,7 @@ import { getCustomerContact } from "@/utils/api/getCustomerContact";
 import { getPaymentStatus } from "@/utils/api/getPaymentStatus";
 import { computePickupAllowance } from "@/utils/computePickupAllowance";
 
-type Branch = "Valenzuela" | "SM Valenzuela" | "SM Grand";
+type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand";
 type Row = {
   lineItemId: string;
   date: Date;

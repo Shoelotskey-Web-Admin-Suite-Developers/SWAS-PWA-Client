@@ -32,7 +32,7 @@ const WAREHOUSE_MAX_CAPACITY = 1000;
 const BRANCH_CONFIG = [
   { name: "SM Grand", branchId: "SMGRA-B-NCR" },
   { name: "SM Valenzuela", branchId: "SMVAL-B-NCR" },
-  { name: "Valenzuela", branchId: "VAL-B-NCR" },
+  { name: "SM Baliwag", branchId: "SMBAL-B-NCR" },
 ];
 
 export default function BranchStorage() {

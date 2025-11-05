@@ -42,8 +42,8 @@ import {
 
 /* ----------------------------- types ----------------------------- */
 export type PaymentStatus = "PAID" | "PARTIAL" | "NP"
-export type Branch = "SM Valenzuela" | "Valenzuela" | "SM Grand"
-export type BranchLocation = "Valenzuela City" | "Caloocan City"
+export type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand"
+export type BranchLocation = "Baliwag City" | "Valenzuela City" | "Caloocan City"
 
 // Transaction type comes from shared types file (SharedTransaction)
 
@@ -486,7 +486,7 @@ const BRANCH_LEGEND: Record<
   string,
   { branch: string; location: string }
 > = {
-  "VAL-B-NCR": { branch: "Valenzuela Branch", location: "Valenzuela" },
+  "SMBAL-B-NCR": { branch: "SM Baliwag Branch", location: "Baliwag" },
   "SMVAL-B-NCR": { branch: "SM Valenzuela Branch", location: "Valenzuela" },
   "SMGRA-B-NCR": { branch: "SM Grand Branch", location: "Caloocan" },
   "SWAS-SUPERADMIN": { branch: "Super Admin", location: "N/A" },

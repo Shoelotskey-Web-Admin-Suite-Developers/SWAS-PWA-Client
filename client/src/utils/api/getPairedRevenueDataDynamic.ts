@@ -91,7 +91,7 @@ export async function getPairedRevenueDataDynamic(branchMeta: BranchMeta[], limi
     }
     row.totalFC = forecastSourceTotal;
     // Legacy compatibility
-    const legacy: Record<string,string> = { 'SMVAL-B-NCR':'SMVal','VAL-B-NCR':'Val','SMGRA-B-NCR':'SMGra' };
+    const legacy: Record<string,string> = { 'SMVAL-B-NCR':'SMVal','SMBAL-B-NCR':'SMBal','SMGRA-B-NCR':'SMGra' };
     for (const meta of branchMeta) {
       const legacyKey = legacy[meta.branch_id];
       if (legacyKey && row[meta.dataKey] != null) row[legacyKey] = row[meta.dataKey];

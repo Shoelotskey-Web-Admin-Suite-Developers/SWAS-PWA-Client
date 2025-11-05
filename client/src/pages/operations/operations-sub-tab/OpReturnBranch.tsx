@@ -31,7 +31,7 @@ import {
   SortDesc
 } from "lucide-react";
 
-type Branch = "Valenzuela" | "SM Valenzuela" | "SM Grand";
+type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand";
 type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
 
 type Row = {

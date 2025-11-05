@@ -50,7 +50,7 @@ const BRANCH_LEGEND: Record<
   string,
   { branch: string; location: string }
 > = {
-  "VAL-B-NCR": { branch: "Valenzuela Branch", location: "Valenzuela" },
+  "SMBAL-B-NCR": { branch: "SM Baliwag Branch", location: "Baliwag" },
   "SMVAL-B-NCR": { branch: "SM Valenzuela Branch", location: "Valenzuela" },
   "SMGRA-B-NCR": { branch: "SM Grand Branch", location: "Caloocan" },
   "SWAS-SUPERADMIN": { branch: "Super Admin", location: "N/A" },

@@ -40,7 +40,7 @@ import {
   ImageIcon // Add this import for the image icon
 } from "lucide-react";
 
-type Branch = "Valenzuela" | "SM Valenzuela" | "SM Grand";
+type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand";
 type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
 
 type Row = {

@@ -1,7 +1,7 @@
 /* ----------------------------- types ----------------------------- */
 export type PaymentStatus = "PAID" | "PARTIAL" | "NP"
-export type Branch = "SM Valenzuela" | "Valenzuela" | "SM Grand"
-export type BranchLocation = "Valenzuela City" | "Caloocan City"
+export type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand"
+export type BranchLocation = "Baliwag City" | "Valenzuela City" | "Caloocan City"
 
 export type Transaction = {
   id: string
