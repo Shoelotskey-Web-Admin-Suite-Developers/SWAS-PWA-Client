@@ -28,6 +28,7 @@ type Branch = {
 type User = {
   id: string
   branchId: string
+  userName?: string | null
   position?: string | null
 }
 
@@ -60,6 +61,7 @@ export default function Branches() {
         const mappedUsers: User[] = data.map(u => ({
           id: u.user_id,
           branchId: u.branch_id,
+          userName: u.user_name ?? null,
           position: u.position ?? null,
         }))
         setUsers(mappedUsers)
@@ -80,15 +82,28 @@ export default function Branches() {
     return lower.charAt(0).toUpperCase() + lower.slice(1)
   }
 
+  const formatUserName = (name?: string | null) => {
+    if (!name) return "—"
+    const trimmed = name.trim()
+    return trimmed.length > 0 ? trimmed : "—"
+  }
+
   // Add User handler
-  const handleAddUser = async (userId: string, branchId: string, password?: string, position: string = "staff") => {
+  const handleAddUser = async (
+    userId: string,
+    branchId: string,
+    password?: string,
+    position: string = "staff",
+    userName?: string | null
+  ) => {
     try {
-      const newUser = await addUser({ userId, branchId, password: password!, position })
+      const newUser = await addUser({ userId, branchId, password: password!, position, userName: userName ?? null })
 
       const mappedUser: User = {
         id: newUser.user.user_id,
         branchId: newUser.user.branch_id,
-  position: newUser.user.position ?? position,
+        userName: newUser.user.user_name ?? null,
+        position: newUser.user.position ?? position,
       }
 
       setUsers((prev) => [...prev, mappedUser])
@@ -113,7 +128,12 @@ export default function Branches() {
     setUsers((prev) =>
       prev.map((u) =>
         u.id === updatedUser.id
-          ? { ...u, branchId: updatedUser.branchId, position: updatedUser.position ?? u.position }
+          ? {
+              ...u,
+              branchId: updatedUser.branchId,
+              userName: updatedUser.userName ?? u.userName,
+              position: updatedUser.position ?? u.position,
+            }
           : u
       )
     )
@@ -208,6 +228,9 @@ export default function Branches() {
                       <TableHead className="users-col-id text-center text-black">
                         <h5>User ID</h5>
                       </TableHead>
+                      <TableHead className="users-col-name text-center text-black">
+                        <h5>Username</h5>
+                      </TableHead>
                       <TableHead className="users-col-branch text-center text-black">
                         <h5>Branch ID</h5>
                       </TableHead>
@@ -225,6 +248,9 @@ export default function Branches() {
                       <TableRow key={user.id} className="branches-row">
                         <TableCell className="users-col-id">
                           <small>{user.id}</small>
+                        </TableCell>
+                        <TableCell className="users-col-name text-center">
+                          <small>{formatUserName(user.userName)}</small>
                         </TableCell>
                         <TableCell className="users-col-branch text-center">
                           <small>{user.branchId}</small>
@@ -263,6 +289,7 @@ export default function Branches() {
           user={{
             userId: editingUser.id, // map id -> userId
             branchId: editingUser.branchId,
+            userName: editingUser.userName ?? null,
             position: editingUser.position ?? null,
           }}
           branchIds={branches.map((b) => b.branch_id)}
@@ -272,6 +299,7 @@ export default function Branches() {
             handleUserEdited({
               id: updatedUserRow.userId,
               branchId: updatedUserRow.branchId,
+              userName: updatedUserRow.userName ?? null,
               position: updatedUserRow.position,
             })
           }}

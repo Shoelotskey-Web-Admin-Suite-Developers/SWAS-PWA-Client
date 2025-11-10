@@ -14,10 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Eye, EyeOff } from "lucide-react"
 import { deleteUser } from "@/utils/api/deleteUser"
 import { editUser } from "@/utils/api/editUser"
+import { toast } from "sonner"
 
 export type UserRow = {
   userId: string
   branchId: string
+  userName?: string | null
   position?: string | null
 }
 
@@ -43,7 +45,7 @@ export function EditUserDialog({
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
 
   React.useEffect(() => {
-  setForm({ ...user, position: user.position ?? "staff" })
+    setForm({ ...user, position: user.position ?? "staff" })
     setNewPassword("")
     setConfirmPassword("")
     setShowNewPassword(false)
@@ -53,35 +55,40 @@ export function EditUserDialog({
   const handleSave = async () => {
     if (newPassword || confirmPassword) {
       if (newPassword !== confirmPassword) {
-        alert("Passwords do not match!")
+        toast.error("Passwords do not match!")
         return
       }
     }
 
     try {
-      const updatedData: { branch_id?: string; password?: string; position?: string | null } = {
+      const updatedData: { branch_id?: string; user_name?: string | null; password?: string; position?: string | null } = {
         branch_id: form.branchId,
       }
 
       updatedData.position = form.position ?? null
+      if (typeof form.userName === "string") {
+        const trimmed = form.userName.trim()
+        updatedData.user_name = trimmed.length > 0 ? trimmed : ""
+      }
 
       if (newPassword) updatedData.password = newPassword
 
       const updatedUser = await editUser(form.userId, updatedData)
 
-      alert("User updated successfully")
+  toast.success("User updated successfully")
 
       // Update parent state
       onUserEdited({
         userId: updatedUser.user.user_id,
         branchId: updatedUser.user.branch_id,
+        userName: updatedUser.user.user_name ?? form.userName ?? null,
         position: updatedUser.user.position ?? form.position ?? null,
       })
 
       onOpenChange(false)
     } catch (err) {
-      console.error(err)
-      alert("Failed to update user")
+  console.error(err)
+  toast.error("Failed to update user")
     }
   }
 
@@ -90,12 +97,12 @@ export function EditUserDialog({
 
     try {
       await deleteUser(form.userId)
-      alert("User deleted successfully")
+      toast.success("User deleted successfully")
       onUserDeleted(form.userId)
       onOpenChange(false)
     } catch (err) {
-      alert("Failed to delete user")
       console.error(err)
+      toast.error("Failed to delete user")
     }
   }
 
@@ -148,6 +155,16 @@ export function EditUserDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label>Username</Label>
+              <Input
+                value={form.userName ?? ""}
+                placeholder="Display name"
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, userName: e.target.value }))
+                }
+              />
             </div>
             <div>
               <Label>Position</Label>

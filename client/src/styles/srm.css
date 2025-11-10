@@ -46,6 +46,16 @@ html, body {
   display: flex;
   flex-direction: column;
   width: 100%;
+  .payment-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-left: 0.5rem;
+  }
+
+  .radio-inline-label {
+    margin: 0;
+  }
   padding: 1.5rem;
   gap: 1rem;
   /* background-color: green; */
@@ -100,12 +110,16 @@ html, body {
 .customer-info-pair {
   display: grid;
   gap: 1rem;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@media (min-width: 1024px) {
-  .customer-info-pair {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.customer-info-pair > * {
+  width: 100%;
+}
+
+.customer-info-pair > *:only-child {
+  grid-column: 1 / -1;
 }
 
 .section-divider {
@@ -184,6 +198,7 @@ html, body {
 
 .rush-options {
   display: flex;
+  flex-direction: row;
   gap: 1rem;
   margin-top: 0.25rem;
 }

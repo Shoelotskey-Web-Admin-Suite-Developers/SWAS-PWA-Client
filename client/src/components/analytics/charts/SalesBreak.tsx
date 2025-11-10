@@ -22,16 +22,6 @@ import { PieChart as PieChartIcon } from "lucide-react"
 
 export const description = "A donut chart with text"
 
-// Helper function to format currency
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
 // Helper function to format date
 const formatDate = (dateString: string | null): string => {
   if (!dateString) return 'N/A'
@@ -70,6 +60,75 @@ export function SalesBreakdown({ selectedBranches = [] }: SalesBreakdownProps) {
   const [dateRange, setDateRange] = useState<{earliest: string | null, latest: string | null, totalTransactions: number} | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const RADIAN = Math.PI / 180
+
+  const getTextColor = (hex?: string) => {
+    if (!hex) return "#0f172a"
+    const normalized = hex.replace("#", "")
+    if (normalized.length !== 6) return "#0f172a"
+    const r = parseInt(normalized.slice(0, 2), 16)
+    const g = parseInt(normalized.slice(2, 4), 16)
+    const b = parseInt(normalized.slice(4, 6), 16)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance > 0.6 ? "#0f172a" : "#fafafa"
+  }
+
+  const formatPercent = (value: number) => {
+    if (value >= 0.1) return `${Math.round(value * 100)}%`
+    if (value >= 0.01) return `${(value * 100).toFixed(1)}%`
+    return `<0.1%`
+  }
+
+  const truncateLabel = (label: string, maxLength = 16) =>
+    label.length > maxLength ? `${label.slice(0, maxLength - 1)}…` : label
+
+  const renderSliceLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+    payload,
+  }: {
+    cx: number
+    cy: number
+    midAngle: number
+    innerRadius: number
+    outerRadius: number
+    percent: number
+    payload: ISalesBreakdown
+  }) => {
+    if (percent < 0.04) return null
+
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.55
+    const x = cx + radius * Math.cos(-midAngle * RADIAN)
+    const y = cy + radius * Math.sin(-midAngle * RADIAN)
+
+    const label = truncateLabel(payload.status)
+    const percentText = formatPercent(percent)
+    const textColor = getTextColor(payload.fill)
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill={textColor}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={11}
+        fontWeight={600}
+      >
+        <tspan x={x} y={y - 6} fontSize={11} fontWeight={600}>
+          {label}
+        </tspan>
+        <tspan x={x} y={y + 6} fontSize={10} fontWeight={500}>
+          {percentText}
+        </tspan>
+      </text>
+    )
+  }
 
   useEffect(() => {
     const fetchSalesBreakdown = async () => {
@@ -133,60 +192,38 @@ export function SalesBreakdown({ selectedBranches = [] }: SalesBreakdownProps) {
   }
 
   return (
-    <Card className="flex min-h-[180px]" style={{ width: "100%" }}>
-      <div className="flex-1 flex flex-col">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <PieChartIcon className="h-5 w-5" />
-            <h2 className="font-semibold">Sales Breakdown</h2>
-          </CardTitle>
-          <CardDescription className="text-sm text-gray-600">
-            {selectedBranches.length === 0 || selectedBranches.includes('total') 
-              ? "Payment status across all branches" 
-              : `Payment status - ${selectedBranches.length} branch${selectedBranches.length > 1 ? 'es' : ''}`}
-          </CardDescription>
-          {dateRange && dateRange.earliest && dateRange.latest && (
-            <div className="text-xs text-gray-500 mt-1">
-              {formatDate(dateRange.earliest)} - {formatDate(dateRange.latest)}
-              <span className="block">
-                {dateRange.totalTransactions} transaction{dateRange.totalTransactions !== 1 ? 's' : ''}
-              </span>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className="flex-1 pt-0">
-          <div className="space-y-2">
-            {chartData.map((item, index) => (
-              <div key={index} className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full flex-shrink-0" 
-                    style={{ backgroundColor: item.fill }}
-                  ></div>
-                  <span className="text-sm font-medium text-gray-700">{item.status}</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-semibold text-gray-900">{item.transactions}</div>
-                  <div className="text-xs text-gray-500">{formatCurrency(item.amount)}</div>
-                </div>
-              </div>
-            ))}
+    <Card className="flex flex-col" style={{ width: "100%" }}>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <PieChartIcon className="h-5 w-5" />
+          <h2 className="font-semibold">Sales Breakdown</h2>
+        </CardTitle>
+        <CardDescription className="text-sm text-gray-600">
+          {selectedBranches.length === 0 || selectedBranches.includes('total')
+            ? "Payment status across all branches"
+            : `Payment status - ${selectedBranches.length} branch${selectedBranches.length > 1 ? 'es' : ''}`}
+        </CardDescription>
+        {dateRange && dateRange.earliest && dateRange.latest && (
+          <div className="text-xs text-gray-500 mt-1">
+            {formatDate(dateRange.earliest)} - {formatDate(dateRange.latest)}
+            <span className="block">
+              {dateRange.totalTransactions} transaction{dateRange.totalTransactions !== 1 ? 's' : ''}
+            </span>
           </div>
-        </CardContent>
-      </div>
-      <div className="w-[200px] flex items-center justify-center p-2">
-        <ChartContainer config={chartConfig} className="w-full h-[160px]">
-          <PieChart width={160} height={160}>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
+        )}
+      </CardHeader>
+      <CardContent className="flex justify-center items-center pt-0">
+        <ChartContainer config={chartConfig} className="w-[300px] h-[280px]">
+          <PieChart width={280} height={280}>
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
             <Pie
               data={chartData}
               dataKey="transactions"
               nameKey="status"
-              innerRadius={35}
-              outerRadius={70}
+              innerRadius={65}
+              outerRadius={125}
+              labelLine={false}
+              label={renderSliceLabel}
             >
               <Label
                 content={({ viewBox }) => {
@@ -220,7 +257,7 @@ export function SalesBreakdown({ selectedBranches = [] }: SalesBreakdownProps) {
             </Pie>
           </PieChart>
         </ChartContainer>
-      </div>
+      </CardContent>
     </Card>
   )
 }

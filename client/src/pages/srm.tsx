@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,8 +13,10 @@ import { toast } from 'sonner'
 // API Import
 import { getServices, IService } from "@/utils/api/getServices";
 import { getCustomerByNameAndPhone } from "@/utils/api/getCustByNameAndPhone";
+import { getCustomerByReferenceNo } from "@/utils/api/getCustomerByReferenceNo";
 import { addServiceRequest} from "@/utils/api/addServiceRequest";
 import { updateDates } from "@/utils/api/updateDates";
+import { getUserName } from "@/utils/api/getUserName";
 
 interface LineItemInput {
   priority: "Rush" | "Normal";
@@ -113,6 +115,30 @@ export default function SRM() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchCashierName = async () => {
+      const userId = sessionStorage.getItem("user_id");
+      if (!userId) {
+        return;
+      }
+
+      try {
+        const result = await getUserName(userId);
+        const resolvedName = result?.user_name && result.user_name.trim().length > 0
+          ? result.user_name.trim()
+          : userId;
+        setCashier(resolvedName);
+        setCashierDefault(resolvedName);
+      } catch (error) {
+        console.error("Failed to fetch cashier name:", error);
+        setCashier(userId);
+        setCashierDefault(userId);
+      }
+    };
+
+    fetchCashierName();
+  }, []);
+
   const serviceOptions = services.filter(s => s.service_type === "Service");
   const additionalOptions = services.filter(s => s.service_type === "Additional");
 
@@ -123,6 +149,83 @@ export default function SRM() {
   const [email, setEmail] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
   const [customerId, setCustomerId] = useState<string>('NEW')
+  const [referenceNo, setReferenceNo] = useState<string>('')
+  const [isReferenceLookupLoading, setIsReferenceLookupLoading] = useState(false)
+  const populatingFromLookup = useRef(false)
+
+  interface CustomerLookupResult {
+    cust_id?: string
+    cust_name?: string
+    cust_bdate?: string
+    cust_address?: string
+    cust_email?: string
+    cust_contact?: string
+  }
+
+  const populateCustomerFields = (
+    customer: CustomerLookupResult | null,
+    options?: { guardEffect?: boolean }
+  ) => {
+    if (!customer) return
+
+    const guardEffect = options?.guardEffect ?? true
+    if (guardEffect) {
+      populatingFromLookup.current = true
+    }
+
+    setName(customer.cust_name ?? '')
+    setAddress(customer.cust_address ?? '')
+    setEmail(customer.cust_email ?? '')
+    setPhone(customer.cust_contact ?? '')
+  setCustomerId(customer.cust_id ?? 'NEW')
+
+    if (customer.cust_bdate) {
+      try {
+        const parsed = new Date(customer.cust_bdate)
+        if (!Number.isNaN(parsed.getTime())) {
+          const y = parsed.getFullYear()
+          const m = String(parsed.getMonth() + 1).padStart(2, '0')
+          const d = String(parsed.getDate()).padStart(2, '0')
+          setBirthdate(`${y}-${m}-${d}`)
+        } else {
+          setBirthdate('')
+        }
+      } catch {
+        setBirthdate('')
+      }
+    } else {
+      setBirthdate('')
+    }
+
+    setCustomerType('old')
+  }
+
+  const handleReferenceLookup = async () => {
+    const trimmed = referenceNo.trim()
+
+    if (!trimmed) {
+      toast.error('Please enter a reference number.')
+      return
+    }
+
+    try {
+      setIsReferenceLookupLoading(true)
+      const result = await getCustomerByReferenceNo(trimmed)
+
+      if (!result) {
+        toast.error('No customer found for that reference number.')
+        return
+      }
+
+      populateCustomerFields(result)
+      toast.success(`Customer found for reference ${trimmed}`)
+    } catch (error) {
+      console.error('Reference lookup failed:', error)
+      toast.error('Failed to fetch customer by reference number.')
+    } finally {
+      setIsReferenceLookupLoading(false)
+    }
+  }
 
   // Received by (user types it)
   const [receivedBy, setReceivedBy] = useState<string>('')
@@ -214,6 +317,11 @@ export default function SRM() {
 
   // --- Auto-search logic: Name + Phone (replaces Name + Birthdate) ---
   useEffect(() => {
+    if (populatingFromLookup.current) {
+      populatingFromLookup.current = false
+      return
+    }
+
     const n = name.trim();
     const p = phone.trim();
 
@@ -227,27 +335,7 @@ export default function SRM() {
         const found = await getCustomerByNameAndPhone(n, p);
 
         if (found) {
-          setAddress(found.cust_address || "");
-          setEmail(found.cust_email || "");
-          // If API returns ISO string for cust_bdate, set input-friendly YYYY-MM-DD
-          if (found.cust_bdate) {
-            try {
-              const iso = String(found.cust_bdate)
-              const d = new Date(iso)
-              if (!isNaN(d.getTime())) {
-                const y = d.getFullYear()
-                const m = String(d.getMonth() + 1).padStart(2, '0')
-                const dy = String(d.getDate()).padStart(2, '0')
-                setBirthdate(`${y}-${m}-${dy}`)
-              }
-            } catch(_) { /* ignore parse error */ }
-          }
-          setPhone(found.cust_contact || "");
-          setCustomerId(found.cust_id);
-          if (customerType === "new") {
-            setCustomerType("old");
-          }
-          // Notify user that an existing customer was found
+          populateCustomerFields(found, { guardEffect: false });
           toast.success(`Customer found: ${found.cust_name || found.cust_id || ''}`)
         } else {
           setCustomerId("NEW");
@@ -657,6 +745,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
 
   // Cashier input state
   const [cashier, setCashier] = useState("");
+  const [cashierDefault, setCashierDefault] = useState("");
 
   // Function to clear all form fields to initial state
   const clearAllFields = () => {
@@ -669,6 +758,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
     setAddress('');
     setEmail('');
     setPhone('');
+  setReferenceNo('');
     setCustomerId('NEW');
     setReceivedBy('');
     
@@ -690,7 +780,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
     setApplyDiscount(false);
     setDiscountType('percent');
     setDiscountValue('0');
-    setCashier('');
+    setCashier(cashierDefault);
   };
 
   return (
@@ -710,6 +800,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                 setAddress('')
                 setEmail('')
                 setPhone('')
+                setReferenceNo('')
               }}
             >
               NEW CUSTOMER
@@ -726,6 +817,26 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
           <Card>
             <CardContent className="pt-6 form-card-content">
               {/* Customer Info */}
+              <div className="customer-info-pair mb-4">
+                <div className="w-full">
+                  <Label>Reference Number</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={referenceNo}
+                      onChange={(e: any) => setReferenceNo(e.target.value)}
+                      placeholder="Enter reference number"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleReferenceLookup}
+                      disabled={!referenceNo.trim() || isReferenceLookupLoading}
+                    >
+                      {isReferenceLookupLoading ? 'Searching...' : 'Lookup'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
               <div className="customer-info-grid">
                 <div className="customer-info-pair">
                   <div className="w-full">
@@ -955,8 +1066,8 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                   <Label>Cashier</Label>
                   <Input
                     value={cashier}
-                    onChange={e => setCashier(e.target.value)}
-                    placeholder="Enter cashier name"
+                    readOnly
+                    placeholder="Cashier name"
                   />
                 </div>
 
@@ -965,23 +1076,23 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                   <RadioGroup
                     value={modeOfPayment}
                     onValueChange={(val) => setModeOfPayment(val as 'cash' | 'gcash' | 'bank' | 'other')}
-                    className="pl-10"
+                    className="payment-radio-group"
                   >
                     <div className="radio-option">
                       <RadioGroupItem value="cash" id="cash" />
-                      <Label htmlFor="cash">Cash</Label>
+                      <Label htmlFor="cash" className="radio-inline-label">Cash</Label>
                     </div>
                     <div className="radio-option">
                       <RadioGroupItem value="gcash" id="gcash" />
-                      <Label htmlFor="gcash">GCash</Label>
+                      <Label htmlFor="gcash" className="radio-inline-label">GCash</Label>
                     </div>
                     <div className="radio-option">
                       <RadioGroupItem value="bank" id="bank" />
-                      <Label htmlFor="bank">Bank</Label>
+                      <Label htmlFor="bank" className="radio-inline-label">Bank</Label>
                     </div>
                     <div className="radio-option">
                       <RadioGroupItem value="other" id="other" />
-                      <Label htmlFor="other">Other</Label>
+                      <Label htmlFor="other" className="radio-inline-label">Other</Label>
                     </div>
                   </RadioGroup>
                 </div>

@@ -247,12 +247,12 @@ function Analytics() {
           </div>
 
           {/* Secondary Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="space-y-6">
               <TopServices selectedBranches={effectiveSelectedBranches} />
               <SalesBreakdown selectedBranches={effectiveSelectedBranches} />
             </div>
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-3 space-y-6">
               <MonthlyGrowthRate selectedBranches={effectiveSelectedBranches} branchMeta={branchMeta} />
               <TopCustomers />
             </div>

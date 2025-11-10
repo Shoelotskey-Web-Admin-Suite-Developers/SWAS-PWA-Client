@@ -21,6 +21,7 @@ import { getAllLineItems } from "@/utils/api/getAllLineItems"
 import { getTransactionById } from "@/utils/api/getTransactionById"
 import { applyPayment } from "@/utils/api/applyPayment"
 import { getServices, IService } from "@/utils/api/getServices"
+import { getUserName } from "@/utils/api/getUserName"
 import { exportReceiptPDF } from "@/utils/exportReceiptPDF"
 import {
   formatCurrency,
@@ -78,6 +79,7 @@ export default function Payments() {
   const [change, setChange] = useState(0)
   const [updatedBalance, setUpdatedBalance] = useState(0)
   const [cashier, setCashier] = useState("")
+  const [cashierDefault, setCashierDefault] = useState("")
 
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<"default" | keyof Request>("default")
@@ -149,7 +151,7 @@ export default function Payments() {
     setCustomerPaid(0);
     setChange(0);
     setUpdatedBalance(0);
-    setCashier("");
+    setCashier(cashierDefault);
     setModeOfPayment('cash');
     setPaymentOnly(false);
   };
@@ -168,6 +170,33 @@ export default function Payments() {
     for (const s of servicesList) map.set(s.service_name, s.service_base_price)
     return map
   }, [servicesList])
+
+  useEffect(() => {
+    const fetchCashierName = async () => {
+      const userId = sessionStorage.getItem("user_id")
+      if (!userId) {
+        const fallback = "Unknown Cashier"
+        setCashier(fallback)
+        setCashierDefault(fallback)
+        return
+      }
+
+      try {
+        const result = await getUserName(userId)
+        const resolved = result?.user_name && result.user_name.trim().length > 0
+          ? result.user_name.trim()
+          : userId
+        setCashier(resolved)
+        setCashierDefault(resolved)
+      } catch (error) {
+        console.error("Failed to fetch cashier name:", error)
+        setCashier(userId)
+        setCashierDefault(userId)
+      }
+    }
+
+    fetchCashierName()
+  }, [])
 
   // adapt existing findServicePrice/findAddonPrice to consult service list first
   function findServicePriceFromList(serviceName: string) {
@@ -1127,7 +1156,7 @@ export default function Payments() {
             <CardContent className="pt-6 form-card-content">
               <h1>Update Payment</h1>
               <div className="customer-info-grid">
-                <div className="customer-info-pair flex items-end">
+                <div className="payment-filter-pair  flex items-end">
                   <div className="w-[70%]">
                     <Label>Search by Transaction ID/ Line-item ID / Customer Name / Shoes</Label>
                     <SearchBar
@@ -1238,8 +1267,8 @@ export default function Payments() {
                         <Label>Cashier</Label>
                         <Input
                           value={cashier}
-                          onChange={(e) => setCashier(e.target.value)}
-                          placeholder="Enter cashier name"
+                          readOnly
+                          placeholder="Cashier name"
                         />
                       </div>
 

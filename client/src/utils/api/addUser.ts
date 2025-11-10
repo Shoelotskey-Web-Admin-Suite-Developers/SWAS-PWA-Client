@@ -5,14 +5,24 @@ export async function addUser({
   branchId,
   password,
   position,
+  userName,
 }: {
   userId: string
   branchId: string
   password: string
   position: string
+  userName?: string | null
 }) {
   const token = sessionStorage.getItem("token")
   if (!token) throw new Error("No token found")
+
+  const payload = {
+    user_id: userId,
+    branch_id: branchId,
+    password,
+    position,
+    ...(userName && userName.trim().length > 0 ? { user_name: userName.trim() } : {}),
+  }
 
   const res = await fetch(`${BASE_URL}/api/users`, {
     method: "POST",
@@ -20,7 +30,7 @@ export async function addUser({
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-  body: JSON.stringify({ user_id: userId, branch_id: branchId, password, position }),
+    body: JSON.stringify(payload),
   })
 
   if (!res.ok) {

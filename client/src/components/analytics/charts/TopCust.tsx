@@ -38,7 +38,7 @@ export function TopCustomers() {
   }, [])
 
   return (
-    <Card className="flex flex-col min-h-[280px] pb-4" style={{ width: "100%" }}>
+    <Card className="flex flex-col min-h-[320px] pb-4" style={{ width: "100%" }}>
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           <Users className="h-5 w-5" />
@@ -62,7 +62,7 @@ export function TopCustomers() {
             <div className="text-sm text-gray-500">No customer data available</div>
           </div>
         ) : (
-          <div className="space-y-1 max-h-[180px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="space-y-1 max-h-[232px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {customers.map((customer, index) => {
               const isTopThree = index < 3;
               const rankColors = {

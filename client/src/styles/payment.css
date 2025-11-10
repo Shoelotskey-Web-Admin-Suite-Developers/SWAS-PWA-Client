@@ -75,7 +75,7 @@ html, body {
   }
 }
 
-.customer-info-pair {
+.payment-filter-pair {
   display: flex;
   flex-direction: row;
   width: 100%;

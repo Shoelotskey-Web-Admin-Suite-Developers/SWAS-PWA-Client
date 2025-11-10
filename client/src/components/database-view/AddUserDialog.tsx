@@ -17,7 +17,8 @@ interface AddUserDialogProps {
     userId: string,
     branchId: string,
     password: string,
-    position: string
+    position: string,
+    userName?: string | null
   ) => void
 }
 
@@ -33,6 +34,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
   const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
   const [position, setPosition] = React.useState<string>("staff")
+  const [userName, setUserName] = React.useState("")
 
   // Reset values when dialog opens
   React.useEffect(() => {
@@ -42,12 +44,19 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
       setPassword("")
       setShowPassword(false)
       setPosition("staff")
+      setUserName("")
     }
   }, [open, defaultBranchId, branchIds])
 
   const handleSubmit = () => {
     if (!userId || !branchId || !password || !position) return
-    onAddUser(userId, branchId, password, position)
+    onAddUser(
+      userId,
+      branchId,
+      password,
+      position,
+      userName.trim().length > 0 ? userName.trim() : null
+    )
     onOpenChange(false)
   }
 
@@ -66,6 +75,17 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
               placeholder="Branch@Pos-Name/Identifier"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
+              className="bg-white text-black placeholder-gray-400"
+            />
+          </div>
+
+          {/* Username */}
+          <div>
+            <Label>Username</Label>
+            <Input
+              placeholder="Display name"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
               className="bg-white text-black placeholder-gray-400"
             />
           </div>

@@ -109,11 +109,12 @@
 }
 
 /* === Users Table Columns === */
-.users-col-id { width: 25%; }
-.users-col-branch { width: 25%; }
-.users-col-position { width: 25%; }
+.users-col-id { width: 20%; }
+.users-col-name { width: 20%; }
+.users-col-branch { width: 20%; }
+.users-col-position { width: 20%; }
 .users-col-action {
-  width: 25%;
+  width: 20%;
   text-align: right;
 }
 
