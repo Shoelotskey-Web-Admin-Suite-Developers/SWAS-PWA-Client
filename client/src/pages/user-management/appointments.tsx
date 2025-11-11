@@ -55,6 +55,7 @@ import { getUnavailabilityPartial } from "@/utils/api/getUnavailabilityPartialDa
 import { deleteUnavailability } from "@/utils/api/deleteUnavailability"
 import { getAppointmentsApproved } from "@/utils/api/getAppointmentsApproved";
 import { updateCustomerCredibility } from "@/utils/api/updateCustomerCredibility";
+import { updateAppointmentAttendance } from "@/api/updateAppointmentAttendance";
 import { useAppointmentUpdates } from "@/hooks/useAppointmentUpdates"
 import { useUnavailabilityUpdates } from "@/hooks/useUnavailabilityUpdates"
 
@@ -65,6 +66,7 @@ interface Appointment {
   name: string
   time: string
   contact?: string
+  attendance_status?: "Verified" | "Missed" | null
 }
 
 interface Unavailability {
@@ -183,6 +185,7 @@ export default function Appointments() {
           name: custName,
           time: appt.time_start,
           contact: custContact,
+          attendance_status: appt.attendance_status,
         });
       }
 
@@ -451,6 +454,9 @@ export default function Appointments() {
         .map(id => allAppointments.find(appt => appt.id === id)?.customerId)
         .filter(Boolean) as string[];
 
+      // Update attendance status in database
+      await updateAppointmentAttendance(selectedIds.map(String), "Verified");
+
       // Update credibility for each customer
       const results = await Promise.allSettled(
         customerIds.map(custId => updateCustomerCredibility(custId, "verify_arrival"))
@@ -473,6 +479,9 @@ export default function Appointments() {
       if (failed > 0 && successful === 0) {
         toast.error("Failed to verify arrivals. Please try again.");
       }
+
+      // Refresh appointments to show updated attendance status
+      await fetchAppointments();
 
       // Clear selections after processing
       clearSelections();
@@ -500,6 +509,9 @@ export default function Appointments() {
           return appt ? { custId: appt.customerId, name: appt.name } : null;
         })
         .filter(Boolean) as { custId: string; name: string }[];
+
+      // Update attendance status in database
+      await updateAppointmentAttendance(selectedIds.map(String), "Missed");
 
       // Update credibility for each customer
       const results = await Promise.allSettled(
@@ -536,6 +548,9 @@ export default function Appointments() {
       if (failed > 0 && successful === 0) {
         toast.error("Failed to flag appointments. Please try again.");
       }
+
+      // Refresh appointments to show updated attendance status
+      await fetchAppointments();
 
       // Clear selections after processing
       clearSelections();
@@ -688,23 +703,43 @@ export default function Appointments() {
                       <div className="text-xs mt-1 space-y-1">
                         {todaysAppointments.map(a => {
                           const isSelected = selectedAppointments.has(a.id)
+                          const isProcessed = a.attendance_status !== null && a.attendance_status !== undefined
+                          const isVerified = a.attendance_status === "Verified"
+                          const isMissed = a.attendance_status === "Missed"
+                          
                           return (
                             <div 
                               key={a.id} 
-                              className={`flex items-center gap-1.5 p-2 rounded cursor-pointer transition-colors ${
-                                isSelected 
-                                  ? "bg-blue-100 border-2 border-blue-500" 
-                                  : "hover:bg-white hover:bg-opacity-50"
-                              }`}
-                              onClick={() => toggleAppointmentSelection(a.id)}
+                              className={cn(
+                                "flex items-center gap-1.5 p-2 rounded transition-all",
+                                isProcessed && "opacity-60 cursor-not-allowed",
+                                !isProcessed && "cursor-pointer",
+                                !isProcessed && isSelected && "bg-blue-100 border-2 border-blue-500",
+                                !isProcessed && !isSelected && "hover:bg-white hover:bg-opacity-50",
+                                isVerified && "bg-green-50 border border-green-300",
+                                isMissed && "bg-red-50 border border-red-300"
+                              )}
+                              onClick={() => !isProcessed && toggleAppointmentSelection(a.id)}
                             >
                               <input
                                 type="checkbox"
                                 checked={isSelected}
+                                disabled={isProcessed}
                                 onChange={() => {}} // Handled by parent div click
-                                className="w-3 h-3 cursor-pointer"
+                                className={cn(
+                                  "w-3 h-3",
+                                  isProcessed ? "cursor-not-allowed" : "cursor-pointer"
+                                )}
                               />
-                              <span className="font-medium">{a.name}</span>
+                              <span className={cn(
+                                "font-medium",
+                                isVerified && "text-green-700",
+                                isMissed && "text-red-700 line-through"
+                              )}>
+                                {a.name}
+                                {isVerified && " ✓"}
+                                {isMissed && " ✗"}
+                              </span>
                               <span className="text-gray-500">•</span>
                               <div className="flex items-center gap-1 text-gray-600">
                                 <Phone className="w-3 h-3" />
