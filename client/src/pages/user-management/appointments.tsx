@@ -54,12 +54,14 @@ import { getUnavailabilityWhole } from "@/utils/api/getUnavailabilityFullDay"
 import { getUnavailabilityPartial } from "@/utils/api/getUnavailabilityPartialDay"
 import { deleteUnavailability } from "@/utils/api/deleteUnavailability"
 import { getAppointmentsApproved } from "@/utils/api/getAppointmentsApproved";
+import { updateCustomerCredibility } from "@/utils/api/updateCustomerCredibility";
 import { useAppointmentUpdates } from "@/hooks/useAppointmentUpdates"
 import { useUnavailabilityUpdates } from "@/hooks/useUnavailabilityUpdates"
 
 // Types
 interface Appointment {
   id: number
+  customerId: string
   name: string
   time: string
   contact?: string
@@ -96,6 +98,28 @@ export default function Appointments() {
   
   // Real-time update indicators
   const [isUpdating, setIsUpdating] = useState(false)
+
+  // Selection state for verification
+  const [selectedAppointments, setSelectedAppointments] = useState<Set<number>>(new Set())
+  const [isProcessingCredibility, setIsProcessingCredibility] = useState(false)
+
+  // Toggle appointment selection
+  const toggleAppointmentSelection = (appointmentId: number) => {
+    setSelectedAppointments(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(appointmentId)) {
+        newSet.delete(appointmentId)
+      } else {
+        newSet.add(appointmentId)
+      }
+      return newSet
+    })
+  }
+
+  // Clear all selections
+  const clearSelections = () => {
+    setSelectedAppointments(new Set())
+  }
 
   // Fetch unavailability from API
   const fetchUnavailability = async () => {
@@ -155,6 +179,7 @@ export default function Appointments() {
 
         formatted[dateStr].push({
           id: appt.appointment_id,
+          customerId: appt.cust_id,
           name: custName,
           time: appt.time_start,
           contact: custContact,
@@ -412,6 +437,116 @@ export default function Appointments() {
     }
   };
 
+  // Handle verify arrival button
+  const handleVerifyArrival = async () => {
+    if (selectedAppointments.size === 0) return;
+
+    setIsProcessingCredibility(true);
+    try {
+      const selectedIds = Array.from(selectedAppointments);
+      const allAppointments = Object.values(appointments).flat();
+      
+      // Get customer IDs for selected appointments
+      const customerIds = selectedIds
+        .map(id => allAppointments.find(appt => appt.id === id)?.customerId)
+        .filter(Boolean) as string[];
+
+      // Update credibility for each customer
+      const results = await Promise.allSettled(
+        customerIds.map(custId => updateCustomerCredibility(custId, "verify_arrival"))
+      );
+
+      // Count successes and failures
+      const successful = results.filter(r => r.status === "fulfilled").length;
+      const failed = results.filter(r => r.status === "rejected").length;
+
+      if (successful > 0) {
+        toast.success(
+          `✅ ${successful} customer${successful > 1 ? 's' : ''} verified`,
+          {
+            description: `Credibility increased by 7 points. ${failed > 0 ? `${failed} failed.` : ''}`,
+            duration: 4000
+          }
+        );
+      }
+
+      if (failed > 0 && successful === 0) {
+        toast.error("Failed to verify arrivals. Please try again.");
+      }
+
+      // Clear selections after processing
+      clearSelections();
+    } catch (err) {
+      console.error("Error verifying arrivals:", err);
+      toast.error("An error occurred while verifying arrivals.");
+    } finally {
+      setIsProcessingCredibility(false);
+    }
+  };
+
+  // Handle flag as missed button
+  const handleFlagAsMissed = async () => {
+    if (selectedAppointments.size === 0) return;
+
+    setIsProcessingCredibility(true);
+    try {
+      const selectedIds = Array.from(selectedAppointments);
+      const allAppointments = Object.values(appointments).flat();
+      
+      // Get customer IDs and names for selected appointments
+      const customersData = selectedIds
+        .map(id => {
+          const appt = allAppointments.find(appt => appt.id === id);
+          return appt ? { custId: appt.customerId, name: appt.name } : null;
+        })
+        .filter(Boolean) as { custId: string; name: string }[];
+
+      // Update credibility for each customer
+      const results = await Promise.allSettled(
+        customersData.map(({ custId }) => updateCustomerCredibility(custId, "flag_missed"))
+      );
+
+      // Check which customers are now blocked
+      const blockedCustomers = results
+        .map((result, idx) => {
+          if (result.status === "fulfilled" && !result.value.canBook) {
+            return customersData[idx].name;
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      const successful = results.filter(r => r.status === "fulfilled").length;
+      const failed = results.filter(r => r.status === "rejected").length;
+
+      if (successful > 0) {
+        toast.warning(
+          `⚠️ ${successful} customer${successful > 1 ? 's' : ''} flagged as missed`,
+          {
+            description: `Credibility decreased by 10 points. ${
+              blockedCustomers.length > 0 
+                ? `🚫 ${blockedCustomers.join(", ")} ${blockedCustomers.length > 1 ? 'are' : 'is'} now blocked from booking.` 
+                : ''
+            }${failed > 0 ? ` ${failed} failed.` : ''}`,
+            duration: 6000
+          }
+        );
+      }
+
+      if (failed > 0 && successful === 0) {
+        toast.error("Failed to flag appointments. Please try again.");
+      }
+
+      // Clear selections after processing
+      clearSelections();
+    } catch (err) {
+      console.error("Error flagging missed appointments:", err);
+      toast.error("An error occurred while flagging missed appointments.");
+    } finally {
+      setIsProcessingCredibility(false);
+    }
+  };
+
 
   return (
     <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 w-full h-full">
@@ -531,8 +666,8 @@ export default function Appointments() {
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[450px]">
+        <CardContent className="flex flex-col gap-3">
+          <ScrollArea className="h-[350px]">
             <div className="space-y-2">
               {timeSlots.map((slot, idx) => {
                 const slotStart24 = timeSlots24[idx];
@@ -551,16 +686,33 @@ export default function Appointments() {
                     </div>
                     {todaysAppointments.length > 0 && (
                       <div className="text-xs mt-1 space-y-1">
-                        {todaysAppointments.map(a => (
-                          <div key={a.id} className="flex items-center gap-1.5">
-                            <span className="font-medium">{a.name}</span>
-                            <span className="text-gray-500">•</span>
-                            <div className="flex items-center gap-1 text-gray-600">
-                              <Phone className="w-3 h-3" />
-                              <span>{a.contact || "No contact"}</span>
+                        {todaysAppointments.map(a => {
+                          const isSelected = selectedAppointments.has(a.id)
+                          return (
+                            <div 
+                              key={a.id} 
+                              className={`flex items-center gap-1.5 p-2 rounded cursor-pointer transition-colors ${
+                                isSelected 
+                                  ? "bg-blue-100 border-2 border-blue-500" 
+                                  : "hover:bg-white hover:bg-opacity-50"
+                              }`}
+                              onClick={() => toggleAppointmentSelection(a.id)}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}} // Handled by parent div click
+                                className="w-3 h-3 cursor-pointer"
+                              />
+                              <span className="font-medium">{a.name}</span>
+                              <span className="text-gray-500">•</span>
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <Phone className="w-3 h-3" />
+                                <span>{a.contact || "No contact"}</span>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
                   </div>
@@ -568,6 +720,57 @@ export default function Appointments() {
               })}
             </div>
           </ScrollArea>
+
+          {/* Verification Action Buttons */}
+          <div className="border-t pt-3 space-y-2">
+            <div className="text-xs text-gray-500 mb-2">
+              {selectedAppointments.size > 0 
+                ? `${selectedAppointments.size} appointment${selectedAppointments.size > 1 ? 's' : ''} selected`
+                : "Select appointments to verify or flag"
+              }
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                disabled={selectedAppointments.size === 0 || isProcessingCredibility}
+                className="op-btn op-btn-rd bg-[#CE1616] hover:bg-[#e04a4a] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                onClick={handleVerifyArrival}
+              >
+                {isProcessingCredibility ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                    <span className="text-sm font-medium">Processing...</span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium">✓ Verify Arrival</span>
+                )}
+              </Button>
+              <Button
+                disabled={selectedAppointments.size === 0 || isProcessingCredibility}
+                className="op-btn bg-black hover:bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                onClick={handleFlagAsMissed}
+              >
+                {isProcessingCredibility ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                    <span className="text-sm font-medium">Processing...</span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium">⚠ Flag as Missed</span>
+                )}
+              </Button>
+            </div>
+            {selectedAppointments.size > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-sm font-medium"
+                onClick={clearSelections}
+                disabled={isProcessingCredibility}
+              >
+                Clear Selection
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
