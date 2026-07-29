@@ -1,0 +1,620 @@
+Evaluation Tools, Test Documents and Test Results
+
+Test Case 01: Login Page — Authentication
+	Test Case ID: TC01: LOGIN-AUTH
+	Test Priority (Low/Medium/High): High
+	Test Scenario: Verify login with valid/invalid credentials and logout.
+	Test Description: Ensures the login page validates inputs, authenticates users, shows errors for invalid credentials, and supports logout.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Load login page
+	-
+	Login form renders with email/password fields and submit button.
+	As expected
+	Pass
+	2
+	Login with valid credentials
+	Email: "admin@test.com"; Password: "ValidPass123!"
+	Redirects to main dashboard/home view; session established.
+	As expected
+	Pass
+	3
+	Login with invalid credentials
+	Email: "admin@test.com"; Password: "WrongPass"
+	Displays error state and remains on login.
+	As expected
+	Pass
+	4
+	Logout
+	-
+	Session cleared; navigates back to login.
+	As expected
+	Pass
+
+
+Test Case 02: SRM — Service Request Form (Entry & Auto-Fill)
+	Test Case ID: TC02: SRM-FORM
+	Test Priority (Low/Medium/High): High
+	Test Scenario: Verify end-to-end service request creation with customer auto-fill and live summary.
+	Test Description: Ensures SRM form captures customer info, item details, services, pricing, discounts, payment, and generates acknowledgement receipt.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Open SRM page and new request form
+	-
+	Form displays sections: Customer Info, Received By, Shoe Details, Services, Add-ons, Rush, Cashier, Payment Mode, Discount, Payment Breakdown, Request Summary.
+	As expected
+	Pass
+	2
+	Enter customer info (name + contact)
+	Name: "William Jr. Del Rosario"; Contact: "09663752749"
+	If match exists, auto-fill remaining customer fields (email, ID) from database.
+	As expected
+	Pass
+	3
+	Fill "Received By"
+	Received By: "Security Office"
+	Field accepts and appears in summary live.
+	As expected
+	Pass
+	4
+	Fill shoe model
+	Model: "Nike Air Max 90"
+	Model captured and appears in summary.
+	As expected
+	Pass
+	5
+	Pick service
+	Service: "Deep Clean"
+	Service added; summary updates with service and base price.
+	As expected
+	Pass
+	6
+	Pick additional add-ons (optional)
+	Add-ons: "Deodorize", "Sole Whitening"
+	Add-ons added; summary updates items and price.
+	As expected
+	Pass
+	7
+	Mark as Rush (optional)
+	Rush: true
+	Rush fee applied; summary shows rush flag and fee.
+	As expected
+	Pass
+	8
+	Click "Add Shoe" (multi-item)
+	New Item: Model "Converse Chuck 70"; Service "Standard Clean"; Add-on "Deodorize"; Rush: false
+	New item set appears; summary shows separate line items for each shoe.
+	As expected
+	Pass
+	9
+	Cashier auto-filled
+	-
+	Cashier defaults to logged-in user’s name.
+	As expected
+	Pass
+	10
+	Pick mode of payment
+	Mode: "Cash"
+	Payment mode reflected in summary/payment section.
+	As expected
+	Pass
+	11
+	Apply discount (percent)
+	Discount: 10% off
+	Discount applied to subtotal; summary totals adjust accordingly.
+	As expected
+	Pass
+	12
+	Apply discount (fixed)
+	Discount: PHP 100.00
+	Fixed discount applied correctly; totals update.
+	As expected
+	Pass
+	13
+	Pick payment breakdown — Full
+	Breakdown: "Full"
+	Total sales equals full subtotal after discounts/fees; amount due defaults to full.
+	As expected
+	Pass
+	14
+	Pick payment breakdown — 50%
+	Breakdown: "50%"
+	Total sales auto-calculates 50% due now; summary reflects remaining balance.
+	As expected
+	Pass
+	15
+	Pick payment breakdown — Custom
+	Breakdown: "Custom"; Custom %: 30%
+	Total sales due now calculates 30%; remaining shown in summary.
+	As expected
+	Pass
+	16
+	Fill amount due now
+	Amount Due Now: PHP 750.00
+	Field accepts; summary shows due now and remaining correctly.
+	As expected
+	Pass
+	17
+	Fill customer paid; auto calculate change
+	Paid: PHP 800.00
+	System computes change = PHP 50.00; displays in summary.
+	As expected
+	Pass
+	18
+	Verify request summary updates live
+	-
+	All chosen fields (customer, items, services, fees, discounts, breakdown, amounts) appear in real-time.
+	As expected
+	Pass
+	19
+	Confirm Service Request
+	Click "Confirm Service Request"
+	System validates, saves to DB, and generates downloadable acknowledgement receipt including the request summary.
+	As expected
+	Pass
+
+
+Test Case 03: Operations — Service Queue to Ready for Pickup (Batch Pipeline)
+	Test Case ID: TC03: OPS-PIPELINE
+	Test Priority (Low/Medium/High): High
+	Test Scenario: Verify batch status transitions across operations pipeline with image uploads and notifications.
+	Test Description: Ensures items progress through Service Queue → Ready for Delivery → Incoming Branch Delivery → In Warehouse → Return to Branch → In Store → Ready for Pickup with required actions and validations.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Search and filter to locate line items
+	Keyword: "ORD-1001"; Status: "Service Queue"
+	Table shows matching items in Service Queue.
+	As expected
+	Pass
+	2
+	Batch select and Mark as Ready
+	Action: "Mark as Ready"
+	Selected items move to "Ready for Delivery" list.
+	As expected
+	Pass
+	3
+	Navigate to Ready for Delivery and Move to Branch
+	Action: "Move to Branch"
+	Selected items move to "Incoming Branch Delivery" list.
+	As expected
+	Pass
+	4
+	Navigate to Incoming Branch Delivery; upload Before image and Mark In Process
+	Before Image: before.jpg (original > required size)
+	Image is resized to required dimensions via image processing; items move to "In Warehouse".
+	As expected
+	Pass
+	5
+	Navigate to In Warehouse; upload After image and Return to Branch
+	After Image: after.jpg
+	After image uploads; items move to "Return to Branch" list.
+	As expected
+	Pass
+	6
+	Navigate to Return to Branch; Mark as Received
+	Action: "Mark as Received"
+	Items move to "In Store" list.
+	As expected
+	Pass
+	7
+	From In Store; Mark as Ready for Pickup
+	Action: "Mark as Ready for Pickup"
+	Items move to "Ready for Pickup"; customer mobile app receives notification.
+	As expected
+	Pass
+	8
+	Navigate to Ready for Pickup; verify overdue days
+	Notification date: 2025-01-01; Today: 2025-01-05
+	Pickup notice shows 4 days overdue since notification.
+	As expected
+	Pass
+
+Test Case 04: Operations — Service Queue to Ready for Pickup (Batch Pipeline)
+	Test Case ID: TC04: OPS-PIPELINE
+	Test Priority (Low/Medium/High): High
+	Test Scenario: Verify batch status transitions across operations pipeline with image uploads and notifications.
+	Test Description: Ensures items progress through Service Queue → Ready for Delivery → Incoming Branch Delivery → In Warehouse → Return to Branch → In Store → Ready for Pickup with required actions and validations.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Search and filter to locate line items
+	Keyword: "ORD-1001"; Status: "Service Queue"
+	Table shows matching items in Service Queue.
+	As expected
+	Pass
+	2
+	Batch select and Mark as Ready
+	Action: "Mark as Ready"
+	Selected items move to "Ready for Delivery" list.
+	As expected
+	Pass
+	3
+	Navigate to Ready for Delivery and Move to Branch
+	Action: "Move to Branch"
+	Selected items move to "Incoming Branch Delivery" list.
+	As expected
+	Pass
+	4
+	Navigate to Incoming Branch Delivery; upload Before image and Mark In Process
+	Before Image: before.jpg (original > required size)
+	Image is resized to required dimensions via image processing; items move to "In Warehouse".
+	As expected
+	Pass
+	5
+	Navigate to In Warehouse; upload After image and Return to Branch
+	After Image: after.jpg
+	After image uploads; items move to "Return to Branch" list.
+	As expected
+	Pass
+	6
+	Navigate to Return to Branch; Mark as Received
+	Action: "Mark as Received"
+	Items move to "In Store" list.
+	As expected
+	Pass
+	7
+	From In Store; Mark as Ready for Pickup
+	Action: "Mark as Ready for Pickup"
+	Items move to "Ready for Pickup"; customer mobile app receives notification.
+	As expected
+	Pass
+	8
+	Navigate to Ready for Pickup; verify overdue days
+	Notification date: 2025-01-01; Today: 2025-01-05
+	Pickup notice shows 4 days overdue since notification.
+	As expected
+	Pass
+
+
+Test Case 04: Branch Storage Capacity — Location Counts and Realtime Updates
+	Test Case ID: TC04: STORAGE-RT
+	Test Priority (Low/Medium/High): High
+	Test Scenario: Verify storage capacities and counts update by location across pipeline and in realtime to other users.
+	Test Description: Ensures location counts (e.g., SM Valenzuela branch, Warehouse) reflect actual item counts after transitions and broadcast updates to concurrent sessions.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Open storage overview widget/counters
+	Locations: "SM Valenzuela", "Warehouse"
+	Displays capacity limits and current counts per location.
+	As expected
+	Pass
+	2
+	Move items to Incoming Branch Delivery
+	Batch: 5 items → SM Valenzuela
+	Incoming Branch Delivery count for SM Valenzuela increases by 5.
+	As expected
+	Pass
+	3
+	Mark In Process → In Warehouse
+	Batch: 3 items
+	Warehouse count increases by 3; Incoming Branch Delivery decreases accordingly.
+	As expected
+	Pass
+	4
+	Return to Branch → In Store
+	Batch: 2 items → SM Valenzuela
+	In Store count increases by 2 for SM Valenzuela; Warehouse decreases by 2.
+	As expected
+	Pass
+	5
+	Verify concurrent session updates realtime
+	Second session/browser open on storage view
+	Counts update in the second session within seconds of transitions (realtime socket update).
+	As expected
+	Pass
+
+Test Case 05: Operations — Payment & Pickup (Full Flow)
+	Test Case ID: TC05: OPS-PAY-PICK
+	Test Priority (Low/Medium/High): High
+	Test Scenario: Verify search/filter, request summary review, cashier auto-fill, payment processing, overdue storage fee deduction, and pickup confirmation with receipt.
+	Test Description: Ensures end-to-end payment & pickup workflow: find line item, review summary, auto-fill cashier, select payment mode, compute remaining balance including overdue storage fees, enter due now and customer paid, calculate change, update balance and status (PAID/NP/PARTIAL), save & mark as pickup to update DB and download acknowledgement receipt with updated payment history.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Search and filter line item
+	Keyword: "ORD-1001"; Status: "Ready for Pickup"
+	Table shows matching order in Ready for Pickup.
+	As expected
+	Pass
+	2
+	Click Select button to open request summary
+	-
+	Request summary displays all details (items, services, discounts, history) correctly.
+	As expected
+	Pass
+	3
+	Verify cashier auto-fill
+	Logged-in user: "Grace S. Felix"
+	Cashier field auto-fills with "Grace S. Felix".
+	As expected
+	Pass
+	4
+	Pick mode of payment
+	Mode: "Cash"
+	Payment mode reflected in payment section.
+	As expected
+	Pass
+	5
+	Compute remaining balance with overdue storage fee
+	Overdue days: 4; Storage fee per day: PHP 20.00
+	Remaining balance increases by PHP 80.00 and displays updated remaining.
+	As expected
+	Pass
+	6
+	Fill Due Now
+	Due Now: PHP 750.00
+	Field accepts; remaining and status preview update.
+	As expected
+	Pass
+	7
+	Fill Customer Paid; auto-calculate change
+	Paid: PHP 800.00
+	Change auto-calculated = PHP 50.00; displayed in summary.
+	As expected
+	Pass
+	8
+	Show updated balance and status
+	-
+	Status reflects payment outcome: PAID if remaining = 0; PARTIAL if remaining > 0; NP if no payment.
+	As expected
+	Pass
+	9
+	Click Save and Mark as Pickup
+	Action: "Save & Mark as Pickup"
+	System updates DB, moves item to picked-up state, and downloads acknowledgement receipt including new payment history and updated balance.
+	As expected
+	Pass
+
+
+Test Case 06: Database View — Central View (Tables/Filters)
+	Test Case ID: TC06: DB-CENTRAL
+	Test Priority (Low/Medium/High): High
+	Test Scenario: Verify central view tables render and support filters/sorting.
+	Test Description: Ensures central tables (e.g., receipts/users/branches overview) display data with common controls.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Open Central View
+	-
+	Tables render with columns and toolbar actions.
+	As expected
+	Pass
+	2
+	Apply filter
+	Filter: "Last 7 days"
+	Tables update to filtered dataset.
+	As expected
+	Pass
+	3
+	Sort by date
+	Sort: "Date desc"
+	Rows reorder accordingly.
+	As expected
+	Pass
+
+
+Test Case 07: Database View — Customer Information (CRUD)
+	Test Case ID: TC07: DB-CUSTOMERS
+	Test Priority (Low/Medium/High): High
+	Test Scenario: Verify listing, creating, editing, and deleting customers.
+	Test Description: Ensures `CustomerTable.tsx`, `AddCustomer/EditCustomerDialog` flows validate fields and persist changes.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	List customers
+	-
+	Table displays customers with pagination and search.
+	As expected
+	Pass
+	2
+	Add customer
+	Name: "Jane Doe"; Email: "jane@example.com"; Phone: "09123456789"
+	Creates record and updates table.
+	As expected
+	Pass
+	3
+	Edit customer
+	Phone: "09999999999"
+	Saves and shows updated value.
+	As expected
+	Pass
+	4
+	Delete customer
+	Customer: "Jane Doe"
+	Confirms removal and refreshes list.
+	As expected
+	Pass
+
+
+Test Case 08: Database View — Branches (Create/Edit)
+	Test Case ID: TC08: DB-BRANCHES
+	Test Priority (Low/Medium/High): Medium
+	Test Scenario: Verify branch add/edit, including storage location.
+	Test Description: Ensures `AddBranchDialog.tsx` and `EditBranchDialog.tsx` persist and display storage location.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Add branch
+	Name: "North Campus"; Storage: "Cabinet A"
+	Creates branch and shows in list.
+	As expected
+	Pass
+	2
+	Edit storage location
+	Storage: "Cabinet 8"
+	Updates and displays across central view.
+	As expected
+	Pass
+
+
+Test Case 09: Analytics — Date Range, View Toggle, Export
+	Test Case ID: TC09: ANALYTICS
+	Test Priority (Low/Medium/High): Medium
+	Test Scenario: Verify analytics charts update by date range and support exporting.
+	Test Description: Ensures `DateRangePicker.tsx`, `ViewToggle.tsx`, and `ExportButton.tsx` operate correctly with dummy datasets.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Open analytics page
+	-
+	Charts render with default range.
+	As expected
+	Pass
+	2
+	Select range
+	Range: "Last 30 days"
+	Charts update datasets.
+	As expected
+	Pass
+	3
+	Toggle view
+	-
+	Switches between chart and table view.
+	As expected
+	Pass
+	4
+	Export data
+	-
+	Downloads CSV for current view.
+	As expected
+	Pass
+
+
+Test Case 10: User Management — Appointments (List/Schedule/Update)
+	Test Case ID: TC10: UM-APPT
+	Test Priority (Low/Medium/High): High
+	Test Scenario: Verify listing appointments and scheduling/updating status.
+	Test Description: Ensures appointments table supports create/update and validations.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	List appointments
+	-
+	Table shows appointments with date/time and status.
+	As expected
+	Pass
+	2
+	Schedule appointment
+	Date: "2025-01-10 09:00"
+	Creates schedule and displays in list.
+	As expected
+	Pass
+	3
+	Update status
+	Status: "Completed"
+	Row reflects updated status.
+	As expected
+	Pass
+
+
+Test Case 11: User Management — Announcements (Create/Edit/Delete)
+	Test Case ID: TC11: UM-ANN
+	Test Priority (Low/Medium/High): Medium
+	Test Scenario: Verify creating, editing, and deleting announcements.
+	Test Description: Ensures announcement form validates and updates the announcements list.
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Create announcement
+	Title: "Holiday Hours"; Body: "Office closed on Jan 1"
+	Adds announcement to list.
+	As expected
+	Pass
+	2
+	Edit announcement
+	Body: "Office closed on Jan 1-2"
+	Saves changes and updates list.
+	As expected
+	Pass
+	3
+	Delete announcement
+	Title: "Holiday Hours"
+	Removes from list after confirmation.
+	As expected
+	Pass
+
+
+Test Case 12: Notifications Sheet — Display and Actions
+	Test Case ID: TC12: NOTIF-SHEET
+	Test Priority (Low/Medium/High): Medium
+	Test Scenario: Verify notifications sheet opens/closes and supports item actions.
+	Test Description: Ensures `NotifSheet.tsx` renders a sheet with notifications and basic actions (mark read, open related view).
+	No.
+	Test Steps/Scripts
+	Test Data
+	Expected Results
+	Actual Results
+	Status (Pass/Fail)
+	1
+	Open notifications sheet from navbar/icon
+	-
+	Sheet opens displaying notifications.
+	As expected
+	Pass
+	2
+	Mark notification as read
+	Item: "New Claim Submitted"
+	Item state changes to read; count decreases.
+	As expected
+	Pass
+	3
+	Open related view from notification
+	Action: "View"
+	Navigates to corresponding page (e.g., claim details).
+	As expected
+	Pass
+
+
+
