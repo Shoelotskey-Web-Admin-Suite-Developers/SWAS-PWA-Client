@@ -7,13 +7,20 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import '@/styles/srm.css'
 import { toast } from 'sonner'
 
 // API Import
 import { getServices, IService } from "@/utils/api/getServices";
-import { getCustomerByNameAndPhone } from "@/utils/api/getCustByNameAndPhone";
-import { getCustomerByReferenceNo } from "@/utils/api/getCustomerByReferenceNo";
+import { getCustomerSummaries } from "@/utils/api/getCustomerSumamries";
 import { addServiceRequest} from "@/utils/api/addServiceRequest";
 import { updateDates } from "@/utils/api/updateDates";
 import { getUserName } from "@/utils/api/getUserName";
@@ -64,7 +71,6 @@ function formatCurrency(n: number) {
 
 export default function SRM() {
   // UI state
-  const [customerType, setCustomerType] = useState<'new' | 'old'>('new')
   const [useCustomDate, setUseCustomDate] = useState(false)
   const [customDate, setCustomDate] = useState<string>(todayISODate())
   const [services, setServices] = useState<IService[]>([]);
@@ -149,17 +155,35 @@ export default function SRM() {
   const [email, setEmail] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
   const [customerId, setCustomerId] = useState<string>('NEW')
-  const [referenceNo, setReferenceNo] = useState<string>('')
-  const [isReferenceLookupLoading, setIsReferenceLookupLoading] = useState(false)
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
+  const [customerDraft, setCustomerDraft] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    birthdate: '',
+  })
+  const [customerSummaries, setCustomerSummaries] = useState<
+    {
+      cust_id: string
+      cust_name: string
+      cust_bdate?: string | null
+      cust_address?: string | null
+      cust_email?: string | null
+      cust_contact?: string | null
+      is_archive?: boolean
+    }[]
+  >([])
   const populatingFromLookup = useRef(false)
+  const lastAutoMatchedName = useRef<string>('')
 
   interface CustomerLookupResult {
     cust_id?: string
     cust_name?: string
-    cust_bdate?: string
-    cust_address?: string
-    cust_email?: string
-    cust_contact?: string
+    cust_bdate?: string | null
+    cust_address?: string | null
+    cust_email?: string | null
+    cust_contact?: string | null
   }
 
   const populateCustomerFields = (
@@ -197,34 +221,32 @@ export default function SRM() {
       setBirthdate('')
     }
 
-    setCustomerType('old')
   }
 
-  const handleReferenceLookup = async () => {
-    const trimmed = referenceNo.trim()
+  const openCustomerModal = () => {
+    setCustomerDraft({
+      name,
+      phone,
+      email,
+      address,
+      birthdate,
+    })
+    setIsCustomerModalOpen(true)
+  }
 
-    if (!trimmed) {
-      toast.error('Please enter a reference number.')
+  const saveCustomerFromModal = () => {
+    const trimmedName = customerDraft.name.trim()
+    if (!trimmedName) {
+      toast.error('Customer name is required.')
       return
     }
 
-    try {
-      setIsReferenceLookupLoading(true)
-      const result = await getCustomerByReferenceNo(trimmed)
-
-      if (!result) {
-        toast.error('No customer found for that reference number.')
-        return
-      }
-
-      populateCustomerFields(result)
-      toast.success(`Customer found for reference ${trimmed}`)
-    } catch (error) {
-      console.error('Reference lookup failed:', error)
-      toast.error('Failed to fetch customer by reference number.')
-    } finally {
-      setIsReferenceLookupLoading(false)
-    }
+    setName(trimmedName)
+    setPhone(customerDraft.phone.trim())
+    setEmail(customerDraft.email.trim())
+    setAddress(customerDraft.address.trim())
+    setBirthdate(customerDraft.birthdate)
+    setIsCustomerModalOpen(false)
   }
 
   // Received by (user types it)
@@ -315,7 +337,20 @@ export default function SRM() {
     shoe.additionals[serviceId] ?? 1;
 
 
-  // --- Auto-search logic: Name + Phone (replaces Name + Birthdate) ---
+  useEffect(() => {
+    const fetchCustomerSummaries = async () => {
+      try {
+        const summaries = await getCustomerSummaries(false)
+        setCustomerSummaries(summaries)
+      } catch (error) {
+        console.error('Failed to load customer summaries:', error)
+      }
+    }
+
+    fetchCustomerSummaries()
+  }, [])
+
+  // --- Auto-search logic: Name only (exact match, case-insensitive) ---
   useEffect(() => {
     if (populatingFromLookup.current) {
       populatingFromLookup.current = false
@@ -323,43 +358,42 @@ export default function SRM() {
     }
 
     const n = name.trim();
-    const p = phone.trim();
 
-    if (!n || !p) {
+    if (!n) {
       setCustomerId("NEW");
+      lastAutoMatchedName.current = ''
       return;
     }
 
     const handler = setTimeout(async () => {
       try {
-        const found = await getCustomerByNameAndPhone(n, p);
+        const normalized = n.toLowerCase()
+        const matches = customerSummaries.filter((customer) => {
+          if (customer.is_archive) return false
+          return (customer.cust_name || '').trim().toLowerCase() === normalized
+        })
 
-        if (found) {
-          populateCustomerFields(found, { guardEffect: false });
-          toast.success(`Customer found: ${found.cust_name || found.cust_id || ''}`)
+        if (matches.length === 1) {
+          const found = matches[0]
+          populateCustomerFields(found, { guardEffect: false })
+          if (lastAutoMatchedName.current !== normalized) {
+            toast.success(`Customer found: ${found.cust_name || found.cust_id || ''}`)
+            lastAutoMatchedName.current = normalized
+          }
         } else {
           setCustomerId("NEW");
-          if (customerType === "old") {
-            toast.error("Old customer not found. Please check the entered name and phone number.");
-          }
+          lastAutoMatchedName.current = ''
         }
       } catch (err) {
         console.error("Error fetching customer:", err);
         setCustomerId("NEW");
+        lastAutoMatchedName.current = ''
       }
     }, 1000); // debounce delay
 
     return () => clearTimeout(handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, phone]);
-
-
-
-  useEffect(() => {
-    if (customerType === 'new') {
-      setCustomerId((prev) => (prev === 'NEW' ? 'NEW' : 'NEW'))
-    }
-  }, [customerType])
+  }, [name, customerSummaries]);
 
   const [discountValue, setDiscountValue] = useState<string>('0')
 
@@ -750,7 +784,6 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
   // Function to clear all form fields to initial state
   const clearAllFields = () => {
     // Reset customer form
-    setCustomerType('new');
     setUseCustomDate(false);
     setCustomDate(todayISODate());
     setName('');
@@ -758,9 +791,9 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
     setAddress('');
     setEmail('');
     setPhone('');
-  setReferenceNo('');
     setCustomerId('NEW');
     setReceivedBy('');
+    lastAutoMatchedName.current = ''
     
     // Reset shoes
     setShoes([{
@@ -788,139 +821,61 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
       {/* Left: Form */}
       <div className="srm-form-container">
         <div className="srm-form">
-          <div className="customer-type-toggle">
-            <Button
-              className="customer-button button-lg"
-              variant={customerType === 'new' ? 'customer' : 'outline'}
-              onClick={() => {
-                setCustomerType('new')
-                // Clear customer contact fields when switching to new customer
-                setName('')
-                setBirthdate('')
-                setAddress('')
-                setEmail('')
-                setPhone('')
-                setReferenceNo('')
-              }}
-            >
-              NEW CUSTOMER
-            </Button>
-            <Button
-              className="customer-button button-lg"
-              variant={customerType === 'old' ? 'customer' : 'outline'}
-              onClick={() => setCustomerType('old')}
-            >
-              OLD CUSTOMER
-            </Button>
-          </div>
-
           <Card>
             <CardContent className="pt-6 form-card-content">
               {/* Customer Info */}
-              <div className="customer-info-pair mb-4">
+              <div className="customer-name-row mb-4">
                 <div className="w-full">
-                  <Label>Reference Number</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={referenceNo}
-                      onChange={(e: any) => setReferenceNo(e.target.value)}
-                      placeholder="Enter reference number"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleReferenceLookup}
-                      disabled={!referenceNo.trim() || isReferenceLookupLoading}
-                    >
-                      {isReferenceLookupLoading ? 'Searching...' : 'Lookup'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <div className="customer-info-grid">
-                <div className="customer-info-pair">
-                  <div className="w-full">
-                    <Label>Customer Name</Label>
-                    <Input
-                      value={name}
-                      onChange={(e: any) => setName(e.target.value)}
-                      placeholder="Enter full name"
-                    />
-                  </div>
-                  <div  className="w-full">
-                    <Label>Customer Phone Number</Label>
-                    <Input
-                      value={phone}
-                      onChange={(e: any) => setPhone(e.target.value)}
-                      readOnly={customerType === 'old'}
-                      placeholder="09XXXXXXXXX"
-                    />
-                  </div>
-                </div>
-
-                <div className="w-full">
-                  <Label>Customer Address</Label>
+                  <Label>Customer Name</Label>
                   <Input
-                    value={address}
-                    onChange={(e: any) => setAddress(e.target.value)}
-                    readOnly={customerType === 'old'}
-                    placeholder="Address"
+                    value={name}
+                    onChange={(e: any) => setName(e.target.value)}
+                    placeholder="Search customer by name"
                   />
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="customer-add-button"
+                  onClick={openCustomerModal}
+                  aria-label="Add new customer"
+                >
+                  <Plus className="h-5 w-5" aria-hidden="true" />
+                </Button>
+              </div>
 
-                <div className="customer-info-pair">
-                  <div  className="w-full">
-                    <Label>Customer Email</Label>
-                    <Input
-                      value={email}
-                      onChange={(e: any) => setEmail(e.target.value)}
-                      readOnly={customerType === 'old'}
-                      placeholder="email@example.com"
+              <div className="customer-info-pair">
+                <div className="w-full">
+                  <div>
+                    <Label>Set Custom Date</Label>
+                    <Switch
+                      className="ml-3"
+                      checked={useCustomDate}
+                      onCheckedChange={(val: any) => {
+                        setUseCustomDate(!!val)
+                        if (!useCustomDate) {
+                          setCustomDate((prev) => prev || todayISODate())
+                        }
+                      }}
                     />
                   </div>
-                  <div className="w-full">
-                    <Label>Customer Birthdate</Label>
+                  <div>
                     <Input
                       type="date"
-                      value={birthdate}
-                      onChange={(e: any) => setBirthdate(e.target.value)}
+                      disabled={!useCustomDate}
+                      value={customDate}
+                      onChange={(e: any) => setCustomDate(e.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="customer-info-pair">
-                  <div  className="w-full">
-                    <div >
-                      <Label>Set Custom Date</Label>
-                      <Switch
-                        className="ml-3"
-                        checked={useCustomDate}
-                        onCheckedChange={(val: any) => {
-                          setUseCustomDate(!!val)
-                          if (!useCustomDate) {
-                            setCustomDate((prev) => prev || todayISODate())
-                          }
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        type="date"
-                        disabled={!useCustomDate}
-                        value={customDate}
-                        onChange={(e: any) => setCustomDate(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="w-full">
-                    <Label>Received by</Label>
-                    <Input
-                      value={receivedBy}
-                      onChange={(e: any) => setReceivedBy(e.target.value)}
-                      placeholder="Type receiver name"
-                    />
-                  </div>
+                <div className="w-full">
+                  <Label>Received by</Label>
+                  <Input
+                    value={receivedBy}
+                    onChange={(e: any) => setReceivedBy(e.target.value)}
+                    placeholder="Type receiver name"
+                  />
                 </div>
               </div>
 
@@ -1304,6 +1259,83 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
+        <DialogContent className="customer-modal-content">
+          <DialogHeader>
+            <DialogTitle>New Customer</DialogTitle>
+            <DialogDescription>
+              Fill in customer details for this service request.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="customer-modal-grid">
+            <div>
+              <Label>Customer Name</Label>
+              <Input
+                value={customerDraft.name}
+                onChange={(e: any) =>
+                  setCustomerDraft((prev) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder="Enter full name"
+              />
+            </div>
+
+            <div>
+              <Label>Phone Number</Label>
+              <Input
+                value={customerDraft.phone}
+                onChange={(e: any) =>
+                  setCustomerDraft((prev) => ({ ...prev, phone: e.target.value }))
+                }
+                placeholder="09XXXXXXXXX"
+              />
+            </div>
+
+            <div>
+              <Label>Email Address</Label>
+              <Input
+                value={customerDraft.email}
+                onChange={(e: any) =>
+                  setCustomerDraft((prev) => ({ ...prev, email: e.target.value }))
+                }
+                placeholder="email@example.com"
+              />
+            </div>
+
+            <div>
+              <Label>Birthdate</Label>
+              <Input
+                type="date"
+                value={customerDraft.birthdate}
+                onChange={(e: any) =>
+                  setCustomerDraft((prev) => ({ ...prev, birthdate: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="customer-modal-address">
+              <Label>Address</Label>
+              <Input
+                value={customerDraft.address}
+                onChange={(e: any) =>
+                  setCustomerDraft((prev) => ({ ...prev, address: e.target.value }))
+                }
+                placeholder="Address"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsCustomerModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={saveCustomerFromModal}>
+              Save Customer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
