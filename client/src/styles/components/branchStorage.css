@@ -1,133 +1,153 @@
 /* BranchStorage.tsx styles */
 
 .admin-upper {
-  margin-top: 15px;
-}
-
-.branch-card {
-  width: 95%;
-  margin: 0 auto;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  background: #ffffff;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.branch-card:hover {
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+  margin-top: 14px;
 }
 
 .op-branch-card-contents {
-  margin: 10px;
-  margin-bottom: -10px;
+  margin: 0;
+  padding: 0 10px;
   display: flex;
   justify-content: space-between;
   color: #333;
-  gap: 16px;
+  gap: 12px;
+  width: 100%;
 }
 
 .branch-storage-stats {
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 2px;
-  border-radius: 10px;
-  transition: transform 0.2s ease;
+  padding: 12px 14px 10px;
+  border-radius: 18px;
+  border: 1px solid #edf2f7;
+  background: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .branch-storage-stats:hover {
-  transform: scale(1.01);
-  background: #f0f2f5;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
 }
 
 .warehouse:hover {
-  background: #e8eeff;
+  background: #f6f8ff;
 }
 
 .branch-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 0px;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
 
 .location-icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 8px;
-  color: #555;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #fff1f1;
+  color: #ef4444;
+  font-size: 0.95rem;
+}
+
+.location-icon i {
+  -webkit-text-stroke: 0.65px currentColor;
+  font-weight: 900;
 }
 
 .location-title {
-  font-weight: 600;
-  font-size: 16px;
-  color: #333;
-}
-
-.stats-container {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 8px;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  font-weight: 800;
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   flex: 1;
+  margin-right: 10px;
+}
+
+.branch-metric-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .stat-value {
   font-size: 24px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 4px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.shoe-unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  padding-bottom: 1px;
+}
+
+.storage-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: #666;
+  font-size: 11px;
+  color: #64748b;
   font-weight: 500;
 }
 
-.stat-divider {
-  width: 1px;
-  background: #ddd;
-  margin: 0 16px;
-}
-
-.capacity-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
+.storage-percent {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ef2d2d;
 }
 
 .capacity-bar-container {
   width: 100%;
   height: 6px;
-  background: #e0e0e0;
-  border-radius: 3px;
+  background: #f1f5f9;
+  border-radius: 999px;
   overflow: hidden;
-  margin: 6px 0;
+  margin: 0;
 }
 
 .capacity-bar {
   height: 100%;
   transition: width 0.7s ease-out;
+  border-radius: inherit;
 }
 
 .capacity-bar.normal {
-  background: linear-gradient(90deg, #4caf50, #8bc34a);
+  background: linear-gradient(90deg, #ef2d2d, #ef2d2d);
 }
 
 .capacity-bar.warning {
-  background: linear-gradient(90deg, #ff9800, #ffc107);
+  background: linear-gradient(90deg, #ef2d2d, #ef2d2d);
 }
 
 .capacity-bar.critical {
-  background: linear-gradient(90deg, #f44336, #ff5722);
+  background: linear-gradient(90deg, #111827, #111827);
+}
+
+.warehouse .location-icon {
+  background: #111827;
+  color: #ffffff;
+}
+
+.warehouse .storage-percent {
+  color: #111827;
+}
+
+.warehouse .capacity-bar.normal,
+.warehouse .capacity-bar.warning,
+.warehouse .capacity-bar.critical {
+  background: #111827;
 }
 
 /* Mobile styles */
@@ -138,8 +158,8 @@
 .mobile-card {
   color: #333;
   width: 97%;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 22px;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
   overflow: hidden;
 }
 
@@ -157,16 +177,16 @@
 
 /* Media queries */
 @media (max-width: 1088px) {
-  .branch-card {
-    width: 97%;
-  }
-  
   .stat-value {
     font-size: 22px;
   }
   
   .stat-label {
-    font-size: 12px;
+    font-size: 11px;
+  }
+
+  .branch-storage-stats {
+    padding: 10px 12px 8px;
   }
 }
 
@@ -196,6 +216,6 @@
   }
   
   .branch-storage-stats {
-    padding: 12px;
+    padding: 10px 12px 8px;
   }
 }

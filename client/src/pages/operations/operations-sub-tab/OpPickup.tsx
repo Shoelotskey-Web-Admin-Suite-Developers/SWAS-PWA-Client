@@ -339,6 +339,7 @@ export default function OpPickup() {
   };
 
   const hiddenColumns = getHiddenColumns();
+  const tableColSpan = hiddenColumns.length > 0 ? 10 : 9;
 
   // Calculate statistics
   const paidCount = rows.filter(row => row.paymentStatus === "Paid").length;
@@ -372,12 +373,6 @@ export default function OpPickup() {
                 {getSortIcon('lineItemId')}
               </div>
             </TableHead>
-            <TableHead className="op-pu-head-date cursor-pointer hover:bg-gray-50" onClick={() => handleSort('date')}>
-              <div className="flex items-center gap-1">
-                <h5>Date</h5>
-                {getSortIcon('date')}
-              </div>
-            </TableHead>
             <TableHead className="op-pu-head-customer">
               <h5>Customer</h5>
             </TableHead>
@@ -409,7 +404,7 @@ export default function OpPickup() {
         <TableBody className="op-body">
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={10} className="text-center py-8">
+              <TableCell colSpan={tableColSpan} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <RefreshCw className="w-4 h-4 animate-spin" />
                   <span>Loading pickup data...</span>
@@ -418,7 +413,7 @@ export default function OpPickup() {
             </TableRow>
           ) : filteredRows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={tableColSpan} className="text-center py-8 text-gray-500">
                 {searchTerm || filterPayment !== 'all' ? 'No items match your filters' : 'No items ready for pickup'}
               </TableCell>
             </TableRow>
@@ -437,9 +432,15 @@ export default function OpPickup() {
                     />
                   </TableCell>
                   <TableCell className={`op-pu-body-transact ${getUpdateColor(row.date)}`}><h5>{row.lineItemId}</h5></TableCell>
-                  <TableCell className={`op-pu-body-date ${getUpdateColor(row.date)}`}><small>{row.date.toLocaleDateString()}</small></TableCell>
                   <TableCell className={`op-pu-body-customer ${getUpdateColor(row.date)}`}>
-                    <small>{getCustomerDisplayName(row.customerId, showCustomerNames)}</small>
+                    <div className="flex flex-col gap-0.5">
+                      <h5 className="m-0 text-sm font-semibold leading-tight text-slate-900">
+                        {getCustomerDisplayName(row.customerId, showCustomerNames)}
+                      </h5>
+                      <small className="text-[11px] leading-tight text-slate-500">
+                        {row.date.toLocaleDateString()}
+                      </small>
+                    </div>
                   </TableCell>
                   <TableCell className={`op-pu-body-shoe ${getUpdateColor(row.date)}`}><small>{row.shoe}</small></TableCell>
                   <TableCell className={`op-pu-body-service ${getUpdateColor(row.date)}`}><small>{row.service}</small></TableCell>
@@ -505,7 +506,7 @@ export default function OpPickup() {
                 {/* Dropdown card for hidden columns */}
                 {expanded.includes(row.lineItemId) && hiddenColumns.length > 0 && (
                   <TableRow className="op-body-dropdown-row">
-                    <TableCell colSpan={10} className="op-dropdown-cell">
+                    <TableCell colSpan={tableColSpan} className="op-dropdown-cell">
                       <div className="op-dropdown-card">
                         {hiddenColumns.includes("Date") && (
                           <div><h5 className="label">Date</h5> <h5 className="name">{row.date.toLocaleDateString()}</h5></div>

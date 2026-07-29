@@ -11,7 +11,6 @@ import {
 import { getLineItemsByBranch } from '@/utils/api/getLineItemsByBranch';
 import { getLineItemsByLocation } from '@/utils/api/getLineItemsByLocation';
 import { useLineItemUpdates } from '@/hooks/useLineItemUpdates';
-import { WarehouseIcon, StoreIcon } from 'lucide-react';
 
 type BranchData = {
   name: string;
@@ -123,27 +122,22 @@ export default function BranchStorage() {
   const renderBranchStats = (branch: BranchData) => (
     <div className='branch-storage-stats' key={branch.branchId}>
       <div className='branch-header'>
-        <StoreIcon className="location-icon" />
         <h4 className='location-title'>{branch.name}</h4>
+        <span className="location-icon"><i className="bi bi-shop-window"></i></span>
       </div>
-      <div className='stats-container'>
-        <div className='stat-item'>
-          <span className='stat-value'>{loading ? "..." : branch.shoeCount}</span>
-          <span className='stat-label'>Shoes</span>
-        </div>
-        <div className='stat-divider'></div>
-        <div className='stat-item'>
-          <div className='capacity-wrapper'>
-            <span className='stat-value'>{loading ? "..." : `${branch.storageFilled}%`}</span>
-            <div className='capacity-bar-container'>
-              <div 
-                className={`capacity-bar ${branch.storageFilled > 85 ? 'critical' : branch.storageFilled > 70 ? 'warning' : 'normal'}`} 
-                style={{ width: `${loading ? 0 : branch.storageFilled}%` }}
-              ></div>
-            </div>
-          </div>
-          <span className='stat-label'>Storage Filled</span>
-        </div>
+      <div className='branch-metric-row'>
+        <span className='stat-value'>{loading ? "..." : branch.shoeCount}</span>
+        <span className='shoe-unit'>Shoes</span>
+      </div>
+      <div className='storage-row'>
+        <span className='stat-label'>Storage Left</span>
+        <span className='storage-percent'>{loading ? "..." : `${branch.storageFilled}%`}</span>
+      </div>
+      <div className='capacity-bar-container'>
+        <div 
+          className={`capacity-bar ${branch.storageFilled > 85 ? 'critical' : branch.storageFilled > 70 ? 'warning' : 'normal'}`} 
+          style={{ width: `${loading ? 0 : branch.storageFilled}%` }}
+        ></div>
       </div>
     </div>
   );
@@ -151,27 +145,22 @@ export default function BranchStorage() {
   const renderWarehouseStats = () => (
     <div className='branch-storage-stats warehouse'>
       <div className='branch-header'>
-        <WarehouseIcon className="location-icon" />
-        <h4 className='location-title'>Warehouse</h4>
+        <h4 className='location-title'>Warehouse (Main)</h4>
+        <span className="location-icon warehouse-icon"><i className="bi bi-building-fill"></i></span>
       </div>
-      <div className='stats-container'>
-        <div className='stat-item'>
-          <span className='stat-value'>{loading ? "..." : warehouseData.shoeCount}</span>
-          <span className='stat-label'>Shoes</span>
-        </div>
-        <div className='stat-divider'></div>
-        <div className='stat-item'>
-          <div className='capacity-wrapper'>
-            <span className='stat-value'>{loading ? "..." : `${warehouseData.storageFilled}%`}</span>
-            <div className='capacity-bar-container'>
-              <div 
-                className={`capacity-bar ${warehouseData.storageFilled > 85 ? 'critical' : warehouseData.storageFilled > 70 ? 'warning' : 'normal'}`} 
-                style={{ width: `${loading ? 0 : warehouseData.storageFilled}%` }}
-              ></div>
-            </div>
-          </div>
-          <span className='stat-label'>Storage Filled</span>
-        </div>
+      <div className='branch-metric-row'>
+        <span className='stat-value'>{loading ? "..." : warehouseData.shoeCount}</span>
+        <span className='shoe-unit'>Shoes</span>
+      </div>
+      <div className='storage-row'>
+        <span className='stat-label'>Storage Left</span>
+        <span className='storage-percent'>{loading ? "..." : `${warehouseData.storageFilled}%`}</span>
+      </div>
+      <div className='capacity-bar-container'>
+        <div 
+          className={`capacity-bar ${warehouseData.storageFilled > 85 ? 'critical' : warehouseData.storageFilled > 70 ? 'warning' : 'normal'}`} 
+          style={{ width: `${loading ? 0 : warehouseData.storageFilled}%` }}
+        ></div>
       </div>
     </div>
   );
@@ -179,12 +168,10 @@ export default function BranchStorage() {
   return (
     <div>
       <div className='pc-tablet'>
-        <Card className='branch-card'>
-          <CardContent className='op-branch-card-contents'>
-            {branchData.map(renderBranchStats)}
-            {renderWarehouseStats()}
-          </CardContent>
-        </Card>
+        <div className='op-branch-card-contents'>
+          {branchData.map(renderBranchStats)}
+          {renderWarehouseStats()}
+        </div>
       </div>
 
       <div className='landscape-mobile'>

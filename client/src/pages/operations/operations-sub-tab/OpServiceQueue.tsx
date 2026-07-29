@@ -287,6 +287,7 @@ export default function OpServiceQueue() {
   };
 
   const hiddenColumns = getHiddenColumns();
+  const tableColSpan = hiddenColumns.length > 0 ? 11 : 10;
 
   // Add this new function to handle "select all" functionality
   const toggleSelectAll = () => {
@@ -344,12 +345,6 @@ export default function OpServiceQueue() {
                 {getSortIcon('lineItemId')}
               </div>
             </TableHead>
-            <TableHead className="op-head-date cursor-pointer hover:bg-gray-50" onClick={() => handleSort('date')}>
-              <div className="flex items-center gap-1">
-                <h5>Date</h5>
-                {getSortIcon('date')}
-              </div>
-            </TableHead>
             <TableHead className="op-head-customer cursor-pointer hover:bg-gray-50" onClick={() => handleSort('customerName')}>
               <div className="flex items-center gap-1">
                 <h5>Customer</h5>
@@ -359,7 +354,6 @@ export default function OpServiceQueue() {
             <TableHead className="op-head-shoe"><h5>Shoe</h5></TableHead>
             <TableHead className="op-head-service"><h5>Service</h5></TableHead>
             <TableHead className="op-head-branch"><h5>Branch</h5></TableHead>
-            <TableHead className="op-head-location"><h5>Location</h5></TableHead>
             <TableHead className="op-head-status"><h5>Status</h5></TableHead>
             <TableHead className="op-head-rush cursor-pointer hover:bg-gray-50" onClick={() => handleSort('isRush')}>
               <div className="flex items-center gap-1">
@@ -386,7 +380,7 @@ export default function OpServiceQueue() {
         <TableBody className="op-body">
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={12} className="text-center py-8">
+              <TableCell colSpan={tableColSpan} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <RefreshCw className="w-4 h-4 animate-spin" />
                   <span>Loading queue data...</span>
@@ -395,7 +389,7 @@ export default function OpServiceQueue() {
             </TableRow>
           ) : filteredRows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={tableColSpan} className="text-center py-8 text-gray-500">
                 {searchTerm || filterPriority !== 'all' ? 'No items match your filters' : 'No items in queue'}
               </TableCell>
             </TableRow>
@@ -416,13 +410,15 @@ export default function OpServiceQueue() {
                   <TableCell className={`op-body-transact ${getUpdateColor(row.updated)}`}>
                     <h5>{row.lineItemId}</h5>
                   </TableCell>
-                  <TableCell className={`op-body-date ${getUpdateColor(row.updated)}`}>
-                    <small>{row.date.toLocaleDateString()}</small>
-                  </TableCell>
                   <TableCell className={`op-body-customer ${getUpdateColor(row.updated)}`}>
-                    <small>
-                      {getCustomerDisplayName(row.customerId, showCustomerNames)}
-                    </small>
+                    <div className="flex flex-col gap-0.5">
+                      <h5 className="m-0 text-sm font-semibold leading-tight text-slate-900">
+                        {getCustomerDisplayName(row.customerId, showCustomerNames)}
+                      </h5>
+                      <small className="text-[11px] leading-tight text-slate-500">
+                        {row.date.toLocaleDateString()}
+                      </small>
+                    </div>
                   </TableCell>
                   <TableCell className={`op-body-shoe ${getUpdateColor(row.updated)}`}>
                     <small>{row.shoe}</small>
@@ -431,10 +427,14 @@ export default function OpServiceQueue() {
                     <small>{row.service}</small>
                   </TableCell>
                   <TableCell className={`op-body-branch ${getUpdateColor(row.updated)}`}>
-                    <small>{row.branch}</small>
-                  </TableCell>
-                  <TableCell className={`op-body-location ${getUpdateColor(row.updated)}`}>
-                    <small>{row.Location}</small>
+                    <div className="flex flex-col gap-0.5">
+                      <h5 className="m-0 text-sm font-semibold leading-tight text-slate-900">
+                        {row.branch}
+                      </h5>
+                      <small className="text-[11px] font-semibold uppercase tracking-[0.12em] leading-tight text-emerald-600">
+                        {row.Location}
+                      </small>
+                    </div>
                   </TableCell>
                   <TableCell className={`op-body-status op-status-rd ${getUpdateColor(row.updated)}`}>
                     <h5>{row.status}</h5>
@@ -468,11 +468,8 @@ export default function OpServiceQueue() {
 
                 {expanded.includes(row.lineItemId) && hiddenColumns.length > 0 && (
                   <TableRow className="op-body-dropdown-row">
-                    <TableCell colSpan={12} className="op-dropdown-cell">
+                    <TableCell colSpan={tableColSpan} className="op-dropdown-cell">
                       <div className="op-dropdown-card">
-                        {hiddenColumns.includes("Date") && (
-                          <div><h5 className="label">Date</h5> <h5 className="name">{row.date.toLocaleDateString()}</h5></div>
-                        )}
                         {hiddenColumns.includes("Customer") && (
                           <div><h5 className="label">Customer</h5> <h5 className="name">{getCustomerDisplayName(row.customerId, showCustomerNames)}</h5></div>
                         )}
@@ -484,9 +481,6 @@ export default function OpServiceQueue() {
                         )}
                         {hiddenColumns.includes("Branch") && (
                           <div><h5 className="label">Branch</h5> <h5 className="name">{row.branch}</h5></div>
-                        )}
-                        {hiddenColumns.includes("Location") && (
-                          <div><h5 className="label">Location</h5> <h5 className="name">{row.Location}</h5></div>
                         )}
                         {hiddenColumns.includes("Status") && (
                           <div><h5 className="label">Status</h5> <h5 className="name">{row.status}</h5></div>

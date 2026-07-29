@@ -5,7 +5,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  height: 80vh;
+  min-height: 80vh;
   
 }
 
@@ -18,27 +18,62 @@
   flex: 1;
   width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  margin-top: 15px;
+  margin-top: 12px;
 }
 
 .main-card {
   display: flex;
   flex-direction: column;
-  margin-top: -15px;
+  margin-top: 0;
   height: 100%;
-  width: 95%;
-  padding: 20px 0px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.05);
 }
 
 @media (max-width: 1088px) {
   .main-card {
-    width: 97%;
-    margin-top: -20px;
-    padding: 20px 0px;
+    width: 100%;
+    margin-top: 0;
+    padding: 0;
     @apply rounded-xl;
   }
+}
+
+.operations-card-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.operations-nav-card {
+  width: 100%;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  border-bottom: 1px solid #d9e1ea;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.operations-nav-content {
+  padding: 8px 10px;
+}
+
+.operations-tab-content {
+  width: 100%;
+  padding: 0 18px 18px;
+}
+
+.operations-content {
+  width: 100%;
 }
 
 /* Service Queue CSS (Temporarily specific for now) */
@@ -156,10 +191,10 @@
 .op-head-action, .op-body-action { width: 3%; }      
 .op-head-transact, .op-body-transact { width: 11%; }
 .op-head-date, .op-body-date { width: 6%; }
-.op-head-customer, .op-body-customer { width: 10%; }
+.op-head-customer, .op-body-customer { width: 16%; }
 .op-head-shoe, .op-body-shoe { width: 15%; }
 .op-head-service, .op-body-service { width: 10%; }
-.op-head-branch, .op-body-branch { width: 10%; }
+.op-head-branch, .op-body-branch { width: 16%; }
 .op-head-location, .op-body-location { width: 6%; }
 .op-head-status, .op-body-status { width: 6%; }
 .op-head-rush, .op-body-rush { width: 7%; }
@@ -242,10 +277,10 @@
   .op-head-action, .op-body-action { width: 1%; }      
   .op-head-transact, .op-body-transact { width: 16%; }
   .op-head-date, .op-body-date { width: 5%; }
-  .op-head-customer, .op-body-customer { width: 13%; }
+  .op-head-customer, .op-body-customer { width: 16%; }
   .op-head-shoe, .op-body-shoe { width: 18%; }
   .op-head-service, .op-body-service { width: 13%; }
-  .op-head-branch, .op-body-branch { width: 12%; }
+  .op-head-branch, .op-body-branch { width: 16%; }
   .op-head-rush, .op-body-rush { width: 7%; }
   .op-head-due, .op-body-due { width: 7%; }            
   .op-head-mod, .op-body-mod { width: 7%; }         
@@ -264,9 +299,9 @@
 
   .op-head-action, .op-body-action { width: 1%; }      
   .op-head-transact, .op-body-transact { width: 23%; }
-  .op-head-customer, .op-body-customer { width: 19%; }
+  .op-head-customer, .op-body-customer { width: 20%; }
   .op-head-service, .op-body-service { width: 19%; }
-  .op-head-branch, .op-body-branch { width: 17%; }
+  .op-head-branch, .op-body-branch { width: 18%; }
   .op-head-rush, .op-body-rush { width: 10%; }
   .op-head-due, .op-body-due { width: 10%; }                 
   .op-head-chevron, .op-body-dropdown-toggle { width: 1%; } 

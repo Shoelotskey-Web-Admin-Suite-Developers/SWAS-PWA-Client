@@ -118,21 +118,21 @@ export default function Operations() {
   return (
     <CustomerNamesProvider>
       <PickupProvider>
-        <div className='main-div' style={{ "--fillheight": fillHeight } as React.CSSProperties}>
-          {showAdminUpper && ( // conditional rendering
-            <div className='admin-upper'>
+        <div className='main-div operations-page' style={{ "--fillheight": fillHeight } as React.CSSProperties}>
+          {showAdminUpper && (
+            <div className='admin-upper operations-storage'>
               <BranchStorage />
             </div>
           )}
 
-          <div className='main-content'>
-            <Card className='rounded-3xl main-card'>
-              <CardContent>
+          <div className='main-content operations-content'>
+            <Card className='rounded-3xl main-card operations-card'>
+              <CardContent className='operations-card-content'>
                 <OperationsNav
                   onChange={setActiveIndex}
                   visibleTabs={getVisibleTabs()}
                 />
-                <div className="tab-content">
+                <div className="tab-content operations-tab-content">
                   {getTabContent()}
                 </div>
               </CardContent>

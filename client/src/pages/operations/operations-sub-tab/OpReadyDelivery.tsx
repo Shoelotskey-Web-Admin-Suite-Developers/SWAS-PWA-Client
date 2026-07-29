@@ -232,6 +232,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
   };
 
   const hiddenColumns = getHiddenColumns();
+  const tableColSpan = hiddenColumns.length > 0 ? 11 : 10;
 
   const handleSort = (field: keyof Row) => {
     if (sortField === field) {
@@ -353,12 +354,6 @@ export default function OpReadyDelivery({ readOnly = false }) {
                 {!readOnly && getSortIcon('lineItemId')}
               </div>
             </TableHead>
-            <TableHead className="op-head-date cursor-pointer hover:bg-gray-50" onClick={() => !readOnly && handleSort('date')}>
-              <div className="flex items-center gap-1">
-                <h5>Date</h5>
-                {!readOnly && getSortIcon('date')}
-              </div>
-            </TableHead>
             <TableHead className="op-head-customer cursor-pointer hover:bg-gray-50" onClick={() => !readOnly && handleSort('customerName')}>
               <div className="flex items-center gap-1">
                 <h5>Customer</h5>
@@ -373,7 +368,6 @@ export default function OpReadyDelivery({ readOnly = false }) {
                 {!readOnly && getSortIcon('branch')}
               </div>
             </TableHead>
-            <TableHead className="op-head-location"><h5>Location</h5></TableHead>
             <TableHead className="op-head-status"><h5>Status</h5></TableHead>
             <TableHead className="op-head-rush"><h5>Priority</h5></TableHead>
             <TableHead className="op-head-due cursor-pointer hover:bg-gray-50" onClick={() => !readOnly && handleSort('dueDate')}>
@@ -397,7 +391,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
         <TableBody className="op-body">
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={12} className="text-center py-8">
+              <TableCell colSpan={tableColSpan} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
                   <RefreshCw className="w-4 h-4 animate-spin" />
                   <span>Loading delivery data...</span>
@@ -406,7 +400,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
             </TableRow>
           ) : filteredRows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={tableColSpan} className="text-center py-8 text-gray-500">
                 {searchTerm || filterBranch !== 'all' ? 'No items match your filters' : 'No items ready for delivery'}
               </TableCell>
             </TableRow>
@@ -428,14 +422,24 @@ export default function OpReadyDelivery({ readOnly = false }) {
                     )}
                   </TableCell>
                   <TableCell className={`op-body-transact ${getUpdateColor(row.updated)}`}><h5>{row.lineItemId}</h5></TableCell>
-                  <TableCell className={`op-body-date ${getUpdateColor(row.updated)}`}><small>{row.date.toLocaleDateString()}</small></TableCell>
                   <TableCell className={`op-body-customer ${getUpdateColor(row.updated)}`}>
-                    <small>{getCustomerDisplayName(row.customerId, showCustomerNames)}</small>
+                    <div className="flex flex-col gap-0.5">
+                      <h5 className="m-0 text-sm font-semibold leading-tight text-slate-900">
+                        {getCustomerDisplayName(row.customerId, showCustomerNames)}
+                      </h5>
+                      <small className="text-[11px] leading-tight text-slate-500">
+                        {row.date.toLocaleDateString()}
+                      </small>
+                    </div>
                   </TableCell>
                   <TableCell className={`op-body-shoe ${getUpdateColor(row.updated)}`}><small>{row.shoe}</small></TableCell>
                   <TableCell className={`op-body-service ${getUpdateColor(row.updated)}`}><small>{row.service}</small></TableCell>
-                  <TableCell className={`op-body-branch ${getUpdateColor(row.updated)}`}><small>{row.branch}</small></TableCell>
-                  <TableCell className={`op-body-location ${getUpdateColor(row.updated)}`}><small>{row.Location}</small></TableCell>
+                  <TableCell className={`op-body-branch ${getUpdateColor(row.updated)}`}>
+                    <div className="flex flex-col gap-0.5">
+                      <h5 className="m-0 text-sm font-semibold leading-tight text-slate-900">{row.branch}</h5>
+                      <small className="text-[11px] font-semibold uppercase tracking-[0.12em] leading-tight text-emerald-600">{row.Location}</small>
+                    </div>
+                  </TableCell>
                   <TableCell className={`op-body-status op-status-rd ${getUpdateColor(row.updated)}`}><h5>{row.status}</h5></TableCell>
                   <TableCell className={`op-body-rush ${getUpdateColor(row.updated)}`}>
                     {row.isRush ? (
@@ -465,7 +469,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
                 {/* Dropdown card */}
                 {expanded.includes(row.lineItemId) && hiddenColumns.length > 0 && (
                   <TableRow className="op-body-dropdown-row">
-                    <TableCell colSpan={12} className="op-dropdown-cell">
+                    <TableCell colSpan={tableColSpan} className="op-dropdown-cell">
                       <div className="op-dropdown-card">
                         {hiddenColumns.includes("Date") && (
                           <div><h5 className="label">Date</h5> <h5 className="name">{row.date.toLocaleDateString()}</h5></div>
