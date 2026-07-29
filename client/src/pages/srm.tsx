@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { CalendarDays, Plus, ReceiptText, UserRound } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -156,6 +156,7 @@ export default function SRM() {
   const [phone, setPhone] = useState<string>('')
   const [customerId, setCustomerId] = useState<string>('NEW')
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false)
   const [customerDraft, setCustomerDraft] = useState({
     name: '',
     phone: '',
@@ -261,6 +262,8 @@ export default function SRM() {
       rush: 'no',
     },
   ])
+  const [activeShoeIndex, setActiveShoeIndex] = useState(0)
+  const [serviceTab, setServiceTab] = useState<'all' | 'service' | 'additional'>('all')
 
   const handleShoeChange = (
     index: number,
@@ -288,7 +291,23 @@ export default function SRM() {
   }
 
   const addShoe = () => {
-    setShoes([...shoes, { model: '', services: [], additionals: {}, rush: 'no' }])
+    const newShoe: Shoe = { model: '', services: [], additionals: {}, rush: 'no' }
+    const updated = [...shoes, newShoe]
+    setShoes(updated)
+    setActiveShoeIndex(updated.length - 1)
+  }
+
+  const removeShoe = (index: number) => {
+    if (shoes.length <= 1) return
+    const updated = [...shoes]
+    updated.splice(index, 1)
+    setShoes(updated)
+
+    setActiveShoeIndex((prev) => {
+      if (prev === index) return Math.max(0, index - 1)
+      if (prev > index) return prev - 1
+      return prev
+    })
   }
 
   // Toggle checkbox for additionals
@@ -335,6 +354,14 @@ export default function SRM() {
   // Get current quantity of a specific additional (default 1 if selected)
   const getAdditionalQuantity = (shoe: Shoe, serviceId: string) =>
     shoe.additionals[serviceId] ?? 1;
+
+  const activeShoe = shoes[activeShoeIndex] ?? shoes[0]
+
+  const visibleServiceCards = useMemo(() => {
+    if (serviceTab === 'service') return serviceOptions
+    if (serviceTab === 'additional') return additionalOptions
+    return services
+  }, [serviceTab, serviceOptions, additionalOptions, services])
 
 
   useEffect(() => {
@@ -641,6 +668,7 @@ export default function SRM() {
       const result = await addServiceRequest(requestPayload as any);
     console.log("Service request created:", result);
     toast.success("Service request confirmed successfully!");
+    setIsCheckoutModalOpen(false)
 
 // --- Add Dates entry for each line item ---
 if (result?.lineItems && Array.isArray(result.lineItems)) {
@@ -802,6 +830,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
       additionals: {},
       rush: 'no',
     }]);
+    setActiveShoeIndex(0)
     
     // Reset payment fields
     setModeOfPayment('cash');
@@ -824,32 +853,45 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
           <Card>
             <CardContent className="pt-6 form-card-content">
               {/* Customer Info */}
-              <div className="customer-name-row mb-4">
-                <div className="w-full">
-                  <Label>Customer Name</Label>
+              <div className="srm-top-strip mb-2">
+                <div className="srm-top-panel customer-panel">
+                  <Label className="top-panel-label">Customer Information</Label>
+                  <div className="customer-name-row">
+                    <div className="w-full">
+                      <Input
+                        value={name}
+                        onChange={(e: any) => setName(e.target.value)}
+                        placeholder="Search or add customer"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="customer-add-button"
+                      onClick={openCustomerModal}
+                      aria-label="Add new customer"
+                    >
+                      <Plus className="h-5 w-5" aria-hidden="true" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="srm-top-panel active-shoe-panel">
+                  <div className="active-shoe-head">
+                    <Label className="top-panel-label">Active Shoe Details</Label>
+                    <span className="active-shoe-badge">Shoe #{activeShoeIndex + 1}</span>
+                  </div>
                   <Input
-                    value={name}
-                    onChange={(e: any) => setName(e.target.value)}
-                    placeholder="Search customer by name"
+                    value={activeShoe?.model || ''}
+                    onChange={(e) => handleShoeChange(activeShoeIndex, 'model', e.target.value)}
+                    placeholder="Enter shoe model"
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="customer-add-button"
-                  onClick={openCustomerModal}
-                  aria-label="Add new customer"
-                >
-                  <Plus className="h-5 w-5" aria-hidden="true" />
-                </Button>
-              </div>
 
-              <div className="customer-info-pair">
-                <div className="w-full">
-                  <div>
-                    <Label>Set Custom Date</Label>
+                <div className="srm-top-panel date-panel">
+                  <Label className="top-panel-label">Date & Receiver</Label>
+                  <div className="date-switch-row">
                     <Switch
-                      className="ml-3"
                       checked={useCustomDate}
                       onCheckedChange={(val: any) => {
                         setUseCustomDate(!!val)
@@ -858,8 +900,10 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                         }
                       }}
                     />
+                    <span>Use custom date</span>
                   </div>
-                  <div>
+                  <div className="date-input-wrap">
+                    <CalendarDays className="h-4 w-4" aria-hidden="true" />
                     <Input
                       type="date"
                       disabled={!useCustomDate}
@@ -867,10 +911,6 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                       onChange={(e: any) => setCustomDate(e.target.value)}
                     />
                   </div>
-                </div>
-
-                <div className="w-full">
-                  <Label>Received by</Label>
                   <Input
                     value={receivedBy}
                     onChange={(e: any) => setReceivedBy(e.target.value)}
@@ -881,276 +921,151 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
 
               <hr className="section-divider" />
 
-              {shoes.map((shoe, i) => (
-                <div key={i} className="shoe-info-grid mb-6 relative">
-                  {/* Show X button only if more than 1 shoe */}
-                  {shoes.length > 1 && (
+              <div className="shoe-selector-row" role="group" aria-label="Shoes in this transaction">
+                <div className="shoe-chip-list">
+                  {shoes.map((shoe, i) => (
+                    <div className={`shoe-chip ${i === activeShoeIndex ? 'active' : ''}`} key={`${shoe.model}-${i}`}>
+                      <button
+                        type="button"
+                        className="shoe-chip-main"
+                        onClick={() => setActiveShoeIndex(i)}
+                        aria-label={`Select shoe ${i + 1}`}
+                      >
+                        {`Shoe #${i + 1}: ${shoe.model?.trim() || 'Unnamed Shoe'}`}
+                      </button>
+                      {shoes.length > 1 && (
+                        <button
+                          type="button"
+                          className="shoe-chip-remove"
+                          onClick={() => removeShoe(i)}
+                          aria-label={`Remove shoe ${shoe.model || i + 1}`}
+                        >
+                          &times;
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="shoe-add-circle"
+                  onClick={addShoe}
+                  aria-label="Add another shoe"
+                >
+                  <Plus className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+
+              {activeShoe && (
+                <div className="shoe-editor-pane mb-6">
+                  <div className="service-tabs" role="tablist" aria-label="Service filters">
                     <button
                       type="button"
-                      onClick={() => {
-                        const updated = [...shoes]
-                        updated.splice(i, 1)
-                        setShoes(updated)
-                      }}
-                      className="absolute pl-2 pr-2 pt-0 pb-0 top-[-1.5rem] right-0 m-0 bg-transparent text-gray-600 font-bold text-xl hover:text-red-900"
-                      aria-label={`Remove shoe ${shoe.model || i + 1}`}
+                      className={`service-tab ${serviceTab === 'all' ? 'active' : ''}`}
+                      onClick={() => setServiceTab('all')}
                     >
-                      &times;
+                      All
                     </button>
-                  )}
-
-                  <div className="shoe-model">
-                    <Label>Shoe Model</Label>
-                    <Input
-                      value={shoe.model}
-                      onChange={(e) => handleShoeChange(i, 'model', e.target.value)}
-                    />
+                    <button
+                      type="button"
+                      className={`service-tab ${serviceTab === 'service' ? 'active' : ''}`}
+                      onClick={() => setServiceTab('service')}
+                    >
+                      Services
+                    </button>
+                    <button
+                      type="button"
+                      className={`service-tab ${serviceTab === 'additional' ? 'active' : ''}`}
+                      onClick={() => setServiceTab('additional')}
+                    >
+                      Additional
+                    </button>
                   </div>
-                  <div className="services">
-                    {/* rest of your existing shoe fields */}
-                    <div>
-                      <Label>Service Needed</Label>
-                      <div className="checkbox-grid">
-                        {serviceOptions.map((srv) => (
-                            <div className="checkbox-item" key={srv.service_id}>
-                              <Checkbox
-                                checked={shoe.services.includes(srv.service_id)}
-                                onCheckedChange={() => toggleArrayValue(i, "services", srv.service_id)}
-                              />
-                              <Label>{srv.service_name}</Label>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
 
-                    <div>
-                    <Label>Additional</Label>
-                    <div className="checkbox-grid">
-                      {additionalOptions.map((add) => {
-                        const quantity = getAdditionalQuantity(shoe, add.service_id);
-                        const checked = Object.prototype.hasOwnProperty.call(shoe.additionals, add.service_id);
+                  <div className="service-card-grid">
+                    {visibleServiceCards.map((svc) => {
+                      const isAdditional = svc.service_type === 'Additional'
+                      const checked = isAdditional
+                        ? Object.prototype.hasOwnProperty.call(activeShoe.additionals, svc.service_id)
+                        : activeShoe.services.includes(svc.service_id)
+                      const quantity = getAdditionalQuantity(activeShoe, svc.service_id)
+                      const isLayer = svc.service_name === 'Additional Layer'
 
-                        // Only "Additional Layer" shows increment/decrement controls
-                        const isLayer = add.service_name === 'Additional Layer';
-
-                        return (
-                          <div className="checkbox-item flex items-center gap-2" key={add.service_id}>
+                      return (
+                        <div className={`service-card ${checked ? 'selected' : ''}`} key={svc.service_id}>
+                          <div className="service-card-head">
                             <Checkbox
                               checked={checked}
-                              onCheckedChange={(val) =>
-                                toggleAdditional(i, add.service_id, !!val, quantity)
-                              }
+                              onCheckedChange={(val) => {
+                                if (isAdditional) {
+                                  toggleAdditional(activeShoeIndex, svc.service_id, !!val, quantity)
+                                  return
+                                }
+                                toggleArrayValue(activeShoeIndex, 'services', svc.service_id)
+                              }}
                             />
-                            <Label>{add.service_name}</Label>
-                            {checked && (
-                              <div className="flex items-center ml-2">
-                                {isLayer ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => updateAdditionalQuantity(i, add.service_id, Math.max(1, quantity - 1))}
-                                      className="w-5 h-8 flex px-4 items-center justify-center bg-gray-200 rounded"
-                                    >
-                                      <small className="text-sm">-</small>
-                                    </button>
-                                    <span className="px-2">{quantity}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => updateAdditionalQuantity(i, add.service_id, quantity + 1)}
-                                      className="w-5 h-8 flex px-4 items-center justify-center bg-gray-200 rounded"
-                                    >
-                                      <span className="text-sm">+</span>
-                                    </button>
-                                  </>
-                                ) : (
-                                  // For non-layer additionals, show quantity only (no +/-)
-                                  <span className="px-2"></span>
-                                )}
-                              </div>
-                            )}
+                            <p className="service-card-name">{svc.service_name}</p>
+                            <p className="service-card-price">{formatCurrency(svc.service_base_price)}</p>
                           </div>
-                        );
-                      })}
-                    </div>
+
+                          <div className="service-card-meta">
+                            <span>{svc.service_type}</span>
+                            <span>{svc.service_duration} day(s)</span>
+                          </div>
+
+                          {checked && isAdditional && isLayer && (
+                            <div className="service-card-qty">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateAdditionalQuantity(
+                                    activeShoeIndex,
+                                    svc.service_id,
+                                    Math.max(1, quantity - 1)
+                                  )
+                                }
+                              >
+                                -
+                              </button>
+                              <span>{quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateAdditionalQuantity(activeShoeIndex, svc.service_id, quantity + 1)
+                                }
+                              >
+                                +
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
 
-
-                    <div className="pr-[2rem]">
-                      <Label>Rush</Label>
-                      <RadioGroup
-                        value={shoe.rush}
-                        onValueChange={(val) => handleShoeChange(i, 'rush', val as 'yes' | 'no')}
-                        className="rush-options"
-                      >
-                        <div className="radio-option">
-                          <RadioGroupItem value="yes" id={`rush-yes-${i}`} />
-                          <Label htmlFor={`rush-yes-${i}`}>Yes</Label>
-                        </div>
-                        <div className="radio-option">
-                          <RadioGroupItem value="no" id={`rush-no-${i}`} />
-                          <Label htmlFor={`rush-no-${i}`}>No</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-
-              {/* Modern Add Shoe UI */}
-              <div className="add-shoe-wrapper" role="group" aria-label="Add another shoe">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="add-shoe-modern add-shoe-red"
-                  onClick={addShoe}
-                >
-                  <Plus className="add-shoe-icon" aria-hidden="true" />
-                  <h3 className="add-shoe-text">Add Shoe</h3>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Section (Step 1: show totals computed) */}
-          <Card>
-            <CardContent className=" pt-6 payment-section">
-              {/* Left: Discount Section */}
-              <div className="discount-section">
-                <div className="flex flex-col gap-5">
-                  <Label>Cashier</Label>
-                  <Input
-                    value={cashier}
-                    readOnly
-                    placeholder="Cashier name"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-5">
-                  <Label>Mode of Payment</Label>
-                  <RadioGroup
-                    value={modeOfPayment}
-                    onValueChange={(val) => setModeOfPayment(val as 'cash' | 'gcash' | 'bank' | 'other')}
-                    className="payment-radio-group"
-                  >
-                    <div className="radio-option">
-                      <RadioGroupItem value="cash" id="cash" />
-                      <Label htmlFor="cash" className="radio-inline-label">Cash</Label>
-                    </div>
-                    <div className="radio-option">
-                      <RadioGroupItem value="gcash" id="gcash" />
-                      <Label htmlFor="gcash" className="radio-inline-label">GCash</Label>
-                    </div>
-                    <div className="radio-option">
-                      <RadioGroupItem value="bank" id="bank" />
-                      <Label htmlFor="bank" className="radio-inline-label">Bank</Label>
-                    </div>
-                    <div className="radio-option">
-                      <RadioGroupItem value="other" id="other" />
-                      <Label htmlFor="other" className="radio-inline-label">Other</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div className="checkbox-item">
-                  <Checkbox
-                    checked={applyDiscount}
-                    onCheckedChange={(checked) => setApplyDiscount(!!checked)}
-                    id="apply-discount"
-                  />
-                  <Label htmlFor="apply-discount">Apply Discount</Label>
-                </div>
-
-                {applyDiscount && (
-                  <div className="discount-type pl-10">
+                  <div className="rush-row">
+                    <Label>Rush</Label>
                     <RadioGroup
-                      value={discountType}
+                      value={activeShoe.rush}
                       onValueChange={(val) =>
-                        setDiscountType(val as 'percent' | 'fixed')
+                        handleShoeChange(activeShoeIndex, 'rush', val as 'yes' | 'no')
                       }
+                      className="rush-options"
                     >
                       <div className="radio-option">
-                        <RadioGroupItem value="percent" id="percent" />
-                        <Label htmlFor="percent">Percent Discount (%)</Label>
+                        <RadioGroupItem value="yes" id={`rush-yes-${activeShoeIndex}`} />
+                        <Label htmlFor={`rush-yes-${activeShoeIndex}`}>Yes</Label>
                       </div>
                       <div className="radio-option">
-                        <RadioGroupItem value="fixed" id="fixed" />
-                        <Label htmlFor="fixed">Fixed Amount Discount (₱)</Label>
+                        <RadioGroupItem value="no" id={`rush-no-${activeShoeIndex}`} />
+                        <Label htmlFor={`rush-no-${activeShoeIndex}`}>No</Label>
                       </div>
                     </RadioGroup>
-                    <Input
-                      className="mt-3"
-                      placeholder={
-                        discountType === 'percent' ? 'Enter %' : 'Enter amount'
-                      }
-                      value={discountValue}
-                      onChange={(e: any) => setDiscountValue(e.target.value)}
-                    />
                   </div>
-                )}
-              </div>
-
-              {/* Right: Payment Inputs */}
-              <div className="payment-summary-section">
-                <div className="payment-type-buttons">
-                  <Button
-                    className="rounded-full payment-button"
-                    variant={paymentType === 'full' ? 'selected' : 'unselected'}
-                    onClick={() => setPaymentType('full')}
-                  >
-                    Full Payment
-                  </Button>
-                  <Button
-                    className="rounded-full payment-button"
-                    variant={paymentType === 'half' ? 'selected' : 'unselected'}
-                    onClick={() => setPaymentType('half')}
-                  >
-                    50% Down
-                  </Button>
-                  <Button
-                    className="rounded-full payment-button"
-                    variant={paymentType === 'custom' ? 'selected' : 'unselected'}
-                    onClick={() => setPaymentType('custom')}
-                  >
-                    Custom
-                  </Button>
                 </div>
+              )}
 
-                <div className="summary-grid">
-                  <p>Total Bill:</p>
-                  <p className="text-right pr-3">{formatCurrency(totalBill)}</p>
-
-                  <p>Total Sales:</p>
-                  <p className="text-right pr-3">{formatCurrency(totalSales)}</p>
-
-                  <p>Amount Due Now:</p>
-                  <Input
-                    type="number"
-                    className="text-right"
-                    value={amountDueNow}
-                    onChange={(e) => handleAmountDueChange(e.target.value)}
-                  />
-
-
-                  <p>Customer Paid:</p>
-                  <Input
-                    className="text-right"
-                    type="number"
-                    value={customerPaid}
-                    onChange={(e) => setCustomerPaid(Number(e.target.value) || 0)}
-                    onBlur={() => {
-                      // Only enforce when there is an amount due now (>0)
-                      if (amountDueNow > 0 && customerPaid < amountDueNow) {
-                        toast.error('Amount paid cannot be lower than amount due now.')
-                      }
-                    }}
-                  />
-
-                  <p>Change:</p>
-                  <p className="text-right pr-3">{formatCurrency(change)}</p>
-                </div>
-
-              </div>
             </CardContent>
           </Card>
           <hr className="bottom-space" />
@@ -1251,9 +1166,9 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                 <Button
                   disabled={submitting}
                   className="w-full p-8 mt-4 button-lg bg-[#22C55E] hover:bg-[#1E9A50]"
-                  onClick={handleConfirmServiceRequest}
+                  onClick={() => setIsCheckoutModalOpen(true)}
                 >
-                  {submitting ? "Submitting..." : "Confirm Service Request"}
+                  Finalize Ticket
                 </Button>
             </div>
           </CardContent>
@@ -1262,11 +1177,16 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
 
       <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
         <DialogContent className="customer-modal-content">
-          <DialogHeader>
-            <DialogTitle>New Customer</DialogTitle>
-            <DialogDescription>
-              Fill in customer details for this service request.
-            </DialogDescription>
+          <DialogHeader className="modal-head-row">
+            <div className="modal-head-icon customer">
+              <UserRound className="h-4 w-4" aria-hidden="true" />
+            </div>
+            <div>
+              <DialogTitle>New Customer</DialogTitle>
+              <DialogDescription>
+                Fill in customer details for this service request.
+              </DialogDescription>
+            </div>
           </DialogHeader>
 
           <div className="customer-modal-grid">
@@ -1326,14 +1246,164 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsCustomerModalOpen(false)}>
+          <DialogFooter className="modal-actions">
+            <Button type="button" variant="outline" className="modal-cancel" onClick={() => setIsCustomerModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="button" onClick={saveCustomerFromModal}>
-              Save Customer
+            <Button type="button" className="modal-confirm" onClick={saveCustomerFromModal}>
+              Register Customer
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCheckoutModalOpen} onOpenChange={setIsCheckoutModalOpen}>
+        <DialogContent className="checkout-modal-content">
+          <DialogHeader className="modal-head-row">
+            <div className="modal-head-icon checkout">
+              <ReceiptText className="h-4 w-4" aria-hidden="true" />
+            </div>
+            <div>
+              <DialogTitle>Checkout Summary</DialogTitle>
+              <DialogDescription>
+                Review payment details and finalize this ticket.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="checkout-modal-body">
+            <div className="checkout-discount-column">
+              <div className="checkout-cashier-row">
+                <Label>Cashier</Label>
+                <Input value={cashier} readOnly placeholder="Cashier name" />
+              </div>
+
+              <div className="checkout-payment-mode">
+                <Label>Mode of Payment</Label>
+                <RadioGroup
+                  value={modeOfPayment}
+                  onValueChange={(val) => setModeOfPayment(val as 'cash' | 'gcash' | 'bank' | 'other')}
+                  className="payment-radio-group"
+                >
+                  <div className="radio-option">
+                    <RadioGroupItem value="cash" id="checkout-cash" />
+                    <Label htmlFor="checkout-cash" className="radio-inline-label">Cash</Label>
+                  </div>
+                  <div className="radio-option">
+                    <RadioGroupItem value="gcash" id="checkout-gcash" />
+                    <Label htmlFor="checkout-gcash" className="radio-inline-label">GCash</Label>
+                  </div>
+                  <div className="radio-option">
+                    <RadioGroupItem value="bank" id="checkout-bank" />
+                    <Label htmlFor="checkout-bank" className="radio-inline-label">Bank</Label>
+                  </div>
+                  <div className="radio-option">
+                    <RadioGroupItem value="other" id="checkout-other" />
+                    <Label htmlFor="checkout-other" className="radio-inline-label">Other</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="checkbox-item">
+                <Checkbox
+                  checked={applyDiscount}
+                  onCheckedChange={(checked) => setApplyDiscount(!!checked)}
+                  id="checkout-apply-discount"
+                />
+                <Label htmlFor="checkout-apply-discount">Apply Discount</Label>
+              </div>
+
+              {applyDiscount && (
+                <div className="checkout-discount-type">
+                  <RadioGroup
+                    value={discountType}
+                    onValueChange={(val) => setDiscountType(val as 'percent' | 'fixed')}
+                  >
+                    <div className="radio-option">
+                      <RadioGroupItem value="percent" id="checkout-percent" />
+                      <Label htmlFor="checkout-percent">Percent Discount (%)</Label>
+                    </div>
+                    <div className="radio-option">
+                      <RadioGroupItem value="fixed" id="checkout-fixed" />
+                      <Label htmlFor="checkout-fixed">Fixed Amount Discount (₱)</Label>
+                    </div>
+                  </RadioGroup>
+                  <Input
+                    className="mt-3"
+                    placeholder={discountType === 'percent' ? 'Enter %' : 'Enter amount'}
+                    value={discountValue}
+                    onChange={(e: any) => setDiscountValue(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="checkout-payment-column">
+              <div className="payment-type-buttons">
+                <Button
+                  className="rounded-full payment-button"
+                  variant={paymentType === 'full' ? 'selected' : 'unselected'}
+                  onClick={() => setPaymentType('full')}
+                >
+                  Full Payment
+                </Button>
+                <Button
+                  className="rounded-full payment-button"
+                  variant={paymentType === 'half' ? 'selected' : 'unselected'}
+                  onClick={() => setPaymentType('half')}
+                >
+                  50% Down
+                </Button>
+                <Button
+                  className="rounded-full payment-button"
+                  variant={paymentType === 'custom' ? 'selected' : 'unselected'}
+                  onClick={() => setPaymentType('custom')}
+                >
+                  Custom
+                </Button>
+              </div>
+
+              <div className="checkout-totals-grid">
+                <p>Total Bill:</p>
+                <p className="text-right">{formatCurrency(totalBill)}</p>
+
+                <p>Total Sales:</p>
+                <p className="text-right">{formatCurrency(totalSales)}</p>
+
+                <p>Amount Due Now:</p>
+                <Input
+                  type="number"
+                  className="text-right"
+                  value={amountDueNow}
+                  onChange={(e) => handleAmountDueChange(e.target.value)}
+                />
+
+                <p>Customer Paid:</p>
+                <Input
+                  className="text-right"
+                  type="number"
+                  value={customerPaid}
+                  onChange={(e) => setCustomerPaid(Number(e.target.value) || 0)}
+                  onBlur={() => {
+                    if (amountDueNow > 0 && customerPaid < amountDueNow) {
+                      toast.error('Amount paid cannot be lower than amount due now.')
+                    }
+                  }}
+                />
+
+                <p>Change:</p>
+                <p className="text-right checkout-change-value">{formatCurrency(change)}</p>
+              </div>
+
+              <Button
+                disabled={submitting}
+                className="w-full mt-2 p-7 button-lg bg-[#DC2626] hover:bg-[#B91C1C]"
+                onClick={handleConfirmServiceRequest}
+              >
+                {submitting ? 'Finalizing...' : 'Complete Order & Print Receipt'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
