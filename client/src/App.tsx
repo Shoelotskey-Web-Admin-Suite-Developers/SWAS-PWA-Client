@@ -78,8 +78,8 @@ function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="shrink-0">
+    <div className="app-shell">
+      <div className="app-nav">
         <Navbar
           activePage={activePage}
           setActivePage={setActivePage}
@@ -87,12 +87,12 @@ function App() {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">{pages[activePage]}</div>
+      <main className="app-main-content">{pages[activePage]}</main>
       <Toaster
         position="top-center"
         richColors
         toastOptions={{
-          style: { top: '60px' } // offset below navbar height
+          style: { top: '60px' } // keep toasts clear of the navbar
         }}
       />
 

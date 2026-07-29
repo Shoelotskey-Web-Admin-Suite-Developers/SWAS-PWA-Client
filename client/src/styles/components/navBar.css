@@ -213,6 +213,7 @@
 .nav-link {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--nb-space-3);
   height: 40px;
   padding: 0 var(--nb-space-3);
@@ -227,13 +228,19 @@
   white-space: nowrap;
   overflow: hidden;
   position: relative;
+  width: 100%;
 }
 
 .nav-link i {
   font-size: 18px;
   width: 20px;
+  height: 20px;
   text-align: center;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .nav-label {
@@ -257,30 +264,28 @@
   outline-offset: 2px;
 }
 
-/* Active state */
+/* Active state - Updated */
 .nav-active > .nav-link,
 .nav-active > .dropdown-trigger {
   color: var(--nb-foreground);
-  background-color: var(--nb-background-subtle);
+  background-color: var(--nb-red-soft);
   font-weight: 600;
+  width: 100%;
 }
 
+/* Remove the red line indicator */
 .nav-active > .nav-link::before,
 .nav-active > .dropdown-trigger::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 24px;
-  border-radius: 0 2px 2px 0;
-  background-color: var(--nb-red);
+  content: none;
 }
 
+/* Icon red when active */
 .nav-active > .nav-link i,
 .nav-active > .dropdown-trigger i {
   color: var(--nb-red);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ==========================================================================
@@ -295,6 +300,7 @@
 .dropdown-trigger {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--nb-space-3);
   height: 40px;
   padding: 0 var(--nb-space-3);
@@ -315,8 +321,13 @@
 .dropdown-trigger i {
   font-size: 18px;
   width: 20px;
+  height: 20px;
   text-align: center;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .dropdown-trigger .nav-label {
@@ -454,8 +465,13 @@
 .nav-footer-btn i {
   font-size: 18px;
   width: 20px;
+  height: 20px;
   text-align: center;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .nav-footer-btn .nav-label {
@@ -485,18 +501,51 @@
 }
 
 /* ==========================================================================
+   Collapsed State - Center Icons
+   ========================================================================== */
+
+.navBar.collapsed .nav-link,
+.navBar.collapsed .dropdown-trigger,
+.navBar.collapsed .nav-footer-btn {
+  justify-content: center;
+  padding: 0;
+  gap: 0;
+}
+
+.navBar.collapsed .nav-link i,
+.navBar.collapsed .dropdown-trigger i,
+.navBar.collapsed .nav-footer-btn i {
+  font-size: 20px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.navBar.collapsed .nav-active > .nav-link,
+.navBar.collapsed .nav-active > .dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 100%;
+}
+
+.navBar.collapsed .nav-active > .nav-link i,
+.navBar.collapsed .nav-active > .dropdown-trigger i {
+  color: var(--nb-red);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================================================
    Main Content Offset
    ========================================================================== */
 
-/* Add this to your global styles or main layout component */
-.main-content {
-  margin-left: var(--nb-width);
-  transition: margin-left var(--nb-transition-slow);
-}
-
-.navBar.collapsed ~ .main-content {
-  margin-left: var(--nb-width-collapsed);
-}
+/* Offset is handled by the app shell so it stays consistent in both states. */
 
 /* ==========================================================================
    Accessibility
@@ -580,6 +629,11 @@
   .nav-footer-btn i {
     font-size: 20px;
     width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
   }
 
   .dropdown-caret {
@@ -619,5 +673,171 @@
 
   .main-content {
     margin-left: var(--nb-width-collapsed);
+  }
+
+  /* Mobile active state */
+  .nav-active > .nav-link,
+  .nav-active > .dropdown-trigger {
+    background-color: var(--nb-red-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 100%;
+  }
+
+  .nav-active > .nav-link i,
+  .nav-active > .dropdown-trigger i {
+    color: var(--nb-red);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Remove the red line indicator on mobile */
+  .nav-active > .nav-link::before,
+  .nav-active > .dropdown-trigger::before {
+    content: none;
+  }
+}
+
+/* ==========================================================================
+   Logo Icon Morph/Fade Animation
+   ========================================================================== */
+
+.nav-logo-wrapper {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-logo-icon,
+.nav-logo-favicon {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  transition: all var(--nb-transition-slow);
+  object-fit: contain;
+}
+
+/* Expanded state - show full logo, hide favicon */
+.nav-logo-icon.expanded-logo {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  filter: blur(0);
+}
+
+.nav-logo-favicon.expanded-favicon {
+  opacity: 0;
+  transform: scale(0.5) rotate(-90deg);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* Collapsed state - show favicon, hide full logo */
+.navBar.collapsed .nav-logo-icon.collapsed-logo {
+  opacity: 0;
+  transform: scale(0.5) rotate(90deg);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.navBar.collapsed .nav-logo-favicon.collapsed-favicon {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  filter: blur(0);
+  pointer-events: auto;
+}
+
+/* Optional: Add a subtle rotation morph effect */
+@keyframes morphToFavicon {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.75) rotate(45deg);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5) rotate(90deg);
+    filter: blur(4px);
+  }
+}
+
+@keyframes morphFromFavicon {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-90deg);
+    filter: blur(4px);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.75) rotate(-45deg);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+/* Apply animations when toggling */
+.navBar:not(.collapsed) .nav-logo-icon.expanded-logo {
+  animation: morphFromFavicon var(--nb-transition-slow) forwards;
+}
+
+.navBar:not(.collapsed) .nav-logo-favicon.expanded-favicon {
+  animation: morphToFavicon var(--nb-transition-slow) forwards;
+}
+
+.navBar.collapsed .nav-logo-icon.collapsed-logo {
+  animation: morphToFavicon var(--nb-transition-slow) forwards;
+}
+
+.navBar.collapsed .nav-logo-favicon.collapsed-favicon {
+  animation: morphFromFavicon var(--nb-transition-slow) forwards;
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .nav-logo-icon,
+  .nav-logo-favicon {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  .nav-logo-icon.expanded-logo,
+  .navBar:not(.collapsed) .nav-logo-icon.expanded-logo {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  
+  .nav-logo-favicon.expanded-favicon,
+  .navBar:not(.collapsed) .nav-logo-favicon.expanded-favicon {
+    opacity: 0;
+    transform: none;
+    filter: none;
+  }
+  
+  .navBar.collapsed .nav-logo-icon.collapsed-logo {
+    opacity: 0;
+    transform: none;
+    filter: none;
+  }
+  
+  .navBar.collapsed .nav-logo-favicon.collapsed-favicon {
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }

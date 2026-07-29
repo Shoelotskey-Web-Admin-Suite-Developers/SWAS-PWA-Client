@@ -2,6 +2,7 @@
 import '@/styles/components/navBar.css'
 import React, { useEffect, useState, useCallback } from 'react'
 import swasNavbarIcon from '@/assets/icons/swasNavbarIcon.svg'
+import faviconSwas from '@/assets/icons/favicon-swas.svg'
 import NotifIcon from '@/components/icons/NotifIcon'
 import { NotifSheet } from '@/components/NotifSheet'
 import { getBranchNameForNavbar } from '@/utils/api/getBranchName'
@@ -47,7 +48,7 @@ const NAV_ITEMS: Array<{
   { id: 'payment', label: 'Payments', icon: 'bi-credit-card', visibilityKey: 'showPayments' },
   { id: 'central-view', label: 'Central View', icon: 'bi-database', visibilityKey: 'showDatabaseView' },
   { id: 'customer-information', label: 'Customers', icon: 'bi-person-lines-fill', visibilityKey: 'showDatabaseView' },
-  { id: 'branches', label: 'Branches', icon: 'bi-shops-window', visibilityKey: 'showDatabaseView' },
+  { id: 'branches', label: 'Branches', icon: 'bi-shop-window', visibilityKey: 'showDatabaseView' },
   { id: 'analytics', label: 'Analytics', icon: 'bi-bar-chart-line', visibilityKey: 'showAnalytics' },
   { id: 'appointments', label: 'Appointments', icon: 'bi-calendar4-week', visibilityKey: 'showUserManagement' },
   { id: 'announcements', label: 'Announcements', icon: 'bi-megaphone', visibilityKey: 'showUserManagement' },
@@ -113,10 +114,21 @@ export default function Navbar({ activePage, setActivePage, onLogout }: NavbarPr
     <PickupProvider>
       <nav className={`navBar ${isCollapsed ? 'collapsed' : ''}`} role="navigation" aria-label="Main navigation">
         <div className="navBar-contents">
-          {/* Logo section */}
+          {/* Logo section - SWAS text removed */}
           <div className="navBar-header">
-            <img src={swasNavbarIcon} alt="SWAS Logo" className="nav-logo-icon" />
-            {!isCollapsed && <span className="nav-brand-name">SWAS</span>}
+            <div className="nav-logo-wrapper">
+              <img 
+                src={faviconSwas} 
+                alt="SWAS Logo" 
+                className={`nav-logo-icon ${isCollapsed ? 'collapsed-logo' : 'expanded-logo'}`}
+              />
+              <img 
+                src={swasNavbarIcon} 
+                alt="SWAS Favicon" 
+                className={`nav-logo-favicon ${isCollapsed ? 'collapsed-favicon' : 'expanded-favicon'}`}
+              />
+            </div>
+            {/* SWAS text removed */}
             <button 
               className="collapse-toggle"
               onClick={toggleCollapse}

@@ -1,13 +1,25 @@
-body, #root {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
   width: 100%;
 }
 
-.mainContent {
-  flex-grow: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.app-nav {
+  position: relative;
+  z-index: 1;
+}
+
+.app-main-content {
+  height: 100vh;
+  margin-left: var(--nb-width-collapsed);
+  width: calc(100% - var(--nb-width-collapsed));
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
