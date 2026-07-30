@@ -30,18 +30,23 @@ html, body {
 
 .srm-form-container {
   display: flex;
+  flex-direction: column;
   width: 100%;
-  justify-content: flex-end;
+}
+
+.srm-top-spacer {
+  height: 64px; /* Same height as your fake navbar */
+  flex-shrink: 0;
 }
 
 @media (min-width: 1024px) {
   .srm-form-container {
-    overflow-y: scroll;
     max-height: calc(100dvh - 77px);
   }
 }
 
 .srm-form {
+  overflow-y: auto;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -56,10 +61,7 @@ html, body {
   .radio-inline-label {
     margin: 0;
   }
-  padding: 1.5rem;
   gap: 0.85rem;
-  /* background-color: green; */
-  margin-bottom: 20px;
 }
 
 @media (min-width: 1024px) {
@@ -94,24 +96,51 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #6b7280;
-  font-weight: 700;
+  font-family: 'Inter Bold';
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.input-with-icon input {
+  padding-left: 2.25rem;
 }
 
 .srm-top-strip {
   display: grid;
-  grid-template-columns: 1.15fr 1fr 1fr;
+  grid-template-columns: 1.15fr 1fr 1fr 0.3fr;
   gap: 0.85rem;
   align-items: stretch;
+  padding: 1.5rem;
+  padding-bottom: 0;
 }
 
 .srm-top-panel {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.srm-top-shoe-panel {
+  background: #F0F0F0;
+  border: 1px solid #AAAAAA;
   border-radius: 0.85rem;
   padding: 0.65rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .active-shoe-panel {
@@ -130,9 +159,8 @@ html, body {
   line-height: 1;
   background: #ef4444;
   color: #fff;
-  border-radius: 999px;
+  border-radius: 5px;
   padding: 0.25rem 0.45rem;
-  font-weight: 700;
 }
 
 .date-switch-row {
@@ -362,7 +390,9 @@ html, body {
   margin-bottom: 0.25rem;
   border-top: 1px solid #e5e7eb;
   border-bottom: 1px solid #e5e7eb;
-  padding: 0.6rem 0;
+  padding: 1.5rem;
+  padding-top: 0.6rem;
+  padding-bottom: 0.3rem;
 }
 
 .shoe-chip-list {
@@ -380,6 +410,7 @@ html, body {
   border: 1px solid #d1d5db;
   border-radius: 999px;
   background: #ffffff;
+  font-family: 'Inter Bold';
 }
 
 .shoe-chip-main {
@@ -391,6 +422,12 @@ html, body {
   font-size: 0.78rem;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.shoe-chip-main:focus,
+.shoe-chip-main:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .shoe-chip.active {
@@ -438,9 +475,16 @@ html, body {
 .service-tabs {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 3rem;
   border-bottom: 1px solid #eceff3;
   padding-bottom: 0.45rem;
+  padding-left: 1.5rem;
+}
+
+.service-tab:focus,
+.service-tab:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .service-tab {
@@ -451,6 +495,10 @@ html, body {
   font-size: 0.78rem;
   padding: 0.2rem 0;
   position: relative;
+  font-family: 'Inter Bold';
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem; /* Space between icon and text */
 }
 
 .service-tab.active {
@@ -467,14 +515,21 @@ html, body {
   background: #ef4444;
 }
 
+.service-tab i {
+  font-size: 0.9rem;
+  -webkit-text-stroke: 0.6px currentColor;
+}
+
 .service-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 0.8rem;
+  padding: 0.45rem 1.5rem;
 }
 
 .service-card {
-  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  border: 1px solid #C7C7C7;
   border-radius: 0.9rem;
   background: #fff;
   padding: 0.65rem;
@@ -498,7 +553,7 @@ html, body {
 
 .service-card-name {
   margin: 0;
-  font-weight: 700;
+  font-family: 'Inter Bold';
   font-size: 0.92rem;
   color: #1f2937;
 }
@@ -506,14 +561,15 @@ html, body {
 .service-card-price {
   margin: 0;
   color: #ef4444;
-  font-weight: 700;
+  font-family: 'Inter Bold';
   font-size: 0.9rem;
 }
 
 .service-card-meta {
   display: flex;
   justify-content: space-between;
-  color: #6b7280;
+  color: #797979;
+  font-family: 'Inter Bold';
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -545,6 +601,49 @@ html, body {
   align-items: center;
   gap: 0.8rem;
   margin-top: 0.1rem;
+}
+
+.rush-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #9ca3af;
+  font-family: 'Inter Bold';
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rush-toggle i {
+  font-size: 14px;
+  color: #9ca3af;
+  transition: color 0.15s ease;
+}
+
+.rush-toggle:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.rush-toggle:hover {
+  border-color: #9ca3af;
+}
+
+.rush-toggle.active {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
+.rush-toggle.active i {
+  color: #fff;
 }
 
 .shoe-add-circle:hover {

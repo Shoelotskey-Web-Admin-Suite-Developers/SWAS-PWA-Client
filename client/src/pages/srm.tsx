@@ -250,9 +250,6 @@ export default function SRM() {
     setIsCustomerModalOpen(false)
   }
 
-  // Received by (user types it)
-  const [receivedBy, setReceivedBy] = useState<string>('')
-
   // Step 2: Shoes state
   const [shoes, setShoes] = useState<Shoe[]>([
     {
@@ -558,11 +555,6 @@ export default function SRM() {
       }
     }
 
-    // ReceivedBy guard
-    if (!receivedBy.trim()) {
-      toast.error("Please enter 'Received By' name.")
-      return;
-    }
 
     // Cashier guard (must be provided)
     if (!cashier.trim()) {
@@ -650,7 +642,7 @@ export default function SRM() {
       cust_email: email || undefined,
       cust_contact: phone || undefined,
       lineItems,
-      received_by: receivedBy,
+      received_by: cashier,
       total_amount: totalSales, // ✅ no discount subtraction
       discount_amount: discountAmount,
       amount_paid: amountDueNow, // ✅ from amount due now input
@@ -820,7 +812,6 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
     setEmail('');
     setPhone('');
     setCustomerId('NEW');
-    setReceivedBy('');
     lastAutoMatchedName.current = ''
     
     // Reset shoes
@@ -849,20 +840,24 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
     <div className="srm-container">
       {/* Left: Form */}
       <div className="srm-form-container">
+        <div className="srm-top-spacer" />
         <div className="srm-form">
-          <Card>
-            <CardContent className="pt-6 form-card-content">
+          
               {/* Customer Info */}
               <div className="srm-top-strip mb-2">
                 <div className="srm-top-panel customer-panel">
                   <Label className="top-panel-label">Customer Information</Label>
                   <div className="customer-name-row">
                     <div className="w-full">
-                      <Input
-                        value={name}
-                        onChange={(e: any) => setName(e.target.value)}
-                        placeholder="Search or add customer"
-                      />
+                      <div className="input-with-icon">
+                        <i className="bi-search input-icon"></i>
+
+                        <Input
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Search or add customer"
+                        />
+                      </div>
                     </div>
                     <Button
                       type="button"
@@ -876,21 +871,25 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                   </div>
                 </div>
 
-                <div className="srm-top-panel active-shoe-panel">
+                <div className="srm-top-shoe-panel active-shoe-panel">
                   <div className="active-shoe-head">
                     <Label className="top-panel-label">Active Shoe Details</Label>
                     <span className="active-shoe-badge">Shoe #{activeShoeIndex + 1}</span>
                   </div>
-                  <Input
-                    value={activeShoe?.model || ''}
-                    onChange={(e) => handleShoeChange(activeShoeIndex, 'model', e.target.value)}
-                    placeholder="Enter shoe model"
-                  />
+                  <div className="input-with-icon">
+                        <i className="bi-search input-icon"></i>
+
+                        <Input
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Enter Shoe Model"
+                        />
+                      </div>
                 </div>
 
                 <div className="srm-top-panel date-panel">
-                  <Label className="top-panel-label">Date & Receiver</Label>
                   <div className="date-switch-row">
+                    <Label className="top-panel-label">Date</Label>
                     <Switch
                       checked={useCustomDate}
                       onCheckedChange={(val: any) => {
@@ -902,24 +901,34 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                     />
                     <span>Use custom date</span>
                   </div>
-                  <div className="date-input-wrap">
-                    <CalendarDays className="h-4 w-4" aria-hidden="true" />
-                    <Input
-                      type="date"
-                      disabled={!useCustomDate}
-                      value={customDate}
-                      onChange={(e: any) => setCustomDate(e.target.value)}
-                    />
-                  </div>
-                  <Input
-                    value={receivedBy}
-                    onChange={(e: any) => setReceivedBy(e.target.value)}
-                    placeholder="Type receiver name"
-                  />
+                  <div className="input-with-icon">
+                        <i className="bi-search input-icon"></i>
+                        <Input
+                          type="date"
+                          disabled={!useCustomDate}
+                          value={customDate}
+                          onChange={(e: any) => setCustomDate(e.target.value)}
+                        />
+                      </div>
+                </div>
+
+                <div className="rush-row">
+                  <button
+                    type="button"
+                    className={`rush-toggle ${activeShoe.rush === 'yes' ? 'active' : ''}`}
+                    onClick={() =>
+                      handleShoeChange(
+                        activeShoeIndex,
+                        'rush',
+                        activeShoe.rush === 'yes' ? 'no' : 'yes'
+                      )
+                    }
+                  >
+                    <i className="bi-lightning-fill"></i>
+                    RUSH
+                  </button>
                 </div>
               </div>
-
-              <hr className="section-divider" />
 
               <div className="shoe-selector-row" role="group" aria-label="Shoes in this transaction">
                 <div className="shoe-chip-list">
@@ -965,6 +974,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                       className={`service-tab ${serviceTab === 'all' ? 'active' : ''}`}
                       onClick={() => setServiceTab('all')}
                     >
+                      <i className="bi-grid"></i>
                       All
                     </button>
                     <button
@@ -972,6 +982,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                       className={`service-tab ${serviceTab === 'service' ? 'active' : ''}`}
                       onClick={() => setServiceTab('service')}
                     >
+                      <i className="bi-gear"></i>
                       Services
                     </button>
                     <button
@@ -979,6 +990,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                       className={`service-tab ${serviceTab === 'additional' ? 'active' : ''}`}
                       onClick={() => setServiceTab('additional')}
                     >
+                      <i className="bi-brush"></i>
                       Additional
                     </button>
                   </div>
@@ -993,18 +1005,18 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                       const isLayer = svc.service_name === 'Additional Layer'
 
                       return (
-                        <div className={`service-card ${checked ? 'selected' : ''}`} key={svc.service_id}>
+                        <div
+                          className={`service-card ${checked ? 'selected' : ''}`}
+                          key={svc.service_id}
+                          onClick={() => {
+                            if (isAdditional) {
+                              toggleAdditional(activeShoeIndex, svc.service_id, !checked, quantity);
+                              return;
+                            }
+                            toggleArrayValue(activeShoeIndex, 'services', svc.service_id);
+                          }}
+                        >
                           <div className="service-card-head">
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={(val) => {
-                                if (isAdditional) {
-                                  toggleAdditional(activeShoeIndex, svc.service_id, !!val, quantity)
-                                  return
-                                }
-                                toggleArrayValue(activeShoeIndex, 'services', svc.service_id)
-                              }}
-                            />
                             <p className="service-card-name">{svc.service_name}</p>
                             <p className="service-card-price">{formatCurrency(svc.service_base_price)}</p>
                           </div>
@@ -1044,30 +1056,10 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                     })}
                   </div>
 
-                  <div className="rush-row">
-                    <Label>Rush</Label>
-                    <RadioGroup
-                      value={activeShoe.rush}
-                      onValueChange={(val) =>
-                        handleShoeChange(activeShoeIndex, 'rush', val as 'yes' | 'no')
-                      }
-                      className="rush-options"
-                    >
-                      <div className="radio-option">
-                        <RadioGroupItem value="yes" id={`rush-yes-${activeShoeIndex}`} />
-                        <Label htmlFor={`rush-yes-${activeShoeIndex}`}>Yes</Label>
-                      </div>
-                      <div className="radio-option">
-                        <RadioGroupItem value="no" id={`rush-no-${activeShoeIndex}`} />
-                        <Label htmlFor={`rush-no-${activeShoeIndex}`}>No</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
+                  
                 </div>
               )}
 
-            </CardContent>
-          </Card>
           <hr className="bottom-space" />
         </div>
       </div>
