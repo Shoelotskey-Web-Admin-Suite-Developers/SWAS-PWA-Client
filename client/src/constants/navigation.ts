@@ -36,38 +36,38 @@ export const NAV_ITEMS: NavItem[] = [
 export const PAGE_HEADER_META: Record<NavPage, PageHeaderMeta> = {
   serviceRequest: {
     title: 'Service Request',
-    subtitle: 'Create and manage new customer requests',
+    subtitle: 'Create and manage requests',
   },
   operations: {
     title: 'Operations',
-    subtitle: 'Track day-to-day workflows and service queues',
+    subtitle: 'Track workflows and queues',
   },
   payment: {
     title: 'Payments',
-    subtitle: 'Review collections, balances, and settlement status',
+    subtitle: 'Review collections and balances',
   },
   'central-view': {
     title: 'Central View',
-    subtitle: 'Inspect records across branches and customers',
+    subtitle: 'Inspect records across branches',
   },
   'customer-information': {
     title: 'Customers',
-    subtitle: 'Maintain customer profiles and contact details',
+    subtitle: 'Manage customer profiles',
   },
   branches: {
     title: 'Branches',
-    subtitle: 'Manage branch locations and configuration',
+    subtitle: 'Manage branch locations',
   },
   analytics: {
     title: 'Analytics',
-    subtitle: 'Review performance trends and business insights',
+    subtitle: 'Review performance and insights',
   },
   appointments: {
     title: 'Appointments',
-    subtitle: 'Monitor bookings, schedules, and assigned staff',
+    subtitle: 'Monitor bookings and schedules',
   },
   announcements: {
     title: 'Announcements',
-    subtitle: 'Publish updates for staff and branch teams',
+    subtitle: 'Publish staff updates',
   },
 }

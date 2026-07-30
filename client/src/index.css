@@ -8,6 +8,11 @@
 }
 
 @font-face {
+  font-family: 'Inter Semi Bold';
+  src: url('/fonts/Inter_18pt-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
   font-family: 'Inter Bold';
   src: url('/fonts/Inter_18pt-Bold.ttf') format('truetype');
 }
@@ -18,7 +23,7 @@
 }
 
 :root {
-  font-family: 'Inter Regular', 'Inter Bold', 'Inter Extra Bold';
+  font-family: 'Inter Regular', 'Inter Semi Bold', 'Inter Bold', 'Inter Extra Bold';
 
   color: #1E1E1E;
   background-color: #ffffff;

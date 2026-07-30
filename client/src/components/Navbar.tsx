@@ -55,6 +55,7 @@ const NavLink: React.FC<{
 // Main component
 export default function Navbar({ activePage, setActivePage, isCollapsed, onToggleCollapse, onLogout }: NavbarProps) {
   const [branchName, setBranchName] = useState<string | null>(null)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Get visibility based on user role
   const visibility = useVisibility()
@@ -72,32 +73,83 @@ export default function Navbar({ activePage, setActivePage, isCollapsed, onToggl
 
   const handlePageChange = useCallback((page: NavPage) => {
     setActivePage(page)
+    setIsMobileMenuOpen(false) // Close mobile menu on page change
   }, [setActivePage])
+
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(prev => !prev)
+  }, [])
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.classList.add('menu-open')
+    } else {
+      document.body.classList.remove('menu-open')
+    }
+    return () => {
+      document.body.classList.remove('menu-open')
+    }
+  }, [isMobileMenuOpen])
 
   // Filter visible items based on user role
   const visibleItems = NAV_ITEMS.filter(item => visibility[item.visibilityKey])
 
   return (
     <PickupProvider>
-      <nav className={`navBar ${isCollapsed ? 'collapsed' : ''}`} role="navigation" aria-label="Main navigation">
+      {/* Mobile Hamburger Button */}
+      <button 
+        className={`mobile-hamburger ${isMobileMenuOpen ? 'hidden' : ''}`}
+        onClick={toggleMobileMenu}
+        aria-label="Open menu"
+      >
+        <span className="hamburger-line"></span>
+        <span className="hamburger-line"></span>
+        <span className="hamburger-line"></span>
+      </button>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div className="mobile-overlay" onClick={toggleMobileMenu}></div>
+      )}
+
+      <nav 
+        className={`navBar ${isCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`} 
+        role="navigation" 
+        aria-label="Main navigation"
+      >
         <div className="navBar-contents">
-          {/* Logo section - SWAS text removed */}
+          {/* Logo section with branch name */}
           <div className="navBar-header">
             <div className="nav-logo-wrapper">
               <img 
                 src={faviconSwas} 
                 alt="SWAS Logo" 
-                className={`nav-logo-icon ${isCollapsed ? 'collapsed-logo' : 'expanded-logo'}`}
+                className="nav-logo-icon"
               />
               <img 
                 src={swasNavbarIcon} 
                 alt="SWAS Favicon" 
-                className={`nav-logo-favicon ${isCollapsed ? 'collapsed-favicon' : 'expanded-favicon'}`}
+                className="nav-logo-favicon"
               />
             </div>
-            {/* SWAS text removed */}
+            
+            {/* Branch name - now beside logo */}
+            <div className="nav-branch-name">
+              <span>{branchName ? `${branchName}` : "Loading..."}</span>
+            </div>
+            
+            {/* Close button on mobile - top right */}
             <button 
-              className="collapse-toggle"
+              className="mobile-close-btn"
+              onClick={toggleMobileMenu}
+              aria-label="Close menu"
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
+
+            <button 
+              className="collapse-toggle desktop-only"
               onClick={onToggleCollapse}
               aria-label={isCollapsed ? 'Expand navigation' : 'Collapse navigation'}
             >
@@ -105,36 +157,31 @@ export default function Navbar({ activePage, setActivePage, isCollapsed, onToggl
             </button>
           </div>
 
-          {/* Branch name */}
-          {!isCollapsed && (
-            <div className="nav-branch-name">
-              <span>{branchName ? `${branchName}` : "Loading..."}</span>
+          {/* Navigation links - This will take remaining space and be scrollable */}
+          <div className="navBar-links-wrapper">
+            <div className="navBar-links">
+              <ul>
+                {visibleItems.map(item => (
+                  <NavLink 
+                    key={item.id}
+                    label={item.label}
+                    isActive={activePage === item.id}
+                    onClick={() => handlePageChange(item.id)}
+                    icon={item.icon}
+                  />
+                ))}
+              </ul>
             </div>
-          )}
-
-          {/* Navigation links */}
-          <div className="navBar-links">
-            <ul>
-              {visibleItems.map(item => (
-                <NavLink 
-                  key={item.id}
-                  label={item.label}
-                  isActive={activePage === item.id}
-                  onClick={() => handlePageChange(item.id)}
-                  icon={item.icon}
-                />
-              ))}
-            </ul>
           </div>
 
-          {/* Bottom section */}
+          {/* Bottom section - Fixed at bottom */}
           <div className="navBar-footer">
             {visibility.showNotifSheet && (
               <div className="nav-footer-item">
                 <NotifSheet>
                   <button className="nav-footer-btn" aria-label="Notifications">
                     <i className="bi-bell"></i>
-                    {!isCollapsed && <span className="nav-label">Notifications</span>}
+                    <span className="nav-label">Notifications</span>
                   </button>
                 </NotifSheet>
               </div>
@@ -146,7 +193,7 @@ export default function Navbar({ activePage, setActivePage, isCollapsed, onToggl
                 aria-label="Log out"
               >
                 <i className="bi-box-arrow-in-right"></i>
-                {!isCollapsed && <span className="nav-label">Logout</span>}
+                <span className="nav-label">Logout</span>
               </button>
             </div>
           </div>

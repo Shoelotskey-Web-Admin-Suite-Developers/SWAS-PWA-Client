@@ -28,6 +28,25 @@ body,
   background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
 }
 
+@media (max-width: 899px) {
+  .app-content-shell {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .pageHeader {
+    position: fixed;
+    left: 0 !important;
+    right: auto !important;
+    width: 100% !important;
+    min-width: auto !important;
+    max-width: none !important;
+    padding-left: 72px !important;
+    padding-right: 24px;
+    flex-shrink: 0;
+  }
+}
+
 .app-content-shell--flow {
   padding-top: 72px;
 }
@@ -99,7 +118,8 @@ body,
 
 .pageHeader-title {
   color: var(--nb-foreground);
-  font-size: 18px;
+  font-family: 'Inter Extra Bold';
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -107,7 +127,7 @@ body,
 
 .pageHeader-subtitle {
   color: var(--nb-foreground-muted);
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 500;
   line-height: 1.2;
 }
