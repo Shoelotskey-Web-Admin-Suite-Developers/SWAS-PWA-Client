@@ -8,18 +8,124 @@ body,
   position: relative;
   min-height: 100vh;
   width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  --sidebar-width: var(--nb-width-collapsed);
 }
 
 .app-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+}
+
+.app-content-shell {
   position: relative;
-  z-index: 1;
+  margin-left: var(--nb-width-collapsed);
+  width: calc(100% - var(--nb-width-collapsed));
+  min-height: 100vh;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+}
+
+.app-content-shell--flow {
+  padding-top: 72px;
+}
+
+.app-content-shell--overlay {
+  padding-top: 0;
+}
+
+.pageHeader {
+  position: fixed;
+  top: 0;
+  left: var(--nb-width-collapsed);
+  right: 0;
+  height: 65px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  box-sizing: border-box;
+  z-index: 25;
+}
+
+.pageHeader--serviceRequest {
+  right: 0;
+}
+
+@media (min-width: 1024px) {
+  .pageHeader--serviceRequest {
+    right: 425px;
+  }
+}
+
+.pageHeader-brand {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--nb-red-subtle);
+  border: 1px solid rgba(206, 22, 22, 0.12);
+}
+
+.pageHeader-logo {
+  width: auto;
+  height: 80%;
+  object-fit: contain;
+}
+
+.pageHeader-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: right;
+  gap: 16px;
+}
+
+.pageHeader-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  align-items: flex-end;
+}
+
+.pageHeader-title {
+  color: var(--nb-foreground);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.pageHeader-subtitle {
+  color: var(--nb-foreground-muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.pageHeader-icon {
+  width: auto;
+  height: 80%;
+  flex: 0 0 auto;
+  color: var(--nb-red);
+  font-size: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .app-main-content {
-  height: 100vh;
-  margin-left: var(--nb-width-collapsed);
-  width: calc(100% - var(--nb-width-collapsed));
-  box-sizing: border-box;
+  min-height: calc(100vh - 72px);
   overflow-x: hidden;
   overflow-y: auto;
+  box-sizing: border-box;
 }

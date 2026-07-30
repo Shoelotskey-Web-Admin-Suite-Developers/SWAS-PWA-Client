@@ -3,26 +3,16 @@ import '@/styles/components/navBar.css'
 import React, { useEffect, useState, useCallback } from 'react'
 import swasNavbarIcon from '@/assets/icons/swasNavbarIcon.svg'
 import faviconSwas from '@/assets/icons/favicon-swas.svg'
-import NotifIcon from '@/components/icons/NotifIcon'
 import { NotifSheet } from '@/components/NotifSheet'
 import { getBranchNameForNavbar } from '@/utils/api/getBranchName'
 import { PickupProvider } from '@/context/PickupContext'
-
-// Types
-type NavPage = 
-  | 'serviceRequest' 
-  | 'operations' 
-  | 'payment' 
-  | 'central-view' 
-  | 'customer-information' 
-  | 'branches' 
-  | 'analytics' 
-  | 'appointments' 
-  | 'announcements'
+import { NAV_ITEMS, type NavPage } from '@/constants/navigation'
 
 type NavbarProps = {
   activePage: NavPage
   setActivePage: React.Dispatch<React.SetStateAction<NavPage>>
+  isCollapsed: boolean
+  onToggleCollapse: () => void
   onLogout: () => void
 }
 
@@ -35,24 +25,6 @@ type Visibility = {
   showUserManagement: boolean
   showNotifSheet: boolean
 }
-
-// Navigation items configuration
-const NAV_ITEMS: Array<{
-  id: NavPage
-  label: string
-  icon: string
-  visibilityKey: keyof Visibility
-}> = [
-  { id: 'serviceRequest', label: 'Service Request', icon: 'bi-receipt-cutoff', visibilityKey: 'showServiceRequest' },
-  { id: 'operations', label: 'Operations', icon: 'bi-truck', visibilityKey: 'showOperations' },
-  { id: 'payment', label: 'Payments', icon: 'bi-credit-card', visibilityKey: 'showPayments' },
-  { id: 'central-view', label: 'Central View', icon: 'bi-database', visibilityKey: 'showDatabaseView' },
-  { id: 'customer-information', label: 'Customers', icon: 'bi-person-lines-fill', visibilityKey: 'showDatabaseView' },
-  { id: 'branches', label: 'Branches', icon: 'bi-shop-window', visibilityKey: 'showDatabaseView' },
-  { id: 'analytics', label: 'Analytics', icon: 'bi-bar-chart-line', visibilityKey: 'showAnalytics' },
-  { id: 'appointments', label: 'Appointments', icon: 'bi-calendar4-week', visibilityKey: 'showUserManagement' },
-  { id: 'announcements', label: 'Announcements', icon: 'bi-megaphone', visibilityKey: 'showUserManagement' },
-]
 
 const NavLink: React.FC<{
   label: string
@@ -81,9 +53,8 @@ const NavLink: React.FC<{
 }
 
 // Main component
-export default function Navbar({ activePage, setActivePage, onLogout }: NavbarProps) {
+export default function Navbar({ activePage, setActivePage, isCollapsed, onToggleCollapse, onLogout }: NavbarProps) {
   const [branchName, setBranchName] = useState<string | null>(null)
-  const [isCollapsed, setIsCollapsed] = useState(false)
 
   // Get visibility based on user role
   const visibility = useVisibility()
@@ -102,10 +73,6 @@ export default function Navbar({ activePage, setActivePage, onLogout }: NavbarPr
   const handlePageChange = useCallback((page: NavPage) => {
     setActivePage(page)
   }, [setActivePage])
-
-  const toggleCollapse = useCallback(() => {
-    setIsCollapsed(prev => !prev)
-  }, [])
 
   // Filter visible items based on user role
   const visibleItems = NAV_ITEMS.filter(item => visibility[item.visibilityKey])
@@ -131,7 +98,7 @@ export default function Navbar({ activePage, setActivePage, onLogout }: NavbarPr
             {/* SWAS text removed */}
             <button 
               className="collapse-toggle"
-              onClick={toggleCollapse}
+              onClick={onToggleCollapse}
               aria-label={isCollapsed ? 'Expand navigation' : 'Collapse navigation'}
             >
               <i className={`bi ${isCollapsed ? 'bi-chevron-right' : 'bi-chevron-left'}`}></i>

@@ -64,7 +64,7 @@
   top: 0;
   left: 0;
   height: var(--nb-height);
-  width: var(--nb-width);
+  width: var(--sidebar-width, var(--nb-width));
   background-color: var(--nb-background);
   border-right: 1px solid var(--nb-border);
   font-family: var(--nb-font-family);
@@ -77,7 +77,7 @@
 }
 
 .navBar.collapsed {
-  width: var(--nb-width-collapsed);
+  width: var(--sidebar-width, var(--nb-width-collapsed));
 }
 
 .navBar * {
@@ -97,29 +97,42 @@
   text-decoration: none;
 }
 
+/* ==========================================================================
+   Updated: Navbar Contents - No padding
+   ========================================================================== */
+
 .navBar-contents {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
-  padding: var(--nb-space-4) var(--nb-space-3);
-  gap: var(--nb-space-2);
+  padding: 0; /* Removed all padding to allow borders to span full width */
+  gap: 0; /* Remove gap to let sections touch */
 }
 
 /* ==========================================================================
-   Header Section
+   Header Section - Full width border
    ========================================================================== */
 
 .navBar-header {
   display: flex;
   align-items: center;
   gap: var(--nb-space-3);
-  padding: var(--nb-space-2) var(--nb-space-2);
-  margin-bottom: var(--nb-space-4);
   border-bottom: 1px solid var(--nb-border);
-  padding-bottom: var(--nb-space-4);
+  padding: var(--nb-space-4) var(--nb-space-3); /* Padding only for content, border spans full width */
   min-height: 56px;
   position: relative;
+  flex-shrink: 0;
+}
+
+.nav-logo-wrapper {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-logo-icon {
@@ -177,6 +190,18 @@
 }
 
 /* ==========================================================================
+   Branch Name
+   ========================================================================== */
+
+.nav-branch-name {
+  padding: var(--nb-space-2) var(--nb-space-3);
+  font-size: 12px;
+  color: var(--nb-foreground-muted);
+  border-bottom: 1px solid var(--nb-border-subtle);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
    Navigation Links
    ========================================================================== */
 
@@ -184,7 +209,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 var(--nb-space-1);
+  padding: var(--nb-space-2) var(--nb-space-3); /* Padding only for content */
 }
 
 .navBar-links::-webkit-scrollbar {
@@ -264,7 +289,7 @@
   outline-offset: 2px;
 }
 
-/* Active state - Updated */
+/* Active state */
 .nav-active > .nav-link,
 .nav-active > .dropdown-trigger {
   color: var(--nb-foreground);
@@ -273,13 +298,11 @@
   width: 100%;
 }
 
-/* Remove the red line indicator */
 .nav-active > .nav-link::before,
 .nav-active > .dropdown-trigger::before {
   content: none;
 }
 
-/* Icon red when active */
 .nav-active > .nav-link i,
 .nav-active > .dropdown-trigger i {
   color: var(--nb-red);
@@ -422,16 +445,17 @@
 }
 
 /* ==========================================================================
-   Footer Section
+   Footer Section - Full width border
    ========================================================================== */
 
 .navBar-footer {
   display: flex;
   flex-direction: column;
   gap: var(--nb-space-1);
-  padding-top: var(--nb-space-3);
+  padding: var(--nb-space-3) var(--nb-space-3); /* Padding only for content, border spans full width */
   margin-top: auto;
   border-top: 1px solid var(--nb-border);
+  flex-shrink: 0;
 }
 
 .nav-footer-item {
@@ -504,6 +528,19 @@
    Collapsed State - Center Icons
    ========================================================================== */
 
+.navBar.collapsed .navBar-header {
+  padding: var(--nb-space-4) 0;
+  justify-content: center;
+}
+
+.navBar.collapsed .navBar-links {
+  padding: var(--nb-space-2) var(--nb-space-2);
+}
+
+.navBar.collapsed .navBar-footer {
+  padding: var(--nb-space-3) 0;
+}
+
 .navBar.collapsed .nav-link,
 .navBar.collapsed .dropdown-trigger,
 .navBar.collapsed .nav-footer-btn {
@@ -539,166 +576,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-/* ==========================================================================
-   Main Content Offset
-   ========================================================================== */
-
-/* Offset is handled by the app shell so it stays consistent in both states. */
-
-/* ==========================================================================
-   Accessibility
-   ========================================================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  .navBar * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
-}
-
-@media (prefers-contrast: high) {
-  .navBar {
-    border-right-width: 2px;
-  }
-
-  .nav-active > .nav-link,
-  .nav-active > .dropdown-trigger {
-    border-left: 3px solid var(--nb-red);
-    background-color: transparent;
-  }
-
-  .nav-active > .nav-link::before,
-  .nav-active > .dropdown-trigger::before {
-    content: none;
-  }
-
-  .dropdown-menu {
-    border-width: 2px;
-  }
-}
-
-:focus-visible {
-  outline: 2px solid var(--nb-red);
-  outline-offset: 2px;
-}
-
-/* ==========================================================================
-   Mobile Responsiveness
-   ========================================================================== */
-
-@media (max-width: 899px) {
-  .navBar {
-    width: var(--nb-width-collapsed);
-    transform: translateX(0);
-  }
-
-  .navBar.collapsed {
-    width: var(--nb-width-collapsed);
-  }
-
-  .nav-brand-name {
-    display: none;
-  }
-
-  .nav-label {
-    display: none;
-  }
-
-  .collapse-toggle {
-    display: none;
-  }
-
-  .navBar-header {
-    justify-content: center;
-    padding: var(--nb-space-2) 0;
-  }
-
-  .nav-link,
-  .dropdown-trigger,
-  .nav-footer-btn {
-    justify-content: center;
-    padding: 0;
-    gap: 0;
-  }
-
-  .nav-link i,
-  .dropdown-trigger i,
-  .nav-footer-btn i {
-    font-size: 20px;
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-  }
-
-  .dropdown-caret {
-    display: none;
-  }
-
-  .dropdown-menu {
-    position: fixed;
-    left: var(--nb-width-collapsed);
-    top: 50%;
-    transform: translateY(-50%);
-    min-width: 200px;
-    max-width: 280px;
-    box-shadow: var(--nb-shadow-lg);
-    margin: 0;
-    border-radius: var(--nb-radius);
-  }
-
-  .dropdown-open .dropdown-menu {
-    animation: dropdownSlideInMobile 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  @keyframes dropdownSlideInMobile {
-    from {
-      opacity: 0;
-      transform: translateY(-50%) translateX(-8px) scale(0.98);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(-50%) translateX(0) scale(1);
-    }
-  }
-
-  .dropdown-items {
-    padding: var(--nb-space-1);
-  }
-
-  .main-content {
-    margin-left: var(--nb-width-collapsed);
-  }
-
-  /* Mobile active state */
-  .nav-active > .nav-link,
-  .nav-active > .dropdown-trigger {
-    background-color: var(--nb-red-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    width: 100%;
-  }
-
-  .nav-active > .nav-link i,
-  .nav-active > .dropdown-trigger i {
-    color: var(--nb-red);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Remove the red line indicator on mobile */
-  .nav-active > .nav-link::before,
-  .nav-active > .dropdown-trigger::before {
-    content: none;
-  }
 }
 
 /* ==========================================================================
@@ -839,5 +716,172 @@
     opacity: 1;
     transform: none;
     filter: none;
+  }
+}
+
+/* ==========================================================================
+   Main Content Offset
+   ========================================================================== */
+
+/* Offset is handled by the app shell so it stays consistent in both states. */
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .navBar * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .navBar {
+    border-right-width: 2px;
+  }
+
+  .nav-active > .nav-link,
+  .nav-active > .dropdown-trigger {
+    border-left: 3px solid var(--nb-red);
+    background-color: transparent;
+  }
+
+  .nav-active > .nav-link::before,
+  .nav-active > .dropdown-trigger::before {
+    content: none;
+  }
+
+  .dropdown-menu {
+    border-width: 2px;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--nb-red);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Mobile Responsiveness
+   ========================================================================== */
+
+@media (max-width: 899px) {
+  .navBar {
+    width: var(--nb-width-collapsed);
+    transform: translateX(0);
+  }
+
+  .navBar.collapsed {
+    width: var(--nb-width-collapsed);
+  }
+
+  .nav-brand-name {
+    display: none;
+  }
+
+  .nav-label {
+    display: none;
+  }
+
+  .collapse-toggle {
+    display: none;
+  }
+
+  .navBar-header {
+    justify-content: center;
+    padding: var(--nb-space-4) 0;
+  }
+
+  .navBar-links {
+    padding: var(--nb-space-2) 0;
+  }
+
+  .navBar-footer {
+    padding: var(--nb-space-3) 0;
+  }
+
+  .nav-link,
+  .dropdown-trigger,
+  .nav-footer-btn {
+    justify-content: center;
+    padding: 0;
+    gap: 0;
+  }
+
+  .nav-link i,
+  .dropdown-trigger i,
+  .nav-footer-btn i {
+    font-size: 20px;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+
+  .dropdown-caret {
+    display: none;
+  }
+
+  .dropdown-menu {
+    position: fixed;
+    left: var(--nb-width-collapsed);
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 200px;
+    max-width: 280px;
+    box-shadow: var(--nb-shadow-lg);
+    margin: 0;
+    border-radius: var(--nb-radius);
+  }
+
+  .dropdown-open .dropdown-menu {
+    animation: dropdownSlideInMobile 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes dropdownSlideInMobile {
+    from {
+      opacity: 0;
+      transform: translateY(-50%) translateX(-8px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0) scale(1);
+    }
+  }
+
+  .dropdown-items {
+    padding: var(--nb-space-1);
+  }
+
+  .main-content {
+    margin-left: var(--nb-width-collapsed);
+  }
+
+  /* Mobile active state */
+  .nav-active > .nav-link,
+  .nav-active > .dropdown-trigger {
+    background-color: var(--nb-red-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 100%;
+  }
+
+  .nav-active > .nav-link i,
+  .nav-active > .dropdown-trigger i {
+    color: var(--nb-red);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-active > .nav-link::before,
+  .nav-active > .dropdown-trigger::before {
+    content: none;
   }
 }
