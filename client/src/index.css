@@ -21,7 +21,7 @@
   font-family: 'Inter Regular', 'Inter Bold', 'Inter Extra Bold';
 
   color: #1E1E1E;
-  background-color: #F0F0F0;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -43,7 +43,7 @@
 }
 
 body {
-  background-color: #F0F0F0;
+  background-color: #ffffff;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
