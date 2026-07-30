@@ -850,7 +850,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                   <div className="customer-name-row">
                     <div className="w-full">
                       <div className="input-with-icon">
-                        <i className="bi-search input-icon"></i>
+                        <i className="bi-person input-icon"></i>
 
                         <Input
                           value={name}
@@ -877,7 +877,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                     <span className="active-shoe-badge">Shoe #{activeShoeIndex + 1}</span>
                   </div>
                   <div className="input-with-icon">
-                        <i className="bi-search input-icon"></i>
+                        <i className="bi-tag input-icon"></i>
 
                         <Input
                           value={name}
@@ -902,7 +902,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                     <span>Use custom date</span>
                   </div>
                   <div className="input-with-icon">
-                        <i className="bi-search input-icon"></i>
+                        <i className="bi-calendar2 input-icon"></i>
                         <Input
                           type="date"
                           disabled={!useCustomDate}
