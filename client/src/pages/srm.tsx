@@ -880,8 +880,8 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                         <i className="bi-tag input-icon"></i>
 
                         <Input
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
+                          value={activeShoe?.model || ''}
+                          onChange={(e) => handleShoeChange(activeShoeIndex, 'model', e.target.value)}
                           placeholder="Enter Shoe Model"
                         />
                       </div>
@@ -912,7 +912,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                       </div>
                 </div>
 
-                <div className="rush-row">
+                <div className="srm-top-strip rush-row">
                   <button
                     type="button"
                     className={`rush-toggle ${activeShoe.rush === 'yes' ? 'active' : ''}`}
@@ -962,7 +962,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                   onClick={addShoe}
                   aria-label="Add another shoe"
                 >
-                  <Plus className="h-5 w-5" aria-hidden="true" />
+                  <i className="bi-plus"></i>
                 </button>
               </div>
 
@@ -1068,17 +1068,24 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
       <div className="srm-summary">
         <Card className="srm-summary-card">
           <CardContent className="pt-6 srm-summary-content">
-            <h1>Request Summary</h1>
+            <div className="srm-summary-header">
+            <h1>Current Ticket</h1>
+                {/* Customer Info */}
+                <div className="summary-grid rounded-xl">
+                  <div className="summary-customer-info">
+                    <p className="customer-name">{name || 'Customer Name'}</p>
+                    <p className="customer-id">
+                      {customerId === 'NEW' ? 'New Customer' : `#${customerId}`}
+                    </p>
+                  </div>
+                  <div>
+                    <i className="bi-chevron-right"></i>
+                  </div>
+              </div>
+             </div>
             <hr className="section-divider" />
             <div className="srm-summary-body">
-              <div className="summary-grid">
-                <p className="bold">Customer ID</p>
-                <p className="text-right">
-                  {customerId === 'NEW' ? 'NEW' : `#${customerId}`}
-                </p>
-                <p className="bold">Customer Name</p>
-                <p className="text-right">{name || '-'}</p>
-              </div>
+              
 
               <div className="summary-date-row">
                 <p className="bold">Service Request</p>
@@ -1089,14 +1096,18 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
               <div className="summary-service-list">
                 {shoes.map((shoe, i) => (
                   <div className="summary-service-entry mb-5" key={i}>
-                    <p className="font-medium">{shoe.model || 'Unnamed Shoe'}</p>
+                    <p className="font-medium shoe-name">{shoe.model || 'Unnamed Shoe'}</p>
 
+                    <div className="summary-list">
                     {shoe.services.map((srvId) => {
                       const svc = serviceById.get(srvId);
                       return (
-                        <div key={srvId} className="pl-10 flex justify-between">
-                          <p>{svc ? svc.service_name : srvId}</p>
-                          <p className="text-right">{formatCurrency(svc ? svc.service_base_price : 0)}</p>
+                        <div key={srvId} className="pl-5 flex justify-between">
+                          <div>
+                            <p className="service-name">{svc ? svc.service_name : srvId}</p>
+                            <p className="service-type">SERVICE</p>
+                          </div>
+                          <p className="text-right service-price">{formatCurrency(svc ? svc.service_base_price : 0)}</p>
                         </div>
                       );
                     })}
@@ -1104,21 +1115,24 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                     {Object.entries(shoe.additionals).map(([addId, qty]) => {
                       const addon = serviceById.get(addId);
                       return (
-                        <div key={`${addId}-${i}`} className="pl-10 flex justify-between">
-                          <p>{addon ? addon.service_name : addId} {qty > 1 ? ` x${qty}` : ''}</p>
-                          <p className="text-right">{formatCurrency((addon ? addon.service_base_price : 0) * qty)}</p>
+                        <div key={`${addId}-${i}`} className="pl-5 flex justify-between">
+                          <div>
+                            <p className="service-name">{addon ? addon.service_name : addId} {qty > 1 ? ` x${qty}` : ''}</p>
+                            <p className="service-type">ADD ONS</p>
+                          </div>
+                          <p className="text-right service-price">{formatCurrency((addon ? addon.service_base_price : 0) * qty)}</p>
                         </div>
                       );
                     })}
-
+                    
                     {shoe.rush === 'yes' && (
-                      <div className="pl-10 flex justify-between text-red-600">
-                        <p>Rush Service</p>
-                        <p className="text-right">{formatCurrency(RUSH_FEE)}</p>
+                      <div className="pl-5 flex justify-between text-red-600">
+                        <p className="service-name">Rush Service</p>
+                        <p className="text-right service-price">{formatCurrency(RUSH_FEE)}</p>
                       </div>
                     )}
-                    
-                    <hr className="total" />
+                    </div>
+                    <hr className="section-divider" />
                     {/* Per-shoe subtotal */}
                     <div className="pl-10 flex justify-between mt-2">
                       <p className="bold">Subtotal</p>
@@ -1133,8 +1147,12 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                       <p className="text-right bold">{perShoeEstimatedDates[i]}</p>
                     </div>
                   </div>
+
+                  
+
                 ))}
               </div>
+              
 
               {applyDiscount && (
                 <div className="summary-discount-row">
@@ -1142,22 +1160,17 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                   <p>({formatCurrency(discountAmount)})</p>
                 </div>
               )}
-              <div className="summary-discount-row">
-                <p className="bold">Payment</p>
-                <p>({formatCurrency(amountDueNow)})</p>
-              </div>
             </div>
 
-            <hr className="section-divider" />
             <div className="summary-footer">
               <div className="summary-balance-row">
-                <h2>Balance:</h2>
+                <p>Total Amount Due:</p>
                 {/* Since Amount Due / Payments not implemented yet, show total sales as current balance */}
-                <h2>{formatCurrency(balance)}</h2>
+                <h2>{formatCurrency(amountDueNow)}</h2>
               </div>
                 <Button
                   disabled={submitting}
-                  className="w-full p-8 mt-4 button-lg bg-[#22C55E] hover:bg-[#1E9A50]"
+                  className="w-full p-8 mt-4 rounded-xl button-lg bg-[#DC2626] hover:bg-[#9e1c1c]"
                   onClick={() => setIsCheckoutModalOpen(true)}
                 >
                   Finalize Ticket
@@ -1385,6 +1398,11 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
 
                 <p>Change:</p>
                 <p className="text-right checkout-change-value">{formatCurrency(change)}</p>
+                <div className="text-right checkout-change-value">
+                  <p>Balance:</p>
+                  {/* Since Amount Due / Payments not implemented yet, show total sales as current balance */}
+                  <h2>{formatCurrency(balance)}</h2>
+              </div>
               </div>
 
               <Button
