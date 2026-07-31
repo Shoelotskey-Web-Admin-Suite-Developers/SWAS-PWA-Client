@@ -14,7 +14,7 @@ const navItems = [
 
 type OperationsNavProps = {
   onChange?: (index: number) => void;
-  visibleTabs?: number[]; // Add this prop
+  visibleTabs?: number[];
 };
 
 export default function OperationsNav({ onChange, visibleTabs }: OperationsNavProps) {
@@ -74,10 +74,12 @@ export default function OperationsNav({ onChange, visibleTabs }: OperationsNavPr
                   className={`card-item ${index === activeIndex ? "active" : ""}`}
                   onClick={() => handleClick(index)}
                 >
-                  <span className="nav-icon"><i className={`bi ${item.icon}`}></i></span>
+                  <span className="nav-icon">
+                    <i className={`bi ${item.icon}`}></i>
+                  </span>
                   <div className="nav-copy">
-                    <span className="nav-step">STEP {item.step}</span>
-                    <h6 className="regular">{item.label}</h6>
+                    <span className="nav-step extra-bold">STEP {item.step}</span>
+                    <h6 className="regular bold">{item.label}</h6>
                   </div>
                 </div>
                 {index < filteredNavItems.length - 1 && (

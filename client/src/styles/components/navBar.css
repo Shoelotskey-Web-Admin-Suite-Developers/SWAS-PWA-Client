@@ -160,12 +160,11 @@
   display: none;
   width: 32px;
   height: 32px;
-  height: auto;
   object-fit: contain;
 }
 
 /* ==========================================================================
-   Branch Name
+   Branch Name (Header)
    ========================================================================== */
 
 .nav-branch-name {
@@ -189,6 +188,13 @@
   font-weight: 700;
   font-size: 18px;
   color: var(--nb-foreground);
+}
+
+.nav-branch-name.hidden {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  flex: 0;
 }
 
 /* ==========================================================================
@@ -612,9 +618,148 @@
   outline-offset: 2px;
 }
 
-.logout-btn:hover {
+/* ==========================================================================
+   User Section with Avatar
+   ========================================================================== */
+
+.nav-footer-user {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  min-height: 48px;
+}
+
+/* Remove the old hover effect from nav-footer-user */
+.nav-footer-user:hover {
+  background-color: transparent;
+}
+
+/* ==========================================================================
+   User Info Container - Wraps avatar, branch name, and logout
+   ========================================================================== */
+
+.user-info-container {
+  display: flex;
+  align-items: center;
+  gap: var(--nb-space-3);
+  padding: var(--nb-space-2) var(--nb-space-3);
+  border-radius: var(--nb-radius);
+  width: 100%;
+  transition: all var(--nb-transition-fast);
+  background-color: transparent;
+}
+
+/* When expanded, add a subtle background */
+.user-info-container:not(.collapsed) {
+  background-color: var(--nb-background-subtle);
+  border: 1px solid var(--nb-border);
+}
+
+/* Hover effect when expanded */
+.user-info-container:not(.collapsed):hover {
+  background-color: var(--nb-background-hover);
+  border-color: var(--nb-border-strong);
+}
+
+/* When collapsed, remove padding and background */
+.user-info-container.collapsed {
+  padding: var(--nb-space-2);
+  background-color: transparent;
+  border: none;
+  justify-content: center;
+  gap: 0;
+}
+
+.user-info-container.collapsed .user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--nb-radius-sm);
+}
+
+.user-info-container.collapsed .footer-branch-name {
+  display: none;
+}
+
+.user-info-container.collapsed .logout-btn {
+  display: none;
+}
+
+/* Avatar - Square with rounded corners */
+.user-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--nb-radius); /* Square with rounded corners */
+  overflow: hidden;
+  border: 2px solid var(--nb-border);
+  transition: all var(--nb-transition-fast);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Footer branch name - now using nav-label styling */
+.nav-footer-user .footer-branch-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--nb-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity var(--nb-transition-fast), width var(--nb-transition-fast);
+  flex: 1;
+}
+
+.nav-footer-user .footer-branch-name.hidden {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  flex: 0;
+}
+
+/* Logout button in footer */
+.nav-footer-user .logout-btn {
+  flex-shrink: 0;
+  width: auto;
+  padding: 0 var(--nb-space-2);
+  gap: var(--nb-space-2);
   color: var(--nb-red);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  border-radius: var(--nb-radius);
+  transition: all var(--nb-transition-fast);
+  outline: none;
+}
+
+.nav-footer-user .logout-btn:hover {
   background-color: var(--nb-red-soft);
+  color: var(--nb-red-hover);
+}
+
+.nav-footer-user .logout-btn:focus-visible {
+  outline: 2px solid var(--nb-red);
+  outline-offset: 2px;
+}
+
+.nav-footer-user .logout-btn .nav-label {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.nav-footer-user .logout-btn .nav-label.hidden {
+  display: none;
 }
 
 /* ==========================================================================
@@ -678,6 +823,34 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Collapsed Footer User Section - Updated for container */
+.navBar.collapsed .nav-footer-user {
+  justify-content: center;
+  padding: 0;
+}
+
+.navBar.collapsed .user-info-container {
+  padding: var(--nb-space-2);
+  background-color: transparent;
+  border: none;
+  justify-content: center;
+  gap: 0;
+}
+
+.navBar.collapsed .user-info-container .user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--nb-radius-sm);
+}
+
+.navBar.collapsed .user-info-container .footer-branch-name {
+  display: none;
+}
+
+.navBar.collapsed .user-info-container .logout-btn {
+  display: none;
 }
 
 /* ==========================================================================
@@ -848,6 +1021,11 @@
 
   .navBar.mobile-open .nav-branch-name {
     display: block;
+    flex: 1;
+  }
+
+  .navBar.mobile-open .nav-branch-name.hidden {
+    display: none;
   }
 
   .navBar.mobile-open .navBar-header {
@@ -897,6 +1075,39 @@
 
   .navBar.mobile-open .dropdown-caret {
     display: inline-block;
+  }
+
+  /* Mobile Footer User Section - Updated for container */
+  .navBar.mobile-open .nav-footer-user {
+    padding: 0;
+  }
+
+  .navBar.mobile-open .user-info-container {
+    background-color: var(--nb-background-subtle);
+    border: 1px solid var(--nb-border);
+    padding: var(--nb-space-2) var(--nb-space-3);
+    justify-content: flex-start;
+    gap: var(--nb-space-3);
+  }
+
+  .navBar.mobile-open .user-info-container .user-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: var(--nb-radius) !important;
+  }
+
+  .navBar.mobile-open .user-info-container .footer-branch-name {
+    display: block !important;
+    flex: 1 !important;
+    opacity: 1 !important;
+  }
+
+  .navBar.mobile-open .user-info-container .footer-branch-name.hidden {
+    display: none !important;
+  }
+
+  .navBar.mobile-open .user-info-container .logout-btn {
+    display: flex !important;
   }
 
   /* Default collapsed state on mobile (hamburger visible only) */
@@ -970,6 +1181,10 @@
     display: block !important;
   }
 
+  .navBar .nav-branch-name.hidden {
+    display: none !important;
+  }
+
   /* Logo visibility on desktop */
   .navBar .nav-logo-icon {
     display: block !important;
@@ -985,6 +1200,40 @@
 
   .navBar.collapsed .nav-logo-favicon {
     display: block !important;
+  }
+
+  /* Footer user section on desktop - Updated for container */
+  .navBar .nav-footer-user {
+    display: flex !important;
+  }
+
+  .navBar .user-info-container:not(.collapsed) {
+    background-color: var(--nb-background-subtle);
+    border: 1px solid var(--nb-border);
+  }
+
+  .navBar.collapsed .user-info-container {
+    padding: var(--nb-space-2);
+    background-color: transparent;
+    border: none;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .navBar.collapsed .user-info-container .footer-branch-name {
+    display: none !important;
+  }
+
+  .navBar.collapsed .user-info-container .logout-btn {
+    display: none !important;
+  }
+
+  .navBar .user-info-container .footer-branch-name {
+    display: block !important;
+  }
+
+  .navBar .user-info-container .logout-btn {
+    display: flex !important;
   }
 }
 

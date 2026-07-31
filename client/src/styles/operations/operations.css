@@ -1,17 +1,23 @@
-
-/* operations.tsx CSS styles */
+/* operations.css */
 
 .main-div {
   width: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 80vh;
-  
+  height: calc(100vh - 96px);
+  max-height: calc(100vh - 96px);
+  overflow: hidden;
+}
+
+/* When admin-upper is hidden, remove extra spacing */
+.main-div.no-admin .main-content {
+  margin-top: 0;
 }
 
 .admin-upper {
   width: 100%;
   flex: 0 0 auto;
+  margin-bottom: 4px;
 }
 
 .main-content {
@@ -20,29 +26,27 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  margin-top: 12px;
+  margin-top: 8px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .main-card {
   display: flex;
   flex-direction: column;
-  margin-top: 0;
-  height: 100%;
   width: 100%;
   max-width: 100%;
   padding: 0;
   border-radius: 26px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.05);
+  border: 1px solid #c7c7c7c7;
+  height: 100%;
+  min-height: 0;
 }
 
 @media (max-width: 1088px) {
   .main-card {
-    width: 100%;
-    margin-top: 0;
-    padding: 0;
-    @apply rounded-xl;
+    border-radius: 12px;
   }
 }
 
@@ -50,7 +54,9 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .operations-nav-card {
@@ -61,30 +67,49 @@
   border-bottom: 1px solid #d9e1ea;
   border-radius: 0;
   box-shadow: none;
+  flex: 0 0 auto;
 }
 
 .operations-nav-content {
-  padding: 8px 10px;
+  padding: 6px 10px;
 }
 
 .operations-tab-content {
   width: 100%;
-  padding: 0 18px 18px;
+  padding: 0 18px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
 }
 
 .operations-content {
   width: 100%;
 }
 
-/* Service Queue CSS (Temporarily specific for now) */
-/* OPs Tables */
-
 /* Container */
 .op-container {
   flex: 1;
   min-height: 0;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Table wrapper */
+.op-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  height: 100%;
 }
 
 /* Table */
@@ -92,27 +117,45 @@
   width: 100%;
   border-collapse: collapse;
   font-family: Arial, sans-serif;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* Header */
 .op-header {
   background-color: #ffffff;
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .op-header-row th {
   border-bottom: none;
-  padding: 8px 12px;
-  text-align: center;
+  padding: 6px 10px;
+  text-align: left; /* Changed from center to left */
   font-weight: bold;
   color: #000000;
+  font-size: 12px;
+}
+
+/* Right align specific header columns */
+.op-head-mod{
+  text-align: right !important;
 }
 
 /* Body Rows */
 .op-body-row td {
   border-bottom: 1px solid #C7C7C7;
-  padding: 8px 12px;
+  padding: 6px 10px;
   color: #444;
+  font-size: 13px;
+  text-align: left; /* Added left alignment for all body cells */
+}
+
+/* Right align specific body columns */
+.op-body-mod,
+.op-pu-body-mod {
+  text-align: right !important;
 }
 
 .op-body-row {
@@ -120,7 +163,7 @@
 }
 
 .op-body-row.selected {
-  background-color: #fafafa !important; /* light blue highlight */
+  background-color: #fafafa !important;
 }
 
 .op-body-row:hover {
@@ -129,13 +172,13 @@
 
 .op-btn {
   color: white;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 12px;
 }
 
-/* Buttons */
 /* Buttons - Unified Red */
 .op-btn-sq,
 .op-btn-rd,
@@ -152,17 +195,36 @@
 .op-btn-wh:hover,
 .op-btn-rb:hover,
 .op-btn-is:hover {
-  background-color: #e04a4a; /* lighter version of #CE1616 */
+  background-color: #e04a4a;
 }
-
 
 /* Make table body scrollable */
 .op-body {
   display: block;
   flex: 1;
-  max-height: calc(100vh - var(--fillheight, 0px)); /* set desired height */
-  overflow-y: scroll; /* always scrollable */
-  scrollbar-width: none; /* Firefox */
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c7c7c7 transparent;
+  min-height: 0;
+  max-height: calc(100% - 40px);
+}
+
+/* Custom scrollbar styling for Chrome/Safari */
+.op-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.op-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.op-body::-webkit-scrollbar-thumb {
+  background-color: #c7c7c7;
+  border-radius: 3px;
+}
+
+.op-body::-webkit-scrollbar-thumb:hover {
+  background-color: #a0a0a0;
 }
 
 /* Keep header aligned with body */
@@ -170,31 +232,26 @@
 .op-header-row {
   display: table;
   width: 100%;
+  table-layout: fixed;
 }
 
 /* Ensure body rows align with header */
 .op-body-row {
   display: table;
   width: 100%;
-  user-select: none; /* Prevents text from being highlighted */
-  cursor: pointer;   /* Optional: makes it feel clickable */
+  user-select: none;
+  cursor: pointer;
+  table-layout: fixed;
 }
 
-.op-header,
-.op-header-row,
-.op-body-row {
-  display: table;
-  width: 100%;
-  table-layout: auto; /* restore natural auto sizing */
-}
-
+/* Column widths - Service Queue & others */
 .op-head-action, .op-body-action { width: 3%; }      
-.op-head-transact, .op-body-transact { width: 11%; }
+.op-head-transact, .op-body-transact { width: 16%; }
 .op-head-date, .op-body-date { width: 6%; }
-.op-head-customer, .op-body-customer { width: 16%; }
+.op-head-customer, .op-body-customer { width: 11%; }
 .op-head-shoe, .op-body-shoe { width: 15%; }
-.op-head-service, .op-body-service { width: 10%; }
-.op-head-branch, .op-body-branch { width: 16%; }
+.op-head-service, .op-body-service { width: 16%; }
+.op-head-branch, .op-body-branch { width: 10%; }
 .op-head-location, .op-body-location { width: 6%; }
 .op-head-status, .op-body-status { width: 6%; }
 .op-head-rush, .op-body-rush { width: 7%; }
@@ -203,10 +260,9 @@
 .op-head-chevron, .op-body-dropdown-toggle { width: 1%; }            
 
 /* Classes for Ready for Pickup */
-
-.op-pu-head-transact, .op-pu-body-transact { width: 12%; }
+.op-pu-head-transact, .op-pu-body-transact { width: 14%; }
 .op-pu-head-date, .op-pu-body-date { width: 8%; }
-.op-pu-head-customer, .op-pu-body-customer { width: 12%; }
+.op-pu-head-customer, .op-pu-body-customer { width: 10%; }
 .op-pu-head-shoe, .op-pu-body-shoe { width: 12%; }
 .op-pu-head-service, .op-pu-body-service { width: 10%; }
 .op-pu-head-branch, .op-pu-body-branch { width: 10%; }
@@ -214,7 +270,6 @@
 .op-pu-head-payment-status, .op-pu-body-payment-status { width: 10%; }
 .op-pu-head-contact, .op-pu-body-contact { width: 13%; }
 .op-pu-head-chevron, .op-pu-body-dropdown-toggle { width: 1%; }
-
 
 .op-body-dropdown-toggle button {
   width: -10px;
@@ -228,6 +283,7 @@
   margin-right: -30px;
 }      
 
+/* Status colors */
 .op-status-sq {
   color: #FF5E5E !important;
 }
@@ -256,15 +312,26 @@
   display: flex;
   align-items: center;
   justify-content: end;
-  margin-top: 15px;
+  margin-top: 10px;
   margin-right: auto;
-  margin-bottom: -10px;
+  flex: 0 0 auto;
+  padding-bottom: 4px;
+  min-height: 40px;
 }
 
 .op-below-container p {
   margin-right: 10px;
+  font-size: 13px;
 }
 
+/* Search/Filter area - add this class to your filter component */
+.op-search-filters {
+  flex: 0 0 auto;
+  padding: 8px 0;
+  margin-bottom: 4px;
+}
+
+/* Responsive design */
 @media (max-width: 1312px) {
   .op-head-location, .op-body-location, .op-head-status, .op-body-status {
     display: none;
@@ -285,7 +352,6 @@
   .op-head-due, .op-body-due { width: 7%; }            
   .op-head-mod, .op-body-mod { width: 7%; }         
   .op-head-chevron, .op-body-dropdown-toggle { width: 1%; }             
-
 }
 
 @media (max-width: 1124px) {
@@ -305,7 +371,6 @@
   .op-head-rush, .op-body-rush { width: 10%; }
   .op-head-due, .op-body-due { width: 10%; }                 
   .op-head-chevron, .op-body-dropdown-toggle { width: 1%; } 
-
 }
 
 @media (max-width: 899px) {
@@ -317,17 +382,16 @@
   .op-head-service, .op-body-service { width: 32%; }
   .op-head-branch, .op-body-branch { width: 30%; }           
   .op-head-chevron, .op-body-dropdown-toggle { width: 6%; } 
-
 }
 
 /* Dropdown card style */
 .op-dropdown-card {
   display: grid;
   grid-template-columns: 120px 1fr;
-  gap: 6px 12px;
-  padding: 12px 16px;
+  gap: 4px 12px;
+  padding: 10px 16px;
   background: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   text-align: left;
 }
 
@@ -363,8 +427,8 @@
 /* Chevron button */
 .chevron-btn {
   background: none;
-  font-size: 20px;
-  margin: -10px 0px;
+  font-size: 18px;
+  margin: -8px 0px;
   border: none;
   cursor: pointer;
   transition: transform 0.2s ease;
@@ -382,4 +446,87 @@
 .op-body-dropdown-row td {
   padding: 4px 0;
   background: #fafafa;
+}
+
+/* Additional utility classes for empty state */
+.op-empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 150px;
+  color: #888;
+  font-size: 14px;
+}
+
+/* Loading state */
+.op-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 150px;
+}
+
+/* Fix for the header to stay fixed when scrolling */
+.op-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #ffffff;
+}
+
+/* Ensure proper spacing in the dropdown */
+.op-body-dropdown-row td {
+  padding: 0 !important;
+}
+
+.op-body-dropdown-row td > div {
+  padding: 10px 16px;
+}
+
+/* Fix for the action buttons column */
+.op-body-action {
+  text-align: center;
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 768px) {
+  .main-div {
+    height: calc(100vh - 60px);
+    max-height: calc(100vh - 60px);
+    padding: 0 8px;
+  }
+  
+  .op-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  .op-body-row td {
+    padding: 5px 6px;
+    font-size: 12px;
+  }
+  
+  .op-header-row th {
+    padding: 5px 6px;
+    font-size: 11px;
+  }
+  
+  .operations-tab-content {
+    padding: 0 10px 8px;
+  }
+  
+  .op-body {
+    max-height: calc(100% - 35px);
+  }
+  
+  .op-below-container {
+    min-height: 35px;
+    padding-bottom: 2px;
+  }
+  
+  .op-search-filters {
+    padding: 4px 0;
+  }
 }

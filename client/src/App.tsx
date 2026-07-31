@@ -55,7 +55,7 @@ function App() {
     setIsNavCollapsed(prev => !prev)
   }
 
-  // ───────────── PAGES MAP (no JSX.Element typing) ─────────────
+  // ───────────── PAGES MAP ─────────────
   const pages = {
     serviceRequest: <SRM />,
     operations: <Operations />,
@@ -98,10 +98,9 @@ function App() {
         position="top-center"
         richColors
         toastOptions={{
-          style: { top: '60px' } // keep toasts clear of the navbar
+          style: { top: '60px' }
         }}
       />
-
     </div>
   )
 }

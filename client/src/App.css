@@ -1,52 +1,62 @@
+/* Reset and base styles */
 body,
 #root {
   width: 100%;
-  min-height: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
+/* App Shell - Full viewport with no overflow */
 .app-shell {
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
   width: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   --sidebar-width: var(--nb-width-collapsed);
 }
 
+/* Fixed navbar container */
 .app-nav {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 30;
+  height: 100vh;
 }
 
+/* Content shell - fills viewport and handles scrolling */
 .app-content-shell {
   position: relative;
   margin-left: var(--nb-width-collapsed);
   width: calc(100% - var(--nb-width-collapsed));
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  scroll-behavior: smooth;
 }
 
-@media (max-width: 899px) {
-  .app-content-shell {
-    margin-left: 0;
-    width: 100%;
-  }
-
-  .pageHeader {
-    position: fixed;
-    left: 0 !important;
-    right: auto !important;
-    width: 100% !important;
-    min-width: auto !important;
-    max-width: none !important;
-    padding-left: 72px !important;
-    padding-right: 24px;
-    flex-shrink: 0;
-  }
+/* Scrollbar styling for better UX */
+.app-content-shell::-webkit-scrollbar {
+  width: 6px;
 }
 
+.app-content-shell::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-content-shell::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.app-content-shell::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Padding variants for header */
 .app-content-shell--flow {
   padding-top: 72px;
 }
@@ -55,6 +65,16 @@ body,
   padding-top: 0;
 }
 
+/* Main content area */
+.app-main-content {
+  min-height: calc(100vh - 72px);
+  width: 100%;
+  padding: 0 24px 24px 24px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Page Header - Fixed position within content shell */
 .pageHeader {
   position: fixed;
   top: 0;
@@ -71,6 +91,7 @@ body,
   z-index: 25;
 }
 
+/* Special handling for service request page */
 .pageHeader--serviceRequest {
   right: 0;
 }
@@ -81,6 +102,7 @@ body,
   }
 }
 
+/* Header brand/logo styles */
 .pageHeader-brand {
   width: 44px;
   height: 44px;
@@ -143,9 +165,48 @@ body,
   justify-content: center;
 }
 
-.app-main-content {
-  min-height: calc(100vh - 72px);
-  overflow-x: hidden;
-  overflow-y: auto;
-  box-sizing: border-box;
+/* Mobile responsive styles */
+@media (max-width: 899px) {
+  .app-content-shell {
+    margin-left: 0;
+    width: 100%;
+    height: 100vh;
+  }
+
+  .app-content-shell--flow {
+    padding-top: 72px;
+  }
+
+  .pageHeader {
+    left: 0 !important;
+    right: auto !important;
+    width: 100% !important;
+    min-width: auto !important;
+    max-width: none !important;
+    padding-left: 72px !important;
+    padding-right: 24px;
+    flex-shrink: 0;
+  }
+
+  .app-main-content {
+    padding: 0 16px 24px 16px;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 900px) and (max-width: 1024px) {
+  .app-main-content {
+    padding: 0 20px 24px 20px;
+  }
+}
+
+/* Fix for pages that need full-width content (like SRM) */
+.app-content-shell--overlay .app-main-content {
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Ensure content doesn't get cut off at bottom */
+.app-content-shell--flow .app-main-content:last-child {
+  margin-bottom: 0;
 }

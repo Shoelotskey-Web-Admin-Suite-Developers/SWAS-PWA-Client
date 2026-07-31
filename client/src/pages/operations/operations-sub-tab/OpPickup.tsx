@@ -521,7 +521,7 @@ export default function OpPickup() {
                           <div><h5 className="label">Service</h5> <h5 className="name">{row.service}</h5></div>
                         )}
                         {hiddenColumns.includes("Branch") && (
-                          <div><h5 className="label">Branch</h5> <h5 className="name">{row.branch}</h5></div>
+                          <div><h5 className="label">Branch</h5> <h5 className="name bold">{row.branch}</h5></div>
                         )}
                         {hiddenColumns.includes("Contact") && (
                           <div><h5 className="label">Contact</h5> <h5 className="name">{row.contact}</h5></div>

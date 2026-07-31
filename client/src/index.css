@@ -151,6 +151,10 @@ select {
   font-family: 'Inter Regular';
 }
 
+.semi-bold{
+  font-family: 'Inter Semi Bold';
+}
+
 .bold {
   font-family: 'Inter Bold';
 }

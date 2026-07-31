@@ -6,7 +6,6 @@
 
 .op-branch-card-contents {
   margin: 0;
-  padding: 0 10px;
   display: flex;
   justify-content: space-between;
   color: #333;
@@ -20,9 +19,10 @@
   flex: 1;
   padding: 12px 14px 10px;
   border-radius: 18px;
-  border: 1px solid #edf2f7;
+  border: 1px solid #c7c7c7c7;
   background: #ffffff;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0; /* Prevent overflow */
 }
 
 .branch-storage-stats:hover {
@@ -38,24 +38,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  gap: 8px;
 }
 
-.location-icon {
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: #fff1f1;
-  color: #ef4444;
-  font-size: 0.95rem;
-}
-
-.location-icon i {
-  -webkit-text-stroke: 0.65px currentColor;
-  font-weight: 900;
+.branch-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+  min-width: 0; /* Prevent overflow */
 }
 
 .location-title {
@@ -64,15 +56,17 @@
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  flex: 1;
-  margin-right: 10px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .branch-metric-row {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
 .stat-value {
@@ -87,6 +81,24 @@
   font-weight: 500;
   color: #64748b;
   padding-bottom: 1px;
+}
+
+.location-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #fff1f1;
+  color: #ef4444;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.location-icon i {
+  -webkit-text-stroke: 0.65px currentColor;
+  font-weight: 900;
 }
 
 .storage-row {
@@ -135,6 +147,7 @@
   background: linear-gradient(90deg, #111827, #111827);
 }
 
+/* Warehouse specific styles */
 .warehouse .location-icon {
   background: #111827;
   color: #ffffff;
@@ -150,32 +163,264 @@
   background: #111827;
 }
 
-/* Mobile styles */
-.mobile, .landscape-mobile {
-  display: none;
+/* ============================================ */
+/* BASE STYLES - Hidden by default */
+/* ============================================ */
+
+.mobile, 
+.landscape-mobile {
+  display: none !important;
 }
 
-.mobile-card {
-  color: #333;
-  width: 97%;
-  border-radius: 22px;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
-  overflow: hidden;
+/* PC/Tablet view - visible by default */
+.pc-tablet {
+  display: block;
 }
 
-.carousel {
-  margin: 15px;
-  padding: 10px 0;
+/* ============================================ */
+/* LANDSCAPE MOBILE CAROUSEL STYLES */
+/* ============================================ */
+
+@media (max-width: 899px) {
+  /* Hide PC/Tablet view */
+  .pc-tablet {
+    display: none !important;
+  }
+
+  /* Show landscape mobile carousel */
+  .landscape-mobile {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0 8px;
+    position: relative;
+  }
+
+  /* Hide mobile carousel on landscape */
+  .mobile {
+    display: none !important;
+  }
+
+  .landscape-mobile .carousel {
+    margin: 15px 0;
+    padding: 10px 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible !important;
+    position: relative;
+  }
+
+  .landscape-mobile .carousel .overflow-hidden {
+    overflow: visible !important;
+  }
+
+  .landscape-mobile [data-embla-carousel] {
+    overflow: visible !important;
+  }
+
+  .landscape-mobile .embla__viewport {
+    overflow: visible !important;
+  }
+
+  .landscape-mobile .carousel-content {
+    display: flex;
+    padding: 0 15px !important;
+    margin: 0 !important;
+    gap: 16px;
+  }
+
+  .landscape-mobile .carousel-item {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 5px;
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .landscape-mobile .carousel button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+  }
+
+  .landscape-mobile .carousel button:hover {
+    background: #f8fafc;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .landscape-mobile .carousel button:first-of-type {
+    left: -8px;
+  }
+
+  .landscape-mobile .carousel button:last-of-type {
+    right: -8px;
+  }
+
+  .landscape-mobile .branch-storage-stats {
+    padding: 10px 12px 8px;
+  }
 }
 
-.carousel-item {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  padding: 0 5px;
+/* ============================================ */
+/* MOBILE CAROUSEL STYLES (Portrait) */
+/* ============================================ */
+
+@media (max-width: 465px) {
+  /* Hide landscape mobile */
+  .landscape-mobile {
+    display: none !important;
+  }
+
+  /* Show mobile carousel */
+  .mobile {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0 8px;
+  }
+
+  .mobile .carousel {
+    margin: 15px 0;
+    padding: 10px 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible !important;
+  }
+
+  .mobile .carousel .overflow-hidden {
+    overflow: visible !important;
+  }
+
+  .mobile [data-embla-carousel] {
+    overflow: visible !important;
+  }
+
+  .mobile .embla__viewport {
+    overflow: visible !important;
+  }
+
+  .mobile .carousel-content {
+    display: flex;
+    padding: 0 10px !important;
+    margin: 0 !important;
+    gap: 12px;
+  }
+
+  .mobile .carousel-item {
+    display: flex;
+    justify-content: center;
+    padding: 0 5px;
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mobile .carousel button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border: 1px solid #e2e8f0;
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+  }
+
+  .mobile .carousel button:first-of-type {
+    left: -2px;
+  }
+
+  .mobile .carousel button:last-of-type {
+    right: -2px;
+  }
+
+  .branch-storage-stats {
+    padding: 10px 12px 8px;
+  }
+  
+  .location-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1.4rem;
+  }
 }
 
-/* Media queries */
+/* ============================================ */
+/* EXTRA SMALL SCREENS */
+/* ============================================ */
+
+@media (max-width: 380px) {
+  .location-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+  }
+  
+  .location-title {
+    font-size: 10px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .landscape-mobile {
+    padding: 0 4px;
+  }
+  
+  .landscape-mobile .carousel-content {
+    padding: 0 8px !important;
+  }
+  
+  .mobile {
+    padding: 0 4px;
+  }
+  
+  .mobile .carousel-content {
+    padding: 0 8px !important;
+  }
+}
+
+/* ============================================ */
+/* TABLET AND DESKTOP - Ensure carousels are hidden */
+/* ============================================ */
+
+@media (min-width: 900px) {
+  .landscape-mobile,
+  .mobile {
+    display: none !important;
+  }
+  
+  .pc-tablet {
+    display: block !important;
+  }
+}
+
+/* ============================================ */
+/* RESPONSIVE ADJUSTMENTS FOR TABLET */
+/* ============================================ */
+
+@media (min-width: 466px) and (max-width: 899px) {
+  .landscape-mobile .carousel-content {
+    padding: 0 20px !important;
+  }
+  
+  .landscape-mobile .carousel-item {
+    gap: 16px;
+  }
+}
+
 @media (max-width: 1088px) {
   .stat-value {
     font-size: 22px;
@@ -188,34 +433,10 @@
   .branch-storage-stats {
     padding: 10px 12px 8px;
   }
-}
-
-@media (max-width: 899px) {
-  .landscape-mobile {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .pc-tablet {
-    display: none;
-  }
-}
-
-@media (max-width: 465px) {
-  .mobile {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .pc-tablet, .landscape-mobile {
-    display: none;
-  }
   
-  .branch-storage-stats {
-    padding: 10px 12px 8px;
+  .location-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
   }
 }

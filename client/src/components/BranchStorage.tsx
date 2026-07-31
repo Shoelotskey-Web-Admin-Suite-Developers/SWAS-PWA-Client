@@ -122,16 +122,18 @@ export default function BranchStorage() {
   const renderBranchStats = (branch: BranchData) => (
     <div className='branch-storage-stats' key={branch.branchId}>
       <div className='branch-header'>
-        <h4 className='location-title'>{branch.name}</h4>
+        <div className='branch-info'>
+          <h4 className='location-title extra-bold'>{branch.name}</h4>
+          <div className='branch-metric-row'>
+            <span className='stat-value bold'>{loading ? "..." : branch.shoeCount}</span>
+            <span className='shoe-unit semi-bold'>Shoes</span>
+          </div>
+        </div>
         <span className="location-icon"><i className="bi bi-shop-window"></i></span>
       </div>
-      <div className='branch-metric-row'>
-        <span className='stat-value'>{loading ? "..." : branch.shoeCount}</span>
-        <span className='shoe-unit'>Shoes</span>
-      </div>
       <div className='storage-row'>
-        <span className='stat-label'>Storage Left</span>
-        <span className='storage-percent'>{loading ? "..." : `${branch.storageFilled}%`}</span>
+        <span className='stat-label'>Storage Filled</span>
+        <span className='storage-percent bold'>{loading ? "..." : `${branch.storageFilled}%`}</span>
       </div>
       <div className='capacity-bar-container'>
         <div 
@@ -145,16 +147,18 @@ export default function BranchStorage() {
   const renderWarehouseStats = () => (
     <div className='branch-storage-stats warehouse'>
       <div className='branch-header'>
-        <h4 className='location-title'>Warehouse (Main)</h4>
+        <div className='branch-info'>
+          <h4 className='location-title extra-bold'>Warehouse (Main)</h4>
+          <div className='branch-metric-row'>
+            <span className='stat-value bold'>{loading ? "..." : warehouseData.shoeCount}</span>
+            <span className='shoe-unit semi-bold'>Shoes</span>
+          </div>
+        </div>
         <span className="location-icon warehouse-icon"><i className="bi bi-building-fill"></i></span>
       </div>
-      <div className='branch-metric-row'>
-        <span className='stat-value'>{loading ? "..." : warehouseData.shoeCount}</span>
-        <span className='shoe-unit'>Shoes</span>
-      </div>
       <div className='storage-row'>
-        <span className='stat-label'>Storage Left</span>
-        <span className='storage-percent'>{loading ? "..." : `${warehouseData.storageFilled}%`}</span>
+        <span className='stat-label'>Storage Filled</span>
+        <span className='storage-percent bold'>{loading ? "..." : `${warehouseData.storageFilled}%`}</span>
       </div>
       <div className='capacity-bar-container'>
         <div 
@@ -175,44 +179,36 @@ export default function BranchStorage() {
       </div>
 
       <div className='landscape-mobile'>
-        <Card className='mobile-card'>
-          <CardContent>
-            <Carousel className='carousel'>
-              <CarouselContent>
-                <CarouselItem className='carousel-item'>
-                  {branchData.slice(0, 2).map(renderBranchStats)}
-                </CarouselItem>
-                <CarouselItem className='carousel-item'>
-                  {renderBranchStats(branchData[2])}
-                  {renderWarehouseStats()}
-                </CarouselItem>
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          </CardContent>
-        </Card>
+        <Carousel className='carousel'>
+          <CarouselContent className='carousel-content'>
+            <CarouselItem className='carousel-item'>
+              {branchData.slice(0, 2).map(renderBranchStats)}
+            </CarouselItem>
+            <CarouselItem className='carousel-item'>
+              {renderBranchStats(branchData[2])}
+              {renderWarehouseStats()}
+            </CarouselItem>
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
       </div>
-      
+
       <div className='mobile'>
-        <Card className='mobile-card'>
-          <CardContent>
-            <Carousel className='carousel'>
-              <CarouselContent>
-                {branchData.map(branch => (
-                  <CarouselItem key={branch.branchId}>
-                    {renderBranchStats(branch)}
-                  </CarouselItem>
-                ))}
-                <CarouselItem>
-                  {renderWarehouseStats()}
-                </CarouselItem>
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          </CardContent>
-        </Card>
+        <Carousel className='carousel'>
+          <CarouselContent className='carousel-content'>
+            {branchData.map(branch => (
+              <CarouselItem className='carousel-item' key={branch.branchId}>
+                {renderBranchStats(branch)}
+              </CarouselItem>
+            ))}
+            <CarouselItem className='carousel-item'>
+              {renderWarehouseStats()}
+            </CarouselItem>
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
       </div>
     </div>
   );
