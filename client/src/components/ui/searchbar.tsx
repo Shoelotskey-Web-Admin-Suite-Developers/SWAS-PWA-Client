@@ -10,27 +10,24 @@ interface SearchBarProps {
 export function SearchBar({ value, onChange }: SearchBarProps) {
   return (
     <div className="relative w-full">
-      {/* Search Icon */}
-      <div className="absolute top-1/2 -translate-y-1/2 z-10 bg-gray-200 rounded-full p-2 h-10 w-10 flex items-center justify-center border border-black">
-        <Search className="text-gray-600 h-5 w-5" />
+      <div className="absolute left-3 top-1/2 z-10 flex -translate-y-1/2 items-center justify-center bg-white text-slate-500">
+        <Search className="h-5 w-5" />
       </div>
 
-      {/* Input */}
       <Input
         type="text"
-        placeholder="Search..."
-        value={value}            // <-- use parent's value
-        onChange={(e) => onChange(e.target.value)} // <-- report changes to parent
-        className="pl-12 pr-8"
+        placeholder="Receipt ID, Customer, Staff..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-12 rounded-xl border-[#d6dbe3] bg-white pl-14 pr-11 text-[15px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] placeholder:text-slate-400"
       />
 
-      {/* Clear Button */}
       {value && (
         <Button
           variant="unselected"
           size="icon"
-          onClick={() => onChange("")}  // <-- clear parent's value
-          className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 pl-2 pr-2 pt-0 pb-0"
+          onClick={() => onChange("")}
+          className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 rounded-full text-slate-500 hover:text-slate-800"
         >
           <X className="h-4 w-4" />
         </Button>
