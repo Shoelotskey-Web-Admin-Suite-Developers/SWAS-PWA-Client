@@ -538,7 +538,7 @@ html, body {
   border: 1px solid #C7C7C7;
   border-radius: 0.9rem;
   background: #fff;
-  padding: 0.65rem;
+  padding: 1.2rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -588,12 +588,20 @@ html, body {
 }
 
 .service-card-qty button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   border: 1px solid #d1d5db;
   border-radius: 0.35rem;
   background: #f3f4f6;
-  min-width: 1.45rem;
+
+  width: 1.45rem;
   height: 1.45rem;
+  padding: 0;
+  line-height: 1;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .service-card-qty span {
@@ -1099,7 +1107,7 @@ html.dark .add-shoe-modern:hover {
 }
 
 .summary-list {
-  border-left: 2px solid #DC2626;
+  border-left: 3px solid #FEE2E2;
 }
 
 @media (max-width: 1220px) {

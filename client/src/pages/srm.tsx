@@ -1027,7 +1027,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                           </div>
 
                           {checked && isAdditional && isLayer && (
-                            <div className="service-card-qty">
+                            <div className="service-card-qty" onClick={(e) => e.stopPropagation()}>
                               <button
                                 type="button"
                                 onClick={() =>
@@ -1087,16 +1087,11 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
             <div className="srm-summary-body">
               
 
-              <div className="summary-date-row">
-                <p className="bold">Service Request</p>
-                <p className="text-right">{serviceRequestDate}</p>
-              </div>
-
               {/* Services with actual prices */}
               <div className="summary-service-list">
                 {shoes.map((shoe, i) => (
                   <div className="summary-service-entry mb-5" key={i}>
-                    <p className="font-medium shoe-name">{shoe.model || 'Unnamed Shoe'}</p>
+                    <p className="font-medium shoe-name"><span className="active-shoe-badge mr-1">Shoe #{i + 1}</span>{shoe.model || 'Unnamed Shoe'}</p>
 
                     <div className="summary-list">
                     {shoe.services.map((srvId) => {
@@ -1134,16 +1129,16 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                     </div>
                     <hr className="section-divider" />
                     {/* Per-shoe subtotal */}
-                    <div className="pl-10 flex justify-between mt-2">
-                      <p className="bold">Subtotal</p>
+                    <div className="flex justify-between mt-2">
+                      <p className="text-[#797979]">Subtotal</p>
                       <p className="text-right bold">
                         {formatCurrency(perShoeTotals[i]?.shoeTotal || 0)}
                       </p>
                     </div>
 
                     {/* Per-shoe estimated completion date */}
-                    <div className="pl-10 flex justify-between mt-1 text-gray-500">
-                      <p className="bold">Estimated Completion</p>
+                    <div className="flex justify-between mb-5">
+                      <p className="text-[#797979]">Estimated Completion</p>
                       <p className="text-right bold">{perShoeEstimatedDates[i]}</p>
                     </div>
                   </div>
