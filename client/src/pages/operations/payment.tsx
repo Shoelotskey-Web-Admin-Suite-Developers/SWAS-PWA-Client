@@ -1,4 +1,4 @@
-// src/pages/operations/payment.tsx
+﻿// src/pages/operations/payment.tsx
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react"
@@ -15,6 +15,14 @@ import {
 } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import "@/styles/payment.css"
 import { PaymentsTable } from "@/components/operations/PaymentsTable"
 import { getAllLineItems } from "@/utils/api/getAllLineItems"
@@ -156,12 +164,12 @@ export default function Payments() {
     setPaymentOnly(false);
   };
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
-  const [paymentsForSelected, setPaymentsForSelected] = useState<Array<{ payment_id: string; payment_amount: number; payment_mode?: string; payment_date?: string }>>([])
   const [selectedLineItemId, setSelectedLineItemId] = useState<string | null>(null)
   
   // Loading states for payment operations
   const [isSavingPayment, setIsSavingPayment] = useState(false)
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
 
   // Build lookup maps for service prices (service_id -> price)
@@ -397,28 +405,16 @@ export default function Payments() {
 
   // helper: fetch payment details for an array of payment_ids stored on transaction
   async function loadPaymentsForTransaction(paymentIds?: string[]) {
-    if (!paymentIds || paymentIds.length === 0) {
-      setPaymentsForSelected([])
-      return
-    }
+    if (!paymentIds || paymentIds.length === 0) return
 
     try {
       const { getPaymentById } = await import("@/utils/api/getPaymentById")
-      const promises = paymentIds.map((pid) => getPaymentById(String(pid)).catch((e) => {
+      await Promise.all(paymentIds.map((pid) => getPaymentById(String(pid)).catch((e) => {
         console.debug('Failed to load payment', pid, e)
         return null
-      }))
-      const results = await Promise.all(promises)
-      const payments = results.filter(Boolean).map((p: any) => ({
-        payment_id: p.payment_id,
-        payment_amount: p.payment_amount,
-        payment_mode: p.payment_mode,
-        payment_date: p.payment_date,
-      }))
-      setPaymentsForSelected(payments)
+      })))
     } catch (e) {
       console.debug('Error loading payments for transaction', e)
-      setPaymentsForSelected([])
     }
   }
 
@@ -810,6 +806,7 @@ export default function Payments() {
       // removed post-update export: we exported the receipt before saving to DB
 
       toast.success("Payment saved successfully!")
+      setIsPaymentModalOpen(false)
       
       // Clear payment fields after successful save
       clearPaymentFields();
@@ -1114,6 +1111,7 @@ export default function Payments() {
       // removed post-update export: we already exported the receipt before confirming
 
       toast.success("Payment updated & marked as picked up!")
+      setIsPaymentModalOpen(false)
       
       // Clear payment fields after successful confirm
       clearPaymentFields();
@@ -1147,6 +1145,17 @@ export default function Payments() {
 
   // Removed diagnostic state / effects
 
+  const receiptTotalDue = selectedRequest ? Number(selectedRequest.total ?? 0) + Number(selectedRequest.storageFee ?? 0) : 0
+  const receiptBalance = selectedRequest ? Number(selectedRequest.remainingBalance ?? 0) + Number(selectedRequest.storageFee ?? 0) : 0
+  const receiptPaidAfter = selectedRequest ? Number(selectedRequest.amountPaid ?? 0) + Number(dueNow || 0) : 0
+  const receiptStatus = !selectedRequest
+    ? 'NP'
+    : receiptPaidAfter === 0
+      ? 'NP'
+      : receiptPaidAfter >= receiptTotalDue
+        ? 'PAID'
+        : 'PARTIAL'
+
   return (
     <div className="payment-container">
       {/* Left: Form + Table */}
@@ -1154,51 +1163,46 @@ export default function Payments() {
         <div className="payment-form">
           <Card>
             <CardContent className="pt-6 form-card-content">
-              <h1>Update Payment</h1>
-              <div className="customer-info-grid">
-                <div className="payment-filter-pair  flex items-end">
-                  <div className="w-[70%]">
-                    <Label>Search by Transaction ID/ Line-item ID / Customer Name / Shoes</Label>
-                    <SearchBar
-                      value={searchQuery}
-                      onChange={(val) => setSearchQuery(val)}
-                    />
-                  </div>
-                  <div className="w-[20%]">
-                    <Label>Sort by</Label>
-                    <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
-                      <SelectTrigger id="branch">
-                        <SelectValue placeholder="Select an option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">None</SelectItem>
-                        <SelectItem value="receiptId">Transaction ID</SelectItem>
-                        <SelectItem value="pairs"># Pairs</SelectItem>
-                        <SelectItem value="customerName">Customer Name</SelectItem>
-                        <SelectItem value="total">Total Amount</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <RadioGroup
-                      value={sortOrder}
-                      onValueChange={(val) =>
-                        setSortOrder(val as "Ascending" | "Descending")
-                      }
-                      className="flex flex-col mb-[5px]"
-                    >
-                      <div className="radio-option">
-                        <RadioGroupItem value="Ascending" />
-                        <Label>Ascending</Label>
-                      </div>
-                      <div className="radio-option">
-                        <RadioGroupItem value="Descending" />
-                        <Label>Descending</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </div>
+              <div className="payment-header-row">
+              <div>
+                <h1>Update Payment</h1>
+                <p className="payment-header-subtitle">Search and manage pending balances</p>
               </div>
+            </div>
+
+            <div className="payment-filter-pair flex items-end">
+              <div className="w-[45%]">
+                <SearchBar value={searchQuery} onChange={(val) => setSearchQuery(val)} />
+              </div>
+              <div className="w-[30%]">
+                <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+                  <SelectTrigger id="branch">
+                    <SelectValue placeholder="Sort by Date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">None</SelectItem>
+                    <SelectItem value="receiptId">Transaction ID</SelectItem>
+                    <SelectItem value="pairs"># Pairs</SelectItem>
+                    <SelectItem value="customerName">Customer Name</SelectItem>
+                    <SelectItem value="total">Total Amount</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <RadioGroup
+                value={sortOrder}
+                onValueChange={(val) => setSortOrder(val as "Ascending" | "Descending")}
+                className="flex flex-row gap-4 mb-[10px]"
+              >
+                <div className="radio-option">
+                  <RadioGroupItem value="Ascending" />
+                  <Label>ASC</Label>
+                </div>
+                <div className="radio-option">
+                  <RadioGroupItem value="Descending" />
+                  <Label>DESC</Label>
+                </div>
+              </RadioGroup>
+            </div>  
 
               {/* Table */}
               <div className="mt-6 overflow-x-auto payment-table">
@@ -1256,258 +1260,295 @@ export default function Payments() {
             </CardContent>
           </Card>
 
-          {/* Payment Section */}
-          <Card className="payment-card">
-            <CardContent className="pt-6 payment-section">
-              {selectedRequest ? (
-                <div className="payment-update-section">
-                  <div className="w-[40%]">
-                    <div className="flex flex-col gap-5">
-                      <div>
-                        <Label>Cashier</Label>
-                        <Input
-                          value={cashier}
-                          readOnly
-                          placeholder="Cashier name"
-                        />
-                      </div>
-
-                      <div>
-                        <p>Mode of Payment</p>
-                        <RadioGroup
-                          value={modeOfPayment}
-                          onValueChange={(val) => setModeOfPayment(val as 'cash' | 'gcash' | 'bank' | 'other')}
-                          className="pl-10"
-                        >
-                          <div className="radio-option">
-                            <RadioGroupItem value="cash" id="cash" />
-                            <Label htmlFor="cash">Cash</Label>
-                          </div>
-                          <div className="radio-option">
-                            <RadioGroupItem value="gcash" id="gcash" />
-                            <Label htmlFor="gcash">GCash</Label>
-                          </div>
-                          <div className="radio-option">
-                            <RadioGroupItem value="bank" id="bank" />
-                            <Label htmlFor="bank">Bank</Label>
-                          </div>
-                          <div className="radio-option">
-                            <RadioGroupItem value="other" id="other" />
-                            <Label htmlFor="other">Other</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="payment-grid w-[60%]">
-                    <p>Remaining Balance:</p>
-                    <p className="text-right pr-3">
-                      {formatCurrency((selectedRequest.remainingBalance ?? 0) + (selectedRequest.storageFee ?? 0))}
-                    </p>
-
-                    <p>Due Now:</p>
-                    <Input
-                      className="text-right"
-                      type="number"
-                      value={dueNow}
-                      onChange={(e) => handleDueNow(Number(e.target.value) || 0)}
-                      max={selectedRequest ? ((selectedRequest.remainingBalance ?? 0) + (selectedRequest.storageFee ?? 0)) : undefined}
-                      min={0}
-                    />
-
-                    <p>Customer Paid:</p>
-                    <Input
-                      className="text-right"
-                      type="number"
-                      value={customerPaid}
-                      onChange={(e) => handleCustomerPaid(Number(e.target.value) || 0)}
-                    />
-                    {/* validation now uses alert() instead of inline message */}
-
-                    <p>Change:</p>
-                    <p className="text-right pr-3">{formatCurrency(change)}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500">Select a request to update payment</p>
-              )}
-            </CardContent>
-          </Card>
-
           <hr />
         </div>
       </div>
 
       {/* Right: Request Summary */}
-      <div className="payment-summary">
-        <Card className="payment-summary-card">
-          <CardContent className="pt-6 payment-summary-content">
-            <h1>Request Summary</h1>
-            <hr className="section-divider" />
-            {selectedRequest ? (
-              <div className="payment-summary-body">
-                <div className="summary-grid">
-                  <p className="bold">Customer ID</p>
-                  <p className="text-right">#{selectedRequest.customerId}</p>
-                  <p className="bold">Customer Name</p>
-                  <p className="text-right">{selectedRequest.customerName}</p>
-                </div>
+      {/* Right: Request Summary */}
+<div className="payment-receipt-panel">
+  <div className="payment-receipt-card">
+    <div className="payment-receipt-content">
+      <div className="payment-receipt-header">
+        <h1>Request Summary</h1>
+        <div className="payment-receipt-accent-bar" />
+      </div>
 
-                  {cashier && (
-                    <div className="summary-grid mt-2">
-                      <p className="bold">Cashier</p>
-                      <p className="text-right">{cashier}</p>
-                    </div>
-                  )}
+      {selectedRequest ? (
+        <div className="payment-receipt-body">
+          {/* Customer */}
+          <div className="payment-receipt-section">
+            <p className="payment-receipt-section-label">Customer</p>
+            <div className="payment-receipt-two-col">
+              <div>
+                <p className="payment-receipt-meta-label">Customer ID</p>
+                <p className="payment-receipt-meta-value">#{selectedRequest.customerId}</p>
+              </div>
+              <div>
+                <p className="payment-receipt-meta-label">Customer Name</p>
+                <p className="payment-receipt-meta-value">{selectedRequest.customerName}</p>
+              </div>
+            </div>
+          </div>
 
-                <div className="summary-date-row">
-                  <p className="bold">{selectedRequest.receiptId}</p>
-                  <p className="text-right">{selectedRequest.dateIn}</p>
-                </div>
+          <hr className="payment-receipt-divider" />
 
-                {/* Shoe details */}
-                <div className="summary-service-list">
-                  {selectedRequest.shoes.map((shoe, i) => (
-                    <div className="summary-service-entry mb-5" key={i}>
-                      <p className="font-medium">{shoe.model || "Unnamed Shoe"}</p>
+          {/* Service Request */}
+          <div className="payment-receipt-section">
+            <div className="payment-receipt-section-head">
+              <p className="payment-receipt-section-label">Service Request</p>
+              <p className="payment-receipt-section-date">{selectedRequest.dateIn}</p>
+            </div>
 
-                      {/* Group services by name to show quantity as xN when >1 */}
-                      {(() => {
-                        const counts = new Map<string, number>()
-                        for (const s of shoe.services || []) {
-                          counts.set(s, (counts.get(s) || 0) + 1)
-                        }
-                        return Array.from(counts.entries()).map(([srv, qty], idx) => (
-                          <div key={idx} className="pl-10 flex justify-between">
-                            <p>
-                              {srv} {qty > 1 ? <span className="text-sm">x{qty}</span> : null}
-                            </p>
-                            <p className="text-right">{formatCurrency(findServicePriceFromList(srv) * qty)}</p>
-                          </div>
-                        ))
-                      })()}
+            <div className="payment-receipt-items">
+              {selectedRequest.shoes.map((shoe, i) => {
+                const counts = new Map<string, number>()
+                for (const s of shoe.services || []) counts.set(s, (counts.get(s) || 0) + 1)
+                const serviceEntries = Array.from(counts.entries())
+                const shoeTotal =
+                  serviceEntries.reduce(
+                    (sum, [name, qty]) => sum + findServicePriceFromList(name) * qty,
+                    0
+                  ) + (shoe.rush === "yes" ? RUSH_FEE : 0)
 
+                return (
+                  <div className="payment-receipt-item" key={i}>
+                    <div className="payment-receipt-item-info">
+                      <p className="payment-receipt-item-name">{shoe.model || "Unnamed Shoe"}</p>
+                      {serviceEntries.map(([srv, qty], idx) => (
+                        <p key={idx} className="payment-receipt-item-service">
+                          {srv.toUpperCase()}
+                          {qty > 1 ? ` x${qty}` : ""}
+                        </p>
+                      ))}
                       {shoe.rush === "yes" && (
-                        <div className="pl-10 flex justify-between text-red-600">
-                          <p>Rush Service</p>
-                          <p className="text-right">{formatCurrency(RUSH_FEE)}</p>
-                        </div>
+                        <p className="payment-receipt-item-service payment-receipt-item-rush">
+                          RUSH SERVICE
+                        </p>
                       )}
                     </div>
-                  ))}
-                </div>
-                
-                {(() => {
-                  const discountAmount = selectedRequest ? (selectedRequest.discount ?? 0) : 0
-                  return discountAmount > 0 ? (
-                    <div className="summary-discount-row">
-                      <p className="bold">Discount</p>
-                      <p>({formatCurrency(discountAmount)})</p>
-                    </div>
-                  ) : null
-                })()}
-
-                <div className="summary-discount-row">
-                  <p className="bold">Total Amount</p>
-                  <p>{formatCurrency(selectedRequest.total)}</p>
-                </div>
-
-                {/* Show individual payments (payment_id and amount) if available, otherwise show aggregated Amount Paid */}
-                {paymentsForSelected && paymentsForSelected.length > 0 ? (
-                  <div className="summary-discount-row flex flex-col gap-2">
-                    <p className="bold">Payments</p>
-                    <div className="pl-10">
-                      {paymentsForSelected.map((p) => (
-                        <div key={p.payment_id} className="flex justify-between">
-                          <p>Less: {p.payment_id}</p>
-                          <p>{formatCurrency(p.payment_amount)}</p>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="payment-receipt-item-price">{formatCurrency(shoeTotal)}</p>
                   </div>
-                ) : (
-                  <div className="summary-discount-row">
-                    <p className="bold">Amount Paid</p>
-                    <p>({formatCurrency(selectedRequest.amountPaid)})</p>
-                  </div>
-                )}
+                )
+              })}
+            </div>
+          </div>
 
-                {(() => {
-                  const storageFee = selectedRequest?.storageFee ?? 0
-                  return storageFee > 0 ? (
-                    <div className="summary-discount-row">
-                      <p className="bold text-red-600">Storage Fee</p>
-                      <p className="text-red-600">{formatCurrency(storageFee)}</p>
-                    </div>
-                  ) : null
-                })()}
+          <hr className="payment-receipt-divider" />
 
-                <hr className="total" />
-                <div className="summary-discount-row">
-                  <p className="bold">Balance</p>
-                  <p>{formatCurrency((selectedRequest.remainingBalance ?? 0) + (selectedRequest.storageFee ?? 0))}</p>
-                </div>
+          {/* Totals */}
+          <div className="payment-receipt-totals">
+            <div className="payment-receipt-row">
+              <p>Total Amount</p>
+              <p className="payment-receipt-value-strong">{formatCurrency(selectedRequest.total)}</p>
+            </div>
 
-                <div className="summary-discount-row mt-5">
-                  <p className="bold">New Amount Paid</p>
-                  <p>({formatCurrency(dueNow)})</p>
-                </div>
+            <div className="payment-receipt-row">
+              <p>Discount</p>
+              <p className="payment-receipt-value-muted">
+                ({formatCurrency(selectedRequest.discount ?? 0)})
+              </p>
+            </div>
+
+            <div className="payment-receipt-row">
+              <p>Amount Paid</p>
+              <p className="payment-receipt-value-green">
+                ({formatCurrency(selectedRequest.amountPaid)})
+              </p>
+            </div>
+
+            {(selectedRequest.storageFee ?? 0) > 0 && (
+              <div className="payment-receipt-row">
+                <p>Storage Fee</p>
+                <p className="payment-receipt-value-red">{formatCurrency(selectedRequest.storageFee ?? 0)}</p>
               </div>
-            ) : (
-              <p className="text-gray-500">Select a request to view summary</p>
             )}
+          </div>
 
-            <hr className="section-divider" />
-            {selectedRequest && (
-                <div className="summary-footer">
-                <div className="summary-balance-row">
-                  <h2>Updated Balance:</h2>
-                  <h2>{formatCurrency(updatedBalance)}</h2>
-                </div>
-                <div className="summary-balance-row">
-                  <h2>Updated Status:</h2>
-                  <h2>
-                    {(() => {
-                      // UI: compute status same as save/confirm handlers
-                      const prev = Number(selectedRequest.amountPaid ?? 0)
-                      const totalDueUI = Number(selectedRequest.total ?? 0) + Number(selectedRequest.storageFee ?? 0)
-                      const paidAfter = prev + Number(dueNow || 0)
-                      if (paidAfter === 0) return "NP"
-                      if (paidAfter >= totalDueUI) return "PAID"
-                      return "PARTIAL"
-                    })()}
-                  </h2>
-                </div>
-                <div className="flex items-center justify-center gap-2 mt-4 w-fullrounded">
-                  <Checkbox
-                    id="payment-only"
-                    checked={paymentOnly}
-                    onCheckedChange={(checked) => setPaymentOnly(!!checked)}
-                  />
-                  <Label htmlFor="payment-only">Payment only</Label>
-                </div>
-                <Button
-                  className="w-full p-8 mt-4 button-lg bg-[#22C55E] hover:bg-[#1E9A50]"
-                  onClick={() =>
-                    paymentOnly ? handleSavePaymentOnly() : handleConfirmPayment()
-                  }
-                  disabled={isSavingPayment || isConfirmingPayment}
+          <hr className="payment-receipt-divider" />
+
+          <div className="payment-receipt-balance-block">
+            <p className="payment-receipt-balance-label">Balance</p>
+            <p className="payment-receipt-balance-value">{formatCurrency(receiptBalance)}</p>
+          </div>
+
+          <div className="payment-receipt-newpaid-box">
+            <p className="payment-receipt-meta-label">New Amount Paid</p>
+            <p className="payment-receipt-newpaid-value">({formatCurrency(dueNow)})</p>
+          </div>
+        </div>
+      ) : (
+        <div className="payment-receipt-empty">
+          <p className="payment-receipt-empty-title">No request selected</p>
+          <p className="payment-receipt-empty-copy">Select a request to preview the receipt summary.</p>
+        </div>
+      )}
+
+      <hr className="payment-receipt-divider" />
+
+      {selectedRequest && (
+        <div className="payment-receipt-footer">
+          <div className="payment-receipt-footer-grid">
+            <div className="payment-receipt-footer-card">
+              <p className="payment-receipt-footer-label">Updated Balance</p>
+              <p className="payment-receipt-footer-value">{formatCurrency(updatedBalance)}</p>
+            </div>
+            <div className="payment-receipt-footer-card payment-receipt-footer-card-status">
+              <p className="payment-receipt-footer-label">Updated Status</p>
+              <p
+                className={
+                  "payment-receipt-footer-value " +
+                  (receiptStatus === "PAID"
+                    ? "payment-receipt-status-paid"
+                    : receiptStatus === "PARTIAL"
+                    ? "payment-receipt-status-partial"
+                    : "payment-receipt-status-np")
+                }
+              >
+                {receiptStatus}
+              </p>
+            </div>
+          </div>
+
+          <Button
+            className="w-full p-5 mt-0 rounded-xl bg-[#DC2626] payment-receipt-action"
+            onClick={() => setIsPaymentModalOpen(true)}
+          >
+            Open Payment Modal
+            <i className="bi-check-circle"></i>
+          </Button>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="payment-modal-content">
+          <DialogHeader className="payment-modal-header">
+            <div>
+              <DialogTitle>Update Payment</DialogTitle>
+              <DialogDescription>
+                Review the remaining balance, choose the payment mode, and finalize this transaction.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="payment-modal-body">
+            <div className="payment-modal-column payment-modal-left">
+              <div className="payment-modal-field">
+                <Label>Cashier</Label>
+                <Input value={cashier} readOnly placeholder="Cashier name" />
+              </div>
+
+              <div className="payment-modal-field">
+                <Label>Mode of Payment</Label>
+                <RadioGroup
+                  value={modeOfPayment}
+                  onValueChange={(val) => setModeOfPayment(val as 'cash' | 'gcash' | 'bank' | 'other')}
+                  className="payment-modal-radio-group"
                 >
-                  {isSavingPayment || isConfirmingPayment ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      {paymentOnly || isSavingPayment ? "Saving Payment..." : "Confirming Payment..."}
-                    </div>
-                  ) : (
-                    paymentOnly ? "Save Payment" : "Save & Mark as Picked Up"
-                  )}
-                </Button>
+                  <div className="radio-option">
+                    <RadioGroupItem value="cash" id="payment-cash" />
+                    <Label htmlFor="payment-cash" className="radio-inline-label">Cash</Label>
+                  </div>
+                  <div className="radio-option">
+                    <RadioGroupItem value="gcash" id="payment-gcash" />
+                    <Label htmlFor="payment-gcash" className="radio-inline-label">GCash</Label>
+                  </div>
+                  <div className="radio-option">
+                    <RadioGroupItem value="bank" id="payment-bank" />
+                    <Label htmlFor="payment-bank" className="radio-inline-label">Bank</Label>
+                  </div>
+                  <div className="radio-option">
+                    <RadioGroupItem value="other" id="payment-other" />
+                    <Label htmlFor="payment-other" className="radio-inline-label">Other</Label>
+                  </div>
+                </RadioGroup>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+
+              <div className="payment-modal-field payment-modal-remaining">
+                <Label>Remaining Balance</Label>
+                <div className="payment-modal-remaining-value">
+                  {formatCurrency((selectedRequest?.remainingBalance ?? 0) + (selectedRequest?.storageFee ?? 0))}
+                </div>
+              </div>
+            </div>
+
+            <div className="payment-modal-column payment-modal-right">
+              <div className="payment-modal-grid">
+                <div>
+                  <p className="payment-modal-meta-label">Due Now</p>
+                  <Input
+                    type="number"
+                    className="text-right"
+                    value={dueNow}
+                    onChange={(e) => handleDueNow(Number(e.target.value) || 0)}
+                    max={selectedRequest ? ((selectedRequest.remainingBalance ?? 0) + (selectedRequest.storageFee ?? 0)) : undefined}
+                    min={0}
+                  />
+                </div>
+
+                <div>
+                  <p className="payment-modal-meta-label">Customer Paid</p>
+                  <Input
+                    type="number"
+                    className="text-right"
+                    value={customerPaid}
+                    onChange={(e) => handleCustomerPaid(Number(e.target.value) || 0)}
+                  />
+                </div>
+
+                <div>
+                  <p className="payment-modal-meta-label">Change</p>
+                  <div className="payment-modal-value">{formatCurrency(change)}</div>
+                </div>
+
+                <div>
+                  <p className="payment-modal-meta-label">Updated Balance</p>
+                  <div className="payment-modal-value">{formatCurrency(updatedBalance)}</div>
+                </div>
+              </div>
+
+              <div className="payment-modal-status-row">
+                <span className="payment-modal-status-label">Updated Status</span>
+                <span className={`payment-modal-status-pill payment-modal-status-${receiptStatus.toLowerCase()}`}>
+                  {receiptStatus}
+                </span>
+              </div>
+
+              <div className="payment-modal-toggle-row">
+                <Checkbox
+                  id="payment-only-modal"
+                  checked={paymentOnly}
+                  onCheckedChange={(checked) => setPaymentOnly(!!checked)}
+                />
+                <Label htmlFor="payment-only-modal">Payment only</Label>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="payment-modal-footer">
+            <Button type="button" variant="outline" className="payment-modal-cancel" onClick={() => setIsPaymentModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="payment-modal-confirm"
+              disabled={isSavingPayment || isConfirmingPayment}
+              onClick={async () => {
+                if (paymentOnly) {
+                  await handleSavePaymentOnly()
+                } else {
+                  await handleConfirmPayment()
+                }
+              }}
+            >
+              {isSavingPayment || isConfirmingPayment ? 'Processing...' : paymentOnly ? 'Save Payment' : 'Update Payment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

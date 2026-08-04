@@ -1169,6 +1169,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                   onClick={() => setIsCheckoutModalOpen(true)}
                 >
                   Finalize Ticket
+                  <i className="bi-arrow-right"></i>
                 </Button>
             </div>
           </CardContent>
