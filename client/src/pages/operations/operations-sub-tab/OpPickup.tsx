@@ -9,7 +9,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input"; // Added Input import
+import { Input } from "@/components/ui/input";
 import { getLineItems } from "@/utils/api/getLineItems";
 import { getCustomerContact } from "@/utils/api/getCustomerContact";
 import { getPaymentStatus } from "@/utils/api/getPaymentStatus";
@@ -17,19 +17,6 @@ import { computePickupAllowance } from "@/utils/computePickupAllowance";
 import { getUpdateColor } from "@/utils/getUpdateColor";
 import { useLineItemUpdates } from "@/hooks/useLineItemUpdates";
 import { useCustomerNames } from "@/context/CustomerNamesContext";
-import { 
-  Search, 
-  RefreshCw, 
-  Phone, 
-  Clock, 
-  AlertCircle,
-  CheckCircle2, 
-  PackageCheck,
-  Calendar,
-  CreditCard,
-  SortAsc,
-  SortDesc
-} from "lucide-react"; // Added Lucide icons
 
 const SERVICE_ID_TO_NAME: Record<string, string> = {
   "SERVICE-1": "Basic Cleaning",
@@ -328,7 +315,9 @@ export default function OpPickup() {
 
   const getSortIcon = (field: keyof Row) => {
     if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />;
+    return sortDirection === 'asc' ? 
+      <i className="bi bi-sort-up text-sm"></i> : 
+      <i className="bi bi-sort-down text-sm"></i>;
   };
 
   const getHiddenColumns = () => {
@@ -350,6 +339,78 @@ export default function OpPickup() {
 
   return (
     <div className="op-container">
+      {/* Top Bar - Stats on Left, Controls on Right - No card styling */}
+      <div className="flex flex-wrap items-center justify-between gap-3 py-2">
+        {/* Left side - Stats Summary */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-200">
+            <i className="bi bi-box-seam text-blue-600 text-sm"></i>
+            <span className="text-sm font-semibold text-blue-800">{rows.length}</span>
+            <span className="text-xs text-blue-600">Items</span>
+          </div>
+          
+          <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-md border border-green-200">
+            <i className="bi bi-check-circle-fill text-green-600 text-sm"></i>
+            <span className="text-sm font-semibold text-green-800">{notifiedCount}</span>
+            <span className="text-xs text-green-600">Notified</span>
+          </div>
+          
+          {overdueCount > 0 && (
+            <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-md border border-orange-200">
+              <i className="bi bi-clock text-orange-600 text-sm"></i>
+              <span className="text-sm font-semibold text-orange-800">{overdueCount}</span>
+              <span className="text-xs text-orange-600">Overdue</span>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-md border border-purple-200">
+            <i className="bi bi-credit-card text-purple-600 text-sm"></i>
+            <span className="text-sm font-semibold text-purple-800">{paidCount}</span>
+            <span className="text-xs text-purple-600">Paid</span>
+          </div>
+        </div>
+        
+        {/* Right side - Controls */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <i className="bi bi-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+            <Input
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-7 h-8 w-44 text-sm border-gray-300 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Payment Status Filter */}
+          <select
+            value={filterPayment}
+            onChange={(e) => setFilterPayment(e.target.value as 'all' | 'paid' | 'unpaid' | 'partial')}
+            className="px-2.5 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
+          >
+            <option value="all">All Payments</option>
+            <option value="paid">Paid Only</option>
+            <option value="partial">Partial Only</option>
+            <option value="unpaid">Unpaid Only</option>
+          </select>
+
+          {/* Customer Display Toggle */}
+          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border border-gray-300 h-8">
+            <input
+              type="checkbox"
+              id="show-customer-names-pickup"
+              checked={showCustomerNames}
+              onChange={(e) => setShowCustomerNames(e.target.checked)}
+              className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
+            />
+            <label htmlFor="show-customer-names-pickup" className="text-xs font-medium text-gray-700 cursor-pointer select-none whitespace-nowrap">
+              Show Names
+            </label>
+          </div>
+        </div>
+      </div>
+
       {/* Table */}
       <Table className="op-table">
         <TableHeader className="op-header">
@@ -406,7 +467,7 @@ export default function OpPickup() {
             <TableRow>
               <TableCell colSpan={tableColSpan} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <i className="bi bi-arrow-repeat animate-spin text-lg"></i>
                   <span>Loading pickup data...</span>
                 </div>
               </TableCell>
@@ -449,7 +510,7 @@ export default function OpPickup() {
                     {row.pickupNotice ? (
                       <>
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-blue-600" />
+                          <i className="bi bi-calendar3 text-blue-600 text-xs"></i>
                           <small>{row.pickupNotice.toLocaleDateString()}</small>
                         </div>
                         <div className={
@@ -459,7 +520,7 @@ export default function OpPickup() {
                             ? "text-yellow-600 flex items-center gap-1"
                             : "text-green-600 flex items-center gap-1"
                         }>
-                          <Clock className="w-3 h-3" />
+                          <i className="bi bi-clock text-xs"></i>
                           <small>
                             {row.allowanceDays > 0
                               ? `${row.allowanceDays} days left`
@@ -481,13 +542,13 @@ export default function OpPickup() {
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      <CreditCard className="w-3 h-3" />
+                      <i className="bi bi-credit-card text-xs"></i>
                       {row.paymentStatus}
                     </span>
                   </TableCell>
                   <TableCell className={`op-pu-body-contact ${getUpdateColor(row.date)}`}>
                     <div className="flex items-center gap-1">
-                      <Phone className="w-3 h-3 text-gray-500" />
+                      <i className="bi bi-telephone text-gray-500 text-xs"></i>
                       <small>{row.contact || "No contact"}</small>
                     </div>
                   </TableCell>
@@ -536,138 +597,66 @@ export default function OpPickup() {
         </TableBody>
       </Table>
 
-      {/* Modernized Bottom Action Bar */}
-      <div className="op-below-container flex flex-wrap justify-between items-center gap-3 mt-2">
-        {/* Left side - Search, Filter, and Stats */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-            <Input
-              placeholder="Search items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-6 h-8 w-40 text-sm border-gray-300 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Payment Status Filter */}
-          <select
-            value={filterPayment}
-            onChange={(e) => setFilterPayment(e.target.value as 'all' | 'paid' | 'unpaid' | 'partial')}
-            className="px-2 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="all">All Payments</option>
-            <option value="paid">Paid Only</option>
-            <option value="partial">Partial Only</option>
-            <option value="unpaid">Unpaid Only</option>
-          </select>
-
-          {/* Customer Display Toggle */}
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border">
-            <input
-              type="checkbox"
-              id="show-customer-names-pickup"
-              checked={showCustomerNames}
-              onChange={(e) => setShowCustomerNames(e.target.checked)}
-              className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
-            />
-            <label htmlFor="show-customer-names-pickup" className="text-xs font-medium text-gray-700 cursor-pointer select-none">
-              Show Names
-            </label>
-          </div>
-
-          {/* Modern Stats with Text Labels */}
-          <div className="flex items-center gap-3 text-sm bg-gray-50 px-3 py-1 rounded-md border">
-            <span className="flex items-center gap-1 text-blue-600">
-              <PackageCheck className="w-3 h-3" />
-              <span className="font-medium">{filteredRows.length}</span>
-              <span className="hidden sm:inline text-xs text-blue-500">Items</span>
+      {/* Bottom Action Bar - Right aligned */}
+      <div className="op-below-container flex flex-wrap items-center justify-end gap-3 mt-2">
+        {/* Selection counter */}
+        {selected.length > 0 && (
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
+            <i className="bi bi-check-circle-fill text-blue-600 text-sm"></i>
+            <span className="text-sm font-medium text-blue-800">
+              {selected.length} <span>selected</span>
             </span>
-            
-            <span className="w-px h-3 bg-gray-300"></span>
-            <span className="flex items-center gap-1 text-blue-600">
-              <Calendar className="w-3 h-3" />
-              <span className="font-medium">{notifiedCount}</span>
-              <span className="hidden sm:inline text-xs text-blue-500">Notified</span>
-            </span>
-            
-            {overdueCount > 0 && (
-              <>
-                <span className="w-px h-3 bg-gray-300"></span>
-                <span className="flex items-center gap-1 text-red-600">
-                  <AlertCircle className="w-3 h-3" />
-                  <span className="font-medium">{overdueCount}</span>
-                  <span className="hidden sm:inline text-xs text-red-500">Overdue</span>
-                </span>
-              </>
-            )}
           </div>
+        )}
+
+        {/* Connection Status */}
+        <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-300 h-8">
+          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+          <span className="text-xs text-gray-600 whitespace-nowrap">
+            {isConnected ? 'Live' : 'Offline'}
+            <span className="hidden lg:inline">
+              {lastUpdate && ` • ${lastUpdate.toLocaleTimeString()}`}
+            </span>
+          </span>
         </div>
         
-        {/* Right side - Selection count, Status, and Actions */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Modern Selection Counter */}
-          {selected.length > 0 && (
-            <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
-              <CheckCircle2 className="w-3 h-3 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">
-                {selected.length} <span>selected</span>
-              </span>
-            </div>
-          )}
+        {/* Refresh Button */}
+        <button 
+          onClick={fetchData}
+          className="op-btn text-white button-md flex items-center gap-1 hover:opacity-90 transition-opacity"
+          title="Refresh data"
+          disabled={isLoading}
+        >
+          <i className={`bi bi-arrow-repeat ${isLoading ? 'animate-spin' : ''} text-sm`}></i>
+          <span className="text-sm font-medium hidden sm:inline">Refresh</span>
+        </button>
 
-          {/* Connection Status */}
-          <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded-md">
-            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-            <span className="text-xs text-gray-600">
-              {isConnected ? 'Live' : 'Offline'}
-              <span className="hidden sm:inline">
-                {lastUpdate && ` • ${lastUpdate.toLocaleTimeString()}`}
-              </span>
-            </span>
+        {isLoading && (
+          <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md h-8">
+            <i className="bi bi-arrow-repeat animate-spin text-sm"></i>
+            <span className="text-xs font-medium hidden xs:inline">Syncing...</span>
           </div>
-
-          {isLoading && (
-            <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md">
-              <RefreshCw className="w-3 h-3 animate-spin" />
-              <span className="text-xs font-medium hidden xs:inline">Syncing...</span>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={fetchData}
-              className="op-btn text-white button-md flex items-center gap-1 hover:opacity-90 transition-opacity"
-              title="Refresh data"
-              disabled={isLoading}
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="text-sm font-medium hidden sm:inline">Refresh</span>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Payment Status Summary */}
       {rows.length > 0 && (
-        <div className="mt-4 p-2 bg-gray-50 rounded-md border border-gray-200">
-          <div className="text-xs text-gray-600 mb-1">Payment Status Summary</div>
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              <span className="text-sm">{paidCount} Paid</span>
+        <div className="mt-4 p-3 bg-white rounded-lg border border-gray-200">
+          <div className="text-xs font-medium text-gray-600 mb-2">Payment Status Summary</div>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+              <span className="text-sm font-medium text-gray-700">{paidCount} Paid</span>
               <span className="text-xs text-gray-500">({((paidCount / rows.length) * 100).toFixed(0)}%)</span>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-              <span className="text-sm">{partialCount} Partial</span>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+              <span className="text-sm font-medium text-gray-700">{partialCount} Partial</span>
               <span className="text-xs text-gray-500">({((partialCount / rows.length) * 100).toFixed(0)}%)</span>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-red-500"></span>
-              <span className="text-sm">{unpaidCount} Unpaid</span>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+              <span className="text-sm font-medium text-gray-700">{unpaidCount} Unpaid</span>
               <span className="text-xs text-gray-500">({((unpaidCount / rows.length) * 100).toFixed(0)}%)</span>
             </div>
           </div>

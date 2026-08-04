@@ -674,7 +674,7 @@
 .user-info-container.collapsed .user-avatar {
   width: 28px;
   height: 28px;
-  border-radius: var(--nb-radius-sm);
+  border-radius: 99px;
 }
 
 .user-info-container.collapsed .footer-branch-name {
@@ -690,7 +690,7 @@
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: var(--nb-radius); /* Square with rounded corners */
+  border-radius: 99px; /* Square with rounded corners */
   overflow: hidden;
   border: 2px solid var(--nb-border);
   transition: all var(--nb-transition-fast);
@@ -842,7 +842,7 @@
 .navBar.collapsed .user-info-container .user-avatar {
   width: 28px;
   height: 28px;
-  border-radius: var(--nb-radius-sm);
+  border-radius: 99px;
 }
 
 .navBar.collapsed .user-info-container .footer-branch-name {

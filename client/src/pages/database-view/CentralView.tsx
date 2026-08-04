@@ -1,27 +1,8 @@
 "use client"
 import * as React from "react"
-import { MoreVertical } from "lucide-react"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { SearchBar } from "@/components/ui/searchbar"
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select"
 import "@/styles/database-view/central-view.css"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Filters } from "@/components/database-view/Filters"
 import { CentralTable } from "@/components/database-view/CentralTable"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 // Use shared types instead of redefining to ensure compatibility with dialog
 import type { Transaction as SharedTransaction } from "@/components/database-view/central-view.types"
 import { getTransactions } from "@/utils/api/getTransactions"
@@ -44,6 +25,7 @@ import {
 export type PaymentStatus = "PAID" | "PARTIAL" | "NP"
 export type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand"
 export type BranchLocation = "Baliwag City" | "Valenzuela City" | "Caloocan City"
+type SortKey = "dateIn" | "dateOut" | "total" | "amountPaid" | "remaining" | "customer" | ""
 
 // Transaction type comes from shared types file (SharedTransaction)
 
@@ -74,15 +56,6 @@ export type Row = {
   deleted?: boolean // Add this property
 }
 
-/* ----------------------------- component ----------------------------- */
-type SortKey =
-  | "dateIn"
-  | "dateOut"
-  | "total"
-  | "amountPaid"
-  | "remaining"
-  | "customer"
-
 export default function CentralView() {
   const [rows, setRows] = React.useState<Row[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -99,10 +72,8 @@ export default function CentralView() {
   const [branch, setBranch] = React.useState<Branch | "">("")
   const [paymentStatus, setPaymentStatus] = React.useState<PaymentStatus | "">("")
   const [branchLocation, setBranchLocation] = React.useState<BranchLocation | "">("")
-  const [receivedBy, setReceivedBy] = React.useState<string>("")
 
-  const [sortKey, setSortKey] = React.useState<SortKey | "">("")
-  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc")
+  const [sortKey, setSortKey] = React.useState<SortKey>("")
   const [advanced, setAdvanced] = React.useState<boolean>(false)
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = React.useState(false)
   const [showArchivedItems, setShowArchivedItems] = React.useState(false)
@@ -124,7 +95,7 @@ export default function CentralView() {
             contact: undefined,
 
             branch: legend.branch,
-            branchLocation: legend.location,
+            branchLocation: legend.location as BranchLocation,
             receivedBy: tx.received_by,
             dateIn: new Date(tx.date_in),
             dateOut: tx.date_out ? new Date(tx.date_out) : null,
@@ -156,17 +127,29 @@ export default function CentralView() {
 
   // Fetch customer names function
   const fetchCustomerNames = async (customerIds: string[]) => {
-    const newCustomerNames: Record<string, string | null> = {...customerNames}
-    
+      const newCustomerNames: Record<string, string | null> = {...customerNames}
+
     await Promise.all(customerIds.map(async (custId) => {
-      // Skip already fetched names
       if (newCustomerNames[custId] !== undefined) return
-      
+
       const name = await getCustomerName(custId)
       newCustomerNames[custId] = name
     }))
-    
+
     setCustomerNames(newCustomerNames)
+  }
+
+  const clearFilters = () => {
+    setSearch("")
+    setDateIn(undefined)
+    setDateOut(undefined)
+    setBranch("")
+    setPaymentStatus("")
+    setBranchLocation("")
+    setSortKey("")
+    setAdvanced(false)
+    setShowCustomerNames(false)
+    setShowArchivedItems(false)
   }
 
   // Update rows when customer names are fetched
@@ -197,13 +180,7 @@ export default function CentralView() {
     if (dateOut) data = data.filter((r) => r.dateOut && sameDay(r.dateOut, dateOut))
     if (branch) data = data.filter((r) => r.branch === branch)
     if (paymentStatus) data = data.filter((r) => r.status === paymentStatus)
-    if (advanced) {
-      if (branchLocation) data = data.filter((r) => r.branchLocation === branchLocation)
-      if (receivedBy.trim())
-        data = data.filter((r) =>
-          r.receivedBy.toLowerCase().includes(receivedBy.toLowerCase())
-        )
-    }
+    if (advanced && branchLocation) data = data.filter((r) => r.branchLocation === branchLocation)
     if (sortKey) {
       data.sort((a, b) => {
         let result = 0
@@ -229,7 +206,7 @@ export default function CentralView() {
           default:
             result = 0
         }
-        return sortOrder === "asc" ? result : -result
+        return result
       })
     }
     return data
@@ -241,9 +218,7 @@ export default function CentralView() {
     branch,
     paymentStatus,
     branchLocation,
-    receivedBy,
     sortKey,
-    sortOrder,
     advanced,
   ])
 
@@ -338,135 +313,54 @@ export default function CentralView() {
 
   return (
     <div className="cv-wrap">
-      <div className="cv-header">
-        <h1>Central View</h1>
+      <div className="cv-content">
+        <Filters
+          search={search}
+          setSearch={setSearch}
+          dateIn={dateIn}
+          setDateIn={setDateIn}
+          dateOut={dateOut}
+          setDateOut={setDateOut}
+          branch={branch}
+          setBranch={setBranch}
+          paymentStatus={paymentStatus}
+          setPaymentStatus={setPaymentStatus}
+          branchLocation={branchLocation}
+          setBranchLocation={setBranchLocation}
+          sortKey={sortKey}
+          setSortKey={setSortKey}
+          advanced={advanced}
+          setAdvanced={setAdvanced}
+          showCustomerNames={showCustomerNames}
+          setShowCustomerNames={setShowCustomerNames}
+          showArchivedItems={showArchivedItems}
+          setShowArchivedItems={setShowArchivedItems}
+          onClearFilters={clearFilters}
+          onExportRecords={() => exportRecordsToCSV(filtered)}
+          onArchiveRecords={() => setIsArchiveDialogOpen(true)}
+        />
+
+        <CentralTable rows={filtered} onReceiptUpdate={handleReceiptUpdate} />
+
+        {/* Add confirmation dialog */}
+        <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Archive All Records</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action will export all records to CSV and then archive them by hiding them from the main view.
+                You can still access archived records by checking "Show Archived Items". Are you sure you want to continue?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleArchiveRecords} className="bg-red-600 hover:bg-red-700">
+                Yes, Archive Records
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-
-      {/* Search and Sort grid */}
-      <div className="search-sort">
-        <div className="w-[70%] width-full-767">
-          <Label>Search by Receipt ID/ Customer Name/ Received by/ Branch/ Location</Label>
-          <SearchBar value={search} onChange={setSearch} />
-        </div>
-
-        <div className="sort-kebab w-[30%] width-full-767">
-          <div className="w-[100%]">
-            <Label>Sort by</Label>
-            <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey | "")}>
-              <SelectTrigger className="cv-select">
-                <SelectValue placeholder="Select an option" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="dateIn">Date In</SelectItem>
-                <SelectItem value="dateOut">Date Out</SelectItem>
-                <SelectItem value="customer">Customer</SelectItem>
-                <SelectItem value="total">Total</SelectItem>
-                <SelectItem value="amountPaid">Amount Paid</SelectItem>
-                <SelectItem value="remaining">Remaining Balance</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <RadioGroup
-              className="flex flex-col mt-5"
-              value={sortOrder}
-              onValueChange={(v) => setSortOrder(v as "asc" | "desc")}
-            >
-              <div className="radio-option">
-                <RadioGroupItem value="asc" id="asc" />
-                <Label htmlFor="asc">Ascending</Label>
-              </div>
-              <div className="radio-option">
-                <RadioGroupItem value="desc" id="desc" />
-                <Label htmlFor="desc">Descending</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Customer Display Toggle */}
-          <div className="flex items-center space-x-2 mt-4">
-            <Checkbox 
-              id="show-customer-names"
-              checked={showCustomerNames}
-              onCheckedChange={(checked) => setShowCustomerNames(checked === true)}
-            />
-            <Label htmlFor="show-customer-names" className="text-sm font-medium">
-              Show customer names
-            </Label>
-          </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                className="h-10 w-10 p-0 flex items-center justify-center"
-                variant="unselected"
-                aria-label="Options"
-              >
-                <MoreVertical size={80} className="!w-10 !h-10" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => exportRecordsToCSV(filtered)}>
-                Export Records
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => setIsArchiveDialogOpen(true)}
-              >
-                Archive Records
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/* Date, Filters and Advanced grid */}
-      <Filters
-        dateIn={dateIn}
-        setDateIn={setDateIn}
-        dateOut={dateOut}
-        setDateOut={setDateOut}
-        clearDates={() => {
-          setDateIn(undefined)
-          setDateOut(undefined)
-        }}
-        branch={branch}
-        setBranch={setBranch}
-        paymentStatus={paymentStatus}
-        setPaymentStatus={setPaymentStatus}
-        branchLocation={branchLocation}
-        setBranchLocation={setBranchLocation}
-        receivedBy={receivedBy}
-        setReceivedBy={setReceivedBy}
-        advanced={advanced}
-        setAdvanced={setAdvanced}
-        showArchivedItems={showArchivedItems}
-        setShowArchivedItems={setShowArchivedItems}
-      />
-
-      {/* Pass the update handler to CentralTable */}
-  <CentralTable rows={filtered} onReceiptUpdate={handleReceiptUpdate} />
-
-      {/* Add confirmation dialog */}
-      <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Archive All Records</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will export all records to CSV and then archive them by hiding them from the main view.
-              You can still access archived records by checking "Show Archived Items". Are you sure you want to continue?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleArchiveRecords} className="bg-red-600 hover:bg-red-700">
-              Yes, Archive Records
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }
@@ -486,9 +380,10 @@ const BRANCH_LEGEND: Record<
   string,
   { branch: string; location: string }
 > = {
-  "SMBAL-B-NCR": { branch: "SM Baliwag Branch", location: "Baliwag" },
-  "SMVAL-B-NCR": { branch: "SM Valenzuela Branch", location: "Valenzuela" },
-  "SMGRA-B-NCR": { branch: "SM Grand Branch", location: "Caloocan" },
+  "SMBAL-B-NCR": { branch: "SM Baliwag", location: "Baliwag City" },
+  "SMVAL-B-NCR": { branch: "SM Valenzuela", location: "Valenzuela City" },
+  "SMGRA-B-NCR": { branch: "SM Grand", location: "Caloocan City" },
   "SWAS-SUPERADMIN": { branch: "Super Admin", location: "N/A" },
-  "HUBV-W-NCR": { branch: "Valenzuela Hub", location: "Valenzuela City" },
+  "HUBV-W-NCR": { branch: "Valenzuela", location: "Valenzuela City" },
 }
+

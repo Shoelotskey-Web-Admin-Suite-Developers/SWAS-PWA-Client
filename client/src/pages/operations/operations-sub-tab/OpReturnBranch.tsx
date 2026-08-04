@@ -1,4 +1,4 @@
-// src/components/OpReturnBranch.tsx 
+// src/components/OpReturnBranch.tsx
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -20,16 +20,6 @@ import { getUpdateColor } from "@/utils/getUpdateColor";
 import { updateLineItemLocation } from "@/utils/api/editLocation";
 import { useLineItemUpdates } from "@/hooks/useLineItemUpdates";
 import { useCustomerNames } from "@/context/CustomerNamesContext";
-import { 
-  Search, 
-  RefreshCw, 
-  Package, 
-  Clock, 
-  AlertCircle,
-  CheckCircle2,
-  SortAsc,
-  SortDesc
-} from "lucide-react";
 
 type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand";
 type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
@@ -325,7 +315,31 @@ export default function OpReturnBranch({ readOnly = false }) {
 
   const getSortIcon = (field: keyof Row) => {
     if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />;
+    return sortDirection === 'asc' ? 
+      <i className="bi bi-sort-up text-sm"></i> : 
+      <i className="bi bi-sort-down text-sm"></i>;
+  };
+
+  // Helper function to get status color
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'Returning to Branch':
+        return '#e26e0f'; // Orange
+      case 'Incoming Branch Delivery':
+        return '#0D55F1'; // Blue
+      case 'In Process':
+        return '#FF5E5E'; // Red
+      case 'Ready for Pickup':
+        return '#0E9CFF'; // Light Blue
+      case 'For Warehouse':
+        return '#FACC15'; // Yellow
+      case 'Incoming Service':
+        return '#FB923C'; // Orange
+      case 'For Delivery':
+        return '#0BA471'; // Green
+      default:
+        return '#6B7280'; // Gray
+    }
   };
 
   // Calculate statistics
@@ -335,6 +349,73 @@ export default function OpReturnBranch({ readOnly = false }) {
   
   return (
     <div className="op-container">
+      {/* Top Bar - Stats on Left, Controls on Right - No card styling */}
+      <div className="flex flex-wrap items-center justify-between gap-3 py-2">
+        {/* Left side - Stats Summary */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-200">
+            <i className="bi bi-box-seam text-blue-600 text-sm"></i>
+            <span className="text-sm font-semibold text-blue-800">{rows.length}</span>
+            <span className="text-xs text-blue-600">Items</span>
+          </div>
+          
+          <div className="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-md border border-red-200">
+            <i className="bi bi-lightning-fill text-red-600 text-sm"></i>
+            <span className="text-sm font-semibold text-red-800">{rushCount}</span>
+            <span className="text-xs text-red-600">Rush</span>
+          </div>
+          
+          {overdueCount > 0 && (
+            <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-md border border-orange-200">
+              <i className="bi bi-clock text-orange-600 text-sm"></i>
+              <span className="text-sm font-semibold text-orange-800">{overdueCount}</span>
+              <span className="text-xs text-orange-600">Overdue</span>
+            </div>
+          )}
+        </div>
+        
+        {/* Right side - Controls */}
+        {!readOnly && (
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Search */}
+            <div className="relative">
+              <i className="bi bi-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+              <Input
+                placeholder="Search items..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-7 h-8 w-44 text-sm border-gray-300 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Priority Filter */}
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value as 'all' | 'rush' | 'normal')}
+              className="px-2.5 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
+            >
+              <option value="all">All Priority</option>
+              <option value="rush">Rush Only</option>
+              <option value="normal">Normal Only</option>
+            </select>
+
+            {/* Customer Display Toggle */}
+            <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border border-gray-300 h-8">
+              <input
+                type="checkbox"
+                id="show-customer-names-rb"
+                checked={showCustomerNames}
+                onChange={(e) => setShowCustomerNames(e.target.checked)}
+                className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
+              />
+              <label htmlFor="show-customer-names-rb" className="text-xs font-medium text-gray-700 cursor-pointer select-none whitespace-nowrap">
+                Show Names
+              </label>
+            </div>
+          </div>
+        )}
+      </div>
+
       <Table className="op-table">
         <TableHeader className="op-header">
           <TableRow className="op-header-row">
@@ -399,7 +480,7 @@ export default function OpReturnBranch({ readOnly = false }) {
             <TableRow>
               <TableCell colSpan={tableColSpan} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <i className="bi bi-arrow-repeat animate-spin text-lg"></i>
                   <span>Loading return to branch data...</span>
                 </div>
               </TableCell>
@@ -427,22 +508,45 @@ export default function OpReturnBranch({ readOnly = false }) {
                       />
                     )}
                   </TableCell>
-                  <TableCell className={`op-body-transact ${getUpdateColor(row.updated)}`}><h5>{row.lineItemId}</h5></TableCell>
-                  <TableCell className={`op-body-customer ${getUpdateColor(row.updated)}`}>                    <small>{getCustomerDisplayName(row.customerId, showCustomerNames)}</small></TableCell>
-                  <TableCell className={`op-body-shoe ${getUpdateColor(row.updated)}`}><small>{row.shoe}</small></TableCell>
-                  <TableCell className={`op-body-service ${getUpdateColor(row.updated)}`}><small>{row.service}</small></TableCell>
+                  <TableCell className={`op-body-transact ${getUpdateColor(row.updated)}`}>
+                    <h5>{row.lineItemId}</h5>
+                  </TableCell>
+                  <TableCell className={`op-body-customer ${getUpdateColor(row.updated)}`}>
+                    <div className="flex flex-col gap-0.5">
+                      <h5 className="m-0 text-sm font-semibold leading-tight text-slate-900">
+                        {getCustomerDisplayName(row.customerId, showCustomerNames)}
+                      </h5>
+                      <small className="text-[11px] leading-tight text-slate-500">
+                        {row.date.toLocaleDateString()}
+                      </small>
+                    </div>
+                  </TableCell>
+                  <TableCell className={`op-body-shoe ${getUpdateColor(row.updated)}`}>
+                    <small>{row.shoe}</small>
+                  </TableCell>
+                  <TableCell className={`op-body-service ${getUpdateColor(row.updated)}`}>
+                    <small>{row.service}</small>
+                  </TableCell>
                   <TableCell className={`op-body-branch ${getUpdateColor(row.updated)}`}>
                     <div className="flex flex-col gap-0.5">
                       <h5 className="m-0 text-sm font-semibold leading-tight text-slate-900">{row.branch}</h5>
                       <small className="text-[11px] font-semibold uppercase tracking-[0.12em] leading-tight text-emerald-600">{row.Location}</small>
                     </div>
                   </TableCell>
-                  <TableCell className={`op-body-status op-status-rb ${getUpdateColor(row.updated)}`}><h5>{row.status}</h5></TableCell>
+                  <TableCell className={`op-body-status ${getUpdateColor(row.updated)}`}>
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className="inline-block w-2 h-2 rounded-full" 
+                        style={{ backgroundColor: getStatusColor(row.status) }}
+                      ></span>
+                      <h5 style={{ color: getStatusColor(row.status) }}>{row.status}</h5>
+                    </div>
+                  </TableCell>
                   <TableCell className={`op-body-rush ${getUpdateColor(row.updated)}`}>
                     {row.isRush ? (
-                      <span className="px-3 py-1 bg-red-200 text-red-800 rounded-full text-sm font-medium">Rush</span>
+                      <span className="px-3 py-1 bg-[#CE1616] text-white rounded-full text-sm font-medium">Rush</span>
                     ) : (
-                      <span className="px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-medium">Normal</span>
+                      <span className="px-1 py-1 text-sm font-medium text-black">Normal</span>
                     )}
                   </TableCell>
                   <TableCell className={`op-body-due ${getUpdateColor(row.updated)}`}>
@@ -450,7 +554,9 @@ export default function OpReturnBranch({ readOnly = false }) {
                       {row.dueDate.toLocaleDateString()}
                     </small>
                   </TableCell>
-                  <TableCell className={`op-body-mod ${getUpdateColor(row.updated)}`}><small>{row.updated.toLocaleDateString()}</small></TableCell>
+                  <TableCell className={`op-body-mod ${getUpdateColor(row.updated)}`}>
+                    <small>{row.updated.toLocaleDateString()}</small>
+                  </TableCell>
                   {hiddenColumns.length > 0 && (
                     <TableCell className={`op-body-dropdown-toggle ${getUpdateColor(row.updated)}`}>
                       <button
@@ -487,7 +593,7 @@ export default function OpReturnBranch({ readOnly = false }) {
                           <div><h5 className="label">Location</h5> <h5 className="name">{row.Location}</h5></div>
                         )}
                         {hiddenColumns.includes("Status") && (
-                          <div><h5 className="label">Status</h5> <h5 className="name">{row.status}</h5></div>
+                          <div><h5 className="label">Status</h5> <h5 className="name" style={{ color: getStatusColor(row.status) }}>{row.status}</h5></div>
                         )}
                         {hiddenColumns.includes("Priority") && (
                           <div><h5 className="label">Priority</h5> <h5 className="name">{row.isRush ? "Rush" : "Normal"}</h5></div>
@@ -508,178 +614,113 @@ export default function OpReturnBranch({ readOnly = false }) {
         </TableBody>
       </Table>
 
-      {/* Hide action buttons if readOnly */}
+      {/* Bottom Action Bar - Right aligned (only if not readOnly) */}
       {!readOnly && (
-        <div className="op-below-container flex flex-wrap justify-between items-center gap-3 mt-2">
-          {/* Left side - Search, Filter, and Stats */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-              <Input
-                placeholder="Search items..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-6 h-8 w-40 text-sm border-gray-300 focus:border-blue-500"
-              />
-            </div>
+        <div className="op-below-container flex flex-wrap items-center justify-end gap-3 mt-2">
+          {/* Selection counter */}
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
+            <i className="bi bi-check-circle-fill text-blue-600 text-sm"></i>
+            <span className="text-sm font-medium text-blue-800">
+              {selected.length} <span>selected</span>
+            </span>
+          </div>
 
-            {/* Priority Filter */}
-            <select
-              value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value as 'all' | 'rush' | 'normal')}
-              className="px-2 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
-            >
-              <option value="all">All Priority</option>
-              <option value="rush">Rush Only</option>
-              <option value="normal">Normal Only</option>
-            </select>
-
-            {/* Customer Display Toggle */}
-            <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border">
-              <input
-                type="checkbox"
-                id="show-customer-names-rb"
-                checked={showCustomerNames}
-                onChange={(e) => setShowCustomerNames(e.target.checked)}
-                className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
-              />
-              <label htmlFor="show-customer-names-rb" className="text-xs font-medium text-gray-700 cursor-pointer select-none">
-                Show Names
-              </label>
-            </div>
-
-            {/* Modern Stats with Text Labels */}
-            <div className="flex items-center gap-3 text-sm bg-gray-50 px-3 py-1 rounded-md border">
-              <span className="flex items-center gap-1 text-blue-600">
-                <Package className="w-3 h-3" />
-                <span className="font-medium">{filteredRows.length}</span>
-                <span className="hidden sm:inline text-xs text-blue-500">Items</span>
+          {/* Connection Status */}
+          <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-300 h-8">
+            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+            <span className="text-xs text-gray-600 whitespace-nowrap">
+              {isConnected ? 'Live' : 'Offline'}
+              <span className="hidden lg:inline">
+                {lastUpdate && ` • ${lastUpdate.toLocaleTimeString()}`}
               </span>
-              <span className="w-px h-3 bg-gray-300"></span>
-              <span className="flex items-center gap-1 text-red-600">
-                <AlertCircle className="w-3 h-3" />
-                <span className="font-medium">{rushCount}</span>
-                <span className="hidden sm:inline text-xs text-red-500">Rush</span>
-              </span>
-              {overdueCount > 0 && (
-                <>
-                  <span className="w-px h-3 bg-gray-300"></span>
-                  <span className="flex items-center gap-1 text-red-600">
-                    <Clock className="w-3 h-3" />
-                    <span className="font-medium">{overdueCount}</span>
-                    <span className="hidden sm:inline text-xs text-red-500">Overdue</span>
-                  </span>
-                </>
-              )}
-            </div>
+            </span>
           </div>
           
-          {/* Right side - Selection count, Status, and Actions */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Modern Selection Counter */}
-            <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
-              <CheckCircle2 className="w-3 h-3 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">
-                {selected.length} <span>selected</span>
-              </span>
+          {/* Refresh Button */}
+          <button 
+            onClick={fetchData}
+            className="op-btn text-white button-md flex items-center gap-1 hover:opacity-90 transition-opacity"
+            title="Refresh data"
+            disabled={isLoading}
+          >
+            <i className={`bi bi-arrow-repeat ${isLoading ? 'animate-spin' : ''} text-sm`}></i>
+            <span className="text-sm font-medium hidden sm:inline">Refresh</span>
+          </button>
+
+          {isLoading && (
+            <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md h-8">
+              <i className="bi bi-arrow-repeat animate-spin text-sm"></i>
+              <span className="text-xs font-medium hidden xs:inline">Syncing...</span>
             </div>
+          )}
 
-            {/* Connection Status */}
-            <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded-md">
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-              <span className="text-xs text-gray-600">
-                {isConnected ? 'Live' : 'Offline'}
-                <span className="hidden sm:inline">
-                  {lastUpdate && ` • ${lastUpdate.toLocaleTimeString()}`}
-                </span>
-              </span>
-            </div>
-
-            {isLoading && (
-              <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md">
-                <RefreshCw className="w-3 h-3 animate-spin" />
-                <span className="text-xs font-medium hidden xs:inline">Syncing...</span>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              <button 
-  onClick={fetchData}
-  className="op-btn text-white button-md flex items-center gap-1 hover:opacity-90 transition-opacity"
-  title="Refresh data"
-  disabled={isLoading}
->
-  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-  <span className="text-sm font-medium hidden sm:inline">Refresh</span>
-</button>
-              
-              <button
-                className="op-btn-rb op-btn text-white bg-[#0E9CFF] button-md disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={selected.length === 0}
-                onClick={() => setModalOpen(true)}
-              >
-                <h5>Mark as Received</h5>
-              </button>
-            </div>
-
-            <ReceivedModal
-              open={modalOpen}
-              onOpenChange={setModalOpen}
-              selectedCount={selected.length}
-              onConfirm={async () => {
-                try {
-                  // Update Dates for each selected line item
-                  const now = new Date().toISOString();
-                  await Promise.all(
-                    selected.map(async (lineItemId) => {
-                      try {
-                        await updateDates(lineItemId, {
-                          is_date: now,
-                          current_status: 6,
-                        });
-                      } catch (err) {
-                        console.error(`Failed to update Dates for ${lineItemId}:`, err);
-                      }
-                    })
-                  );
-
-                  // 1. Call API to update status
-                  await editLineItemStatus(selected, "To Pack");
-
-                  // 2. Update location to "Branch" for all selected items
-                  await Promise.all(
-                    selected.map(async (lineItemId) => {
-                      try {
-                        await updateLineItemLocation(lineItemId, "Branch");
-                      } catch (err) {
-                        console.error(`Failed to update location for ${lineItemId}:`, err);
-                      }
-                    })
-                  );
-
-                  // 3. Remove updated items from local state
-                  setRows((prevRows) =>
-                    prevRows.filter((row) => !selected.includes(row.lineItemId))
-                  );
-
-                  // 4. Clear selection
-                  setSelected([]);
-
-                  // 5. Close modal
-                  setModalOpen(false);
-
-                  toast.success("Selected items marked as Received!"); // Success toast
-                } catch (error) {
-                  console.error("Failed to update line items status:", error);
-                  toast.error("Failed to update items. Please try again."); // Error toast
-                }
-              }}
-            />
-          </div>
+          {/* CTA Button */}
+          <button
+            className="op-btn-rb op-btn text-white bg-[#0E9CFF] button-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0D8CE6] transition-colors flex items-center gap-1"
+            disabled={selected.length === 0}
+            onClick={() => setModalOpen(true)}
+            title={selected.length === 0 ? "Select items to mark as received" : `Mark ${selected.length} items as received`}
+          >
+            <i className="bi bi-check-lg text-sm"></i>
+            <span className="text-sm font-medium hidden md:inline">Mark as Received</span>
+            <span className="text-sm font-medium md:hidden">Received</span>
+          </button>
         </div>
       )}
+
+      <ReceivedModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        selectedCount={selected.length}
+        onConfirm={async () => {
+          try {
+            // Update Dates for each selected line item
+            const now = new Date().toISOString();
+            await Promise.all(
+              selected.map(async (lineItemId) => {
+                try {
+                  await updateDates(lineItemId, {
+                    is_date: now,
+                    current_status: 6,
+                  });
+                } catch (err) {
+                  console.error(`Failed to update Dates for ${lineItemId}:`, err);
+                }
+              })
+            );
+
+            // 1. Call API to update status
+            await editLineItemStatus(selected, "To Pack");
+
+            // 2. Update location to "Branch" for all selected items
+            await Promise.all(
+              selected.map(async (lineItemId) => {
+                try {
+                  await updateLineItemLocation(lineItemId, "Branch");
+                } catch (err) {
+                  console.error(`Failed to update location for ${lineItemId}:`, err);
+                }
+              })
+            );
+
+            // 3. Remove updated items from local state
+            setRows((prevRows) =>
+              prevRows.filter((row) => !selected.includes(row.lineItemId))
+            );
+
+            // 4. Clear selection
+            setSelected([]);
+
+            // 5. Close modal
+            setModalOpen(false);
+
+            toast.success("Selected items marked as Received!"); // Success toast
+          } catch (error) {
+            console.error("Failed to update line items status:", error);
+            toast.error("Failed to update items. Please try again."); // Error toast
+          }
+        }}
+      />
     </div>
   );
 }

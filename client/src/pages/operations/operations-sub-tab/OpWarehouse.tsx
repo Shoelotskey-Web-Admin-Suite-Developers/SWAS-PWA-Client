@@ -28,17 +28,6 @@ import {
 import { getUpdateColor } from "@/utils/getUpdateColor";
 import { updateDates } from "@/utils/api/updateDates";
 import { useLineItemUpdates } from "@/hooks/useLineItemUpdates";
-import { 
-  Search, 
-  RefreshCw, 
-  Package, 
-  Clock, 
-  AlertCircle,
-  CheckCircle2,
-  SortAsc,
-  SortDesc,
-  ImageIcon // Add this import for the image icon
-} from "lucide-react";
 
 type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand";
 type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
@@ -345,7 +334,31 @@ export default function OpWarehouse() {
 
   const getSortIcon = (field: keyof Row) => {
     if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />;
+    return sortDirection === 'asc' ? 
+      <i className="bi bi-sort-up text-sm"></i> : 
+      <i className="bi bi-sort-down text-sm"></i>;
+  };
+
+  // Helper function to get status color
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'In Process':
+        return '#daa105'; // Yellow
+      case 'Incoming Branch Delivery':
+        return '#0D55F1'; // Blue
+      case 'Ready for Pickup':
+        return '#0E9CFF'; // Light Blue
+      case 'For Warehouse':
+        return '#daa105'; // Yellow
+      case 'Incoming Service':
+        return '#FB923C'; // Orange
+      case 'For Delivery':
+        return '#0BA471'; // Green
+      case 'Ready for Delivery':
+        return '#0E9CFF'; // Light Blue
+      default:
+        return '#6B7280'; // Gray
+    }
   };
 
   // Calculate statistics
@@ -360,6 +373,77 @@ export default function OpWarehouse() {
   
   return (
     <div className="op-container">
+      {/* Top Bar - Stats on Left, Controls on Right - No card styling */}
+      <div className="flex flex-wrap items-center justify-between gap-3 py-2">
+        {/* Left side - Stats Summary */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-200">
+            <i className="bi bi-box-seam text-blue-600 text-sm"></i>
+            <span className="text-sm font-semibold text-blue-800">{rows.length}</span>
+            <span className="text-xs text-blue-600">Items</span>
+          </div>
+          
+          <div className="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-md border border-red-200">
+            <i className="bi bi-lightning-fill text-red-600 text-sm"></i>
+            <span className="text-sm font-semibold text-red-800">{rushCount}</span>
+            <span className="text-xs text-red-600">Rush</span>
+          </div>
+          
+          {overdueCount > 0 && (
+            <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-md border border-orange-200">
+              <i className="bi bi-clock text-orange-600 text-sm"></i>
+              <span className="text-sm font-semibold text-orange-800">{overdueCount}</span>
+              <span className="text-xs text-orange-600">Overdue</span>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-md border border-green-200">
+            <i className="bi bi-image text-green-600 text-sm"></i>
+            <span className="text-sm font-semibold text-green-800">{bothImagesCount}</span>
+            <span className="text-xs text-green-600">Complete</span>
+          </div>
+        </div>
+        
+        {/* Right side - Controls */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <i className="bi bi-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+            <Input
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-7 h-8 w-44 text-sm border-gray-300 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Priority Filter */}
+          <select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value as 'all' | 'rush' | 'normal')}
+            className="px-2.5 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
+          >
+            <option value="all">All Priority</option>
+            <option value="rush">Rush Only</option>
+            <option value="normal">Normal Only</option>
+          </select>
+
+          {/* Customer Display Toggle */}
+          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border border-gray-300 h-8">
+            <input
+              type="checkbox"
+              id="show-customer-names-wh"
+              checked={showCustomerNames}
+              onChange={(e) => setShowCustomerNames(e.target.checked)}
+              className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
+            />
+            <label htmlFor="show-customer-names-wh" className="text-xs font-medium text-gray-700 cursor-pointer select-none whitespace-nowrap">
+              Show Names
+            </label>
+          </div>
+        </div>
+      </div>
+
       <Table className="op-table">
         <TableHeader className="op-header">
           <TableRow className="op-header-row">
@@ -422,7 +506,7 @@ export default function OpWarehouse() {
             <TableRow>
               <TableCell colSpan={tableColSpan} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <i className="bi bi-arrow-repeat animate-spin text-lg"></i>
                   <span>Loading warehouse data...</span>
                 </div>
               </TableCell>
@@ -451,7 +535,7 @@ export default function OpWarehouse() {
                       </TableCell>
                       <TableCell className={`op-body-transact ${getUpdateColor(row.updated)}`}>
                         <div className="flex items-center gap-1">
-                          <h5 className="text-[#000000]">{row.lineItemId}</h5>
+                          <h5>{row.lineItemId}</h5>
                           {/* Add image indicators next to ID with tooltips */}
                           {row.before_img && (
                             <span className="text-blue-500 text-xs px-1 rounded bg-blue-50" title="Before image available">B</span>
@@ -471,20 +555,32 @@ export default function OpWarehouse() {
                           </small>
                         </div>
                       </TableCell>
-                      <TableCell className={`op-body-shoe ${getUpdateColor(row.updated)}`}><small>{row.shoe}</small></TableCell>
-                      <TableCell className={`op-body-service ${getUpdateColor(row.updated)}`}><small>{row.service}</small></TableCell>
+                      <TableCell className={`op-body-shoe ${getUpdateColor(row.updated)}`}>
+                        <small>{row.shoe}</small>
+                      </TableCell>
+                      <TableCell className={`op-body-service ${getUpdateColor(row.updated)}`}>
+                        <small>{row.service}</small>
+                      </TableCell>
                       <TableCell className={`op-body-branch ${getUpdateColor(row.updated)}`}>
                         <div className="flex flex-col gap-0.5">
                           <h5 className="m-0 text-sm font-semibold leading-tight text-slate-900">{row.branch}</h5>
                           <small className="text-[11px] font-semibold uppercase tracking-[0.12em] leading-tight text-emerald-600">{row.Location}</small>
                         </div>
                       </TableCell>
-                      <TableCell className={`op-body-status op-status-wh ${getUpdateColor(row.updated)}`}><h5>{row.status}</h5></TableCell>
+                      <TableCell className={`op-body-status op-status-wh ${getUpdateColor(row.updated)}`}>
+                        <div className="flex items-center gap-2">
+                          <span 
+                            className="inline-block w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: getStatusColor(row.status) }}
+                          ></span>
+                          <h5 style={{ color: getStatusColor(row.status) }}>{row.status}</h5>
+                        </div>
+                      </TableCell>
                       <TableCell className={`op-body-rush ${getUpdateColor(row.updated)}`}>
                         {row.isRush ? (
-                          <span className="px-3 py-1 bg-red-200 text-red-800 rounded-full text-sm font-medium">Rush</span>
+                          <span className="px-3 py-1 bg-[#CE1616] text-white rounded-full text-sm font-medium">Rush</span>
                         ) : (
-                          <span className="px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-medium">Normal</span>
+                          <span className="px-1 py-1 text-sm font-medium text-black">Normal</span>
                         )}
                       </TableCell>
                       <TableCell className={`op-body-due ${getUpdateColor(row.updated)}`}>
@@ -493,7 +589,15 @@ export default function OpWarehouse() {
                         </small>
                       </TableCell>
                       <TableCell className={`op-body-mod ${getUpdateColor(row.updated)}`}>
-                        <small>{row.updated.toLocaleDateString()}</small>
+                        <div className="flex flex-col">
+                          <small>{row.updated.toLocaleDateString()}</small>
+                          {row.after_img && (
+                            <small className="flex items-center gap-1 text-green-600">
+                              <i className="bi bi-check-circle-fill text-xs"></i>
+                              <span className="text-xs">After Image</span>
+                            </small>
+                          )}
+                        </div>
                       </TableCell>
                       {hiddenColumns.length > 0 && (
                         <TableCell className={`op-body-dropdown-toggle ${getUpdateColor(row.updated)}`}>
@@ -539,7 +643,12 @@ export default function OpWarehouse() {
                           <div><h5 className="label">Location</h5> <h5 className="name">{row.Location}</h5></div>
                         )}
                         {hiddenColumns.includes("Status") && (
-                          <div><h5 className="label">Status</h5> <h5 className="name">{row.status}</h5></div>
+                          <div>
+                            <h5 className="label">Status</h5> 
+                            <h5 className="name" style={{ color: getStatusColor(row.status) }}>
+                              {row.status}
+                            </h5>
+                          </div>
                         )}
                         {hiddenColumns.includes("Priority") && (
                           <div><h5 className="label">Priority</h5> <h5 className="name">{row.isRush ? "Rush" : "Normal"}</h5></div>
@@ -560,150 +669,56 @@ export default function OpWarehouse() {
         </TableBody>
       </Table>
 
-      {/* Modernized Bottom Action Bar */}
-      <div className="op-below-container flex flex-wrap justify-between items-center gap-3 mt-2">
-        {/* Left side - Search, Filter, and Stats */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-            <Input
-              placeholder="Search items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-6 h-8 w-40 text-sm border-gray-300 focus:border-blue-500"
-            />
-          </div>
+      {/* Bottom Action Bar - Right aligned */}
+      <div className="op-below-container flex flex-wrap items-center justify-end gap-3 mt-2">
+        {/* Selection counter */}
+        <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
+          <i className="bi bi-check-circle-fill text-blue-600 text-sm"></i>
+          <span className="text-sm font-medium text-blue-800">
+            {selected.length} <span>selected</span>
+          </span>
+        </div>
 
-          {/* Priority Filter */}
-          <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value as 'all' | 'rush' | 'normal')}
-            className="px-2 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="all">All Priority</option>
-            <option value="rush">Rush Only</option>
-            <option value="normal">Normal Only</option>
-          </select>
-
-          {/* Customer Display Toggle */}
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border">
-            <input
-              type="checkbox"
-              id="show-customer-names-wh"
-              checked={showCustomerNames}
-              onChange={(e) => setShowCustomerNames(e.target.checked)}
-              className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
-            />
-            <label htmlFor="show-customer-names-wh" className="text-xs font-medium text-gray-700 cursor-pointer select-none">
-              Show Names
-            </label>
-          </div>
-
-          {/* Modern Stats with Text Labels */}
-          <div className="flex items-center gap-3 text-sm bg-gray-50 px-3 py-1 rounded-md border">
-            <span className="flex items-center gap-1 text-blue-600">
-              <Package className="w-3 h-3" />
-              <span className="font-medium">{filteredRows.length}</span>
-              <span className="hidden sm:inline text-xs text-blue-500">Items</span>
+        {/* Connection Status */}
+        <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-300 h-8">
+          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+          <span className="text-xs text-gray-600 whitespace-nowrap">
+            {isConnected ? 'Live' : 'Offline'}
+            <span className="hidden lg:inline">
+              {lastUpdate && ` • ${lastUpdate.toLocaleTimeString()}`}
             </span>
-            <span className="w-px h-3 bg-gray-300"></span>
-            <span className="flex items-center gap-1 text-red-600">
-              <AlertCircle className="w-3 h-3" />
-              <span className="font-medium">{rushCount}</span>
-              <span className="hidden sm:inline text-xs text-red-500">Rush</span>
-            </span>
-            {overdueCount > 0 && (
-              <>
-                <span className="w-px h-3 bg-gray-300"></span>
-                <span className="flex items-center gap-1 text-red-600">
-                  <Clock className="w-3 h-3" />
-                  <span className="font-medium">{overdueCount}</span>
-                  <span className="hidden sm:inline text-xs text-red-500">Overdue</span>
-                </span>
-              </>
-            )}
-            
-            {/* Keep image statistics from original code */}
-            <span className="w-px h-3 bg-gray-300"></span>
-            <div className="flex items-center gap-1 text-green-600 group relative">
-              <ImageIcon className="w-3 h-3" />
-              <span className="font-medium">
-                {bothImagesCount}/{filteredRows.length}
-              </span>
-              <span className="hidden sm:inline text-xs text-green-500">Images</span>
-              
-              {/* Tooltip with detailed image statistics */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 bg-white p-2 rounded shadow-md border border-gray-200 text-xs w-48 hidden group-hover:block z-10">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Before images:</span>
-                  <span className="font-medium">{beforeImagesCount}</span>
-                </div>
-                <div className="flex justify-between mt-1">
-                  <span className="text-gray-600">After images:</span>
-                  <span className="font-medium">{afterImagesCount}</span>
-                </div>
-                <div className="flex justify-between mt-1">
-                  <span className="text-gray-600">Complete sets:</span>
-                  <span className="font-medium">{bothImagesCount}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          </span>
         </div>
         
-        {/* Right side - Selection count, Status, and Actions */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Modern Selection Counter */}
-          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
-            <CheckCircle2 className="w-3 h-3 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">
-              {selected.length} <span>selected</span>
-            </span>
-          </div>
+        {/* Refresh Button */}
+        <button 
+          onClick={fetchData}
+          className="op-btn text-white button-md flex items-center gap-1 hover:opacity-90 transition-opacity"
+          title="Refresh data"
+          disabled={isLoading}
+        >
+          <i className={`bi bi-arrow-repeat ${isLoading ? 'animate-spin' : ''} text-sm`}></i>
+          <span className="text-sm font-medium hidden sm:inline">Refresh</span>
+        </button>
 
-          {/* Connection Status */}
-          <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded-md">
-            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-            <span className="text-xs text-gray-600">
-              {isConnected ? 'Live' : 'Offline'}
-              <span className="hidden sm:inline">
-                {lastUpdate && ` • ${lastUpdate.toLocaleTimeString()}`}
-              </span>
-            </span>
+        {isLoading && (
+          <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md h-8">
+            <i className="bi bi-arrow-repeat animate-spin text-sm"></i>
+            <span className="text-xs font-medium hidden xs:inline">Syncing...</span>
           </div>
+        )}
 
-          {isLoading && (
-            <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md">
-              <RefreshCw className="w-3 h-3 animate-spin" />
-              <span className="text-xs font-medium hidden xs:inline">Syncing...</span>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={fetchData}
-              className="op-btn text-white button-md flex items-center gap-1 hover:opacity-90 transition-opacity"
-              title="Refresh data"
-              disabled={isLoading}
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="text-sm font-medium hidden sm:inline">Refresh</span>
-            </button>
-            
-            <button
-              className="op-btn-wh op-btn text-white bg-[#0E9CFF] button-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0D8CE6] transition-colors flex items-center gap-1"
-              disabled={selected.length === 0}
-              onClick={() => setModalOpen(true)}
-              title={selected.length === 0 ? "Select items to return to branch" : `Return ${selected.length} items to branch`}
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="text-sm font-medium hidden md:inline">Return to Branch</span>
-              <span className="text-sm font-medium md:hidden">Return</span>
-            </button>
-          </div>
-        </div>
+        {/* CTA Button */}
+        <button
+          className="op-btn-wh op-btn text-white bg-[#0E9CFF] button-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0D8CE6] transition-colors flex items-center gap-1"
+          disabled={selected.length === 0}
+          onClick={() => setModalOpen(true)}
+          title={selected.length === 0 ? "Select items to return to branch" : `Return ${selected.length} items to branch`}
+        >
+          <i className="bi bi-arrow-return-left text-sm"></i>
+          <span className="text-sm font-medium hidden md:inline">Return to Branch</span>
+          <span className="text-sm font-medium md:hidden">Return</span>
+        </button>
       </div>
 
       <ReturnToBranchModal

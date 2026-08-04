@@ -1,91 +1,261 @@
-.cv-table-container {
+.cv-table-shell {
   width: 100%;
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .cv-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
   font-size: 14px;
-  
-  table-layout: fixed; /* prevents shrink-wrapping */
 }
 
 .cv-head-row th h5 {
   margin: 0;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cv-head-row th,
+.cv-row td {
+  border-bottom: 1px solid #e7edf5;
+}
+
+.cv-head-row th {
+  height: 46px;
+  color: #7b8794;
+  background: linear-gradient(180deg, #fbfcfe 0%, #f0f0f0f0 100%);
+  text-align: center;
 }
 
 .cv-row {
-  cursor: pointer;
-  transition: background 0.2s;
+  background: #fff;
+  transition: background 0.18s ease;
 }
+
 .cv-row:hover {
-  background: #f7f7f7;
+  background: #f9fbff;
 }
 
 .cv-row-open {
-  background: #fafafa;
+  background: #f7f9fc;
+}
+
+.cv-row td {
+  padding: 18px 16px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.cv-id {
+  text-align: left;
+  width: 17%;
+}
+
+.cv-head-id {
+  width: 17%;
+}
+
+.cv-action,
+.cv-head-action {
+  width: 9%;
+}
+
+.cv-action {
+  text-align: center;
+}
+
+.cv-id-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cv-id-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1f2937;
+  letter-spacing: -0.01em;
+}
+
+.cv-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+}
+
+.cv-main-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.cv-sub-value {
+  font-size: 12px;
+  color: #8b96a6;
+}
+
+.cv-money-stack {
+  align-items: center;
+}
+
+.cv-money {
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.cv-paid {
+  color: #16a34a;
+}
+
+.cv-partial {
+  color: #ea580c;
+}
+
+.cv-unpaid {
+  color: #ef4444;
+}
+
+.cv-pair-stack {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.cv-mini-badge {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #eef3f9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.cv-status {
+  font-weight: 700;
+}
+
+.cv-status span,
+.cv-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cv-status-paid,
+.cv-status-partial,
+.cv-status-np {
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid transparent;
+}
+
+.cv-status-paid {
+  background: #d1fae5;
+  color: #15803d;
+  border-color: #a7f3d0;
+}
+
+.cv-status-partial {
+  background: #ffedd5;
+  color: #ea580c;
+  border-color: #fdba74;
+}
+
+.cv-status-np {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.cv-edit-btn {
+  min-width: 70px;
+  height: 34px;
+  border-radius: 10px;
+  background: #d11f2d;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 6px 12px rgba(209, 31, 45, 0.18);
+}
+
+.cv-edit-btn:hover {
+  background: #b91c1c;
 }
 
 .cv-row-details td {
-  padding: 12px;
-  white-space: normal;
-  width: 100%;
-  padding: 0px 3%;
+  padding: 0 18px 18px;
+  border-bottom: 1px solid #e7edf5;
 }
 
 .cv-details {
-  columns: 1;
   width: 100%;
   text-align: left;
+  padding: 12px 0 0;
+  columns: 2;
+  column-gap: 2rem;
 }
 
 .cv-details > * {
-  break-inside: avoid;     /* prevent weird breaks */
+  break-inside: avoid;
 }
 
-
-
-
-/* --- RESPONSIVE HIDING SYSTEM --- */
-
-/* ≤1369px */
-@media (max-width: 1369px) {
-  .hide-below-1369 {
-    display: none;
-  }
-}
-
-/* ≤1220px */
-@media (max-width: 1220px) {
-  .hide-below-1220 {
-    display: none;
-  }
-}
-
-/* ≤1024px */
 @media (max-width: 1024px) {
-  .hide-below-1024 {
-    display: none;
-  }
-
   .cv-details {
-    columns: 2;              /* split into 2 columns */
-    column-gap: 5rem;
+    columns: 1;
   }
 }
 
-/* ≤899px */
+@media (max-width: 767px) {
+  .hide-below-767 {
+    display: none;
+  }
+
+  .cv-row td {
+    padding: 14px 12px;
+  }
+
+  .cv-head-id,
+  .cv-id {
+    width: 26%;
+  }
+
+  .cv-head-action,
+  .cv-action {
+    width: 14%;
+  }
+}
+
 @media (max-width: 899px) {
   .hide-below-899 {
     display: none;
   }
 }
 
-/* ≤767px */
-@media (max-width: 767px) {
-  .hide-below-767 {
+@media (max-width: 1024px) {
+  .hide-below-1024 {
+    display: none;
+  }
+}
+
+@media (max-width: 1220px) {
+  .hide-below-1220 {
+    display: none;
+  }
+}
+
+@media (max-width: 1369px) {
+  .hide-below-1369 {
     display: none;
   }
 }

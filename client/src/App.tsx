@@ -20,7 +20,7 @@ import { Toaster } from 'sonner'
 function App() {
   // ───────────── STATES ─────────────
   const [activePage, setActivePage] = useState<NavPage>('serviceRequest')
-  const [isNavCollapsed, setIsNavCollapsed] = useState(false)
+  const [isNavCollapsed, setIsNavCollapsed] = useState(true)
 
   const [user, setUser] = useState<{
     user_id: string
@@ -48,7 +48,7 @@ function App() {
   const handleLogout = () => {
     sessionStorage.clear()
     setUser(null)
-    setIsNavCollapsed(false)
+    setIsNavCollapsed(true)
   }
 
   const handleToggleNavbar = () => {

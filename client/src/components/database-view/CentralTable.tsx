@@ -27,15 +27,15 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
   const [selectedReceipt, setSelectedReceipt] = React.useState<ReceiptRow | null>(null)
 
   const fields = [
-    { key: "dateIn", label: "Date In", hiddenBelow: 767 },
-    { key: "receivedBy", label: "Received By", hiddenBelow: 899 },
+    { key: "dateIn", label: "Date In", hiddenBelow: 1220 },
     { key: "dateOut", label: "Date Out", hiddenBelow: 1024 },
-    { key: "customer", label: "Customer", hiddenBelow: 767 },
+    { key: "receivedBy", label: "Received By", hiddenBelow: 1024 },
+    { key: "customer", label: "Customer", hiddenBelow: 899 },
     { key: "pairs", label: "Pairs", hiddenBelow: 1369 },
-    { key: "released", label: "Released", hiddenBelow: 1220 },
-    { key: "branch", label: "Branch", hiddenBelow: 1369 },
+    { key: "released", label: "Released", hiddenBelow: 1369 },
+    { key: "branch", label: "Branch", hiddenBelow: 1220 },
     { key: "branchLocation", label: "Location", hiddenBelow: 1220 },
-    { key: "total", label: "Total", hiddenBelow: 767 },
+    { key: "total", label: "Total", hiddenBelow: 899 },
     { key: "amountPaid", label: "Paid", hiddenBelow: 1024 },
     { key: "remaining", label: "Balance", hiddenBelow: 899 },
     { key: "status", label: "Status", hiddenBelow: 767 },
@@ -60,22 +60,17 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
   }
 
   return (
-    <div className="cv-table-container">
+    <div className="cv-table-shell">
       <Table className="cv-table">
         <TableHeader className="cv-header">
           <TableRow className="cv-head-row">
-            <TableHead className="cv-head-id"><h5 className="extra-bold">Receipt</h5></TableHead>
-            <TableHead className="hide-below-767"><h5>In</h5></TableHead>
-            <TableHead className="hide-below-899"><h5>By</h5></TableHead>
-            <TableHead className="hide-below-1024"><h5>Out</h5></TableHead>
-            <TableHead className="hide-below-767"><h5>Cust</h5></TableHead>
-            <TableHead className="hide-below-1369 cv-num"><h5># Pairs</h5></TableHead>
-            <TableHead className="hide-below-1220 cv-num"><h5># Rlsd</h5></TableHead>
-            <TableHead className="hide-below-1369"><h5>Br</h5></TableHead>
-            <TableHead className="hide-below-1220"><h5>Loc</h5></TableHead>
-            <TableHead className="hide-below-767 cv-num"><h5>Total</h5></TableHead>
-            <TableHead className="hide-below-1024 cv-num"><h5>Paid</h5></TableHead>
-            <TableHead className="hide-below-899 cv-num"><h5>Bal</h5></TableHead>
+            <TableHead className="cv-head-id"><h5>Receipt ID</h5></TableHead>
+            <TableHead className="hide-below-1220"><h5>Dates (In/Out)</h5></TableHead>
+            <TableHead className="hide-below-899"><h5>Customer / Staff</h5></TableHead>
+            <TableHead className="hide-below-1369 cv-num"><h5>Pairs</h5></TableHead>
+            <TableHead className="hide-below-1369 cv-num"><h5>Released</h5></TableHead>
+            <TableHead className="hide-below-1220"><h5>Branch Details</h5></TableHead>
+            <TableHead className="hide-below-899"><h5>Accounting</h5></TableHead>
             <TableHead className="hide-below-767 cv-status"><h5>Status</h5></TableHead>
             <TableHead className="cv-head-action"><h5>Action</h5></TableHead>
           </TableRow>
@@ -92,18 +87,49 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                   onClick={() => hasHiddenCols && toggleRow(r.id)}
                   style={{ cursor: hasHiddenCols ? "pointer" : "default" }}
                 >
-                  <TableCell className="cv-id"><h5>{r.id}</h5></TableCell>
-                  <TableCell className="hide-below-767"><small>{format(r.dateIn, "yyyy-MM-dd")}</small></TableCell>
-                  <TableCell className="hide-below-899"><small>{r.receivedBy}</small></TableCell>
-                  <TableCell className="hide-below-1024"><small>{r.dateOut ? format(r.dateOut, "yyyy-MM-dd") : "—"}</small></TableCell>
-                  <TableCell className="hide-below-767"><small>{r.customer}</small></TableCell>
-                  <TableCell className="hide-below-1369 cv-num">{r.pairs}</TableCell>
-                  <TableCell className="hide-below-1220 cv-num">{r.released}</TableCell>
-                  <TableCell className="hide-below-1369"><small>{r.branch}</small></TableCell>
-                  <TableCell className="hide-below-1220"><small>{r.branchLocation}</small></TableCell>
-                  <TableCell className="hide-below-767 cv-num">{r.total}</TableCell>
-                  <TableCell className="hide-below-1024 cv-num">{r.amountPaid}</TableCell>
-                  <TableCell className="hide-below-899 cv-num">{r.remaining}</TableCell>
+                  <TableCell className="cv-id">
+                    <div className="cv-id-cell">
+                      <span className="cv-id-value">{r.id}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hide-below-1220">
+                    <div className="cv-stack">
+                      <span className="cv-main-value">{format(r.dateIn, "yyyy-MM-dd")}</span>
+                      <span className="cv-sub-value">
+                        {r.dateOut ? `Out: ${format(r.dateOut, "yyyy-MM-dd")}` : "Out: —"}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hide-below-899">
+                    <div className="cv-stack">
+                      <span className="cv-main-value">{r.customer}</span>
+                      <span className="cv-sub-value">{r.receivedBy}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hide-below-1369 cv-num">
+                    <div className="cv-pair-stack">
+                      <span className="cv-mini-badge">{r.pairs}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hide-below-1369 cv-num">
+                    <span className="cv-main-value">{r.released}</span>
+                  </TableCell>
+                  <TableCell className="hide-below-1220">
+                    <div className="cv-stack">
+                      <span className="cv-main-value">{r.branch}</span>
+                      <span className="cv-sub-value">{r.branchLocation}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hide-below-899">
+                    <div className="cv-stack cv-money-stack">
+                      <span className="cv-money">{formatMoney(r.total)}</span>
+                      <span className={`cv-sub-value ${r.status === "PAID" ? "cv-paid" : r.status === "PARTIAL" ? "cv-partial" : "cv-unpaid"}`}>
+                        {r.status === "PAID"
+                          ? `Paid: ${formatMoney(r.amountPaid)}`
+                          : `Bal: ${formatMoney(r.remaining)}`}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell className={`hide-below-767 cv-status cv-status-${r.status.toLowerCase()}`}>
                     {r.status}
                   </TableCell>
@@ -122,7 +148,7 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                 {/* Accordion details for hidden columns */}
                 {hasHiddenCols && openRow === r.id && (
                   <TableRow className="cv-row-details">
-                    <TableCell colSpan={15}>
+                    <TableCell colSpan={8}>
                       <div className="cv-details">
                         {fields.map((f) => {
                           if (!hiddenCols[f.key]) return null
@@ -159,4 +185,8 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
       )}
     </div>
   )
+}
+
+function formatMoney(value: number) {
+  return `₱${Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 0 })}`
 }

@@ -28,17 +28,6 @@ import { getUpdateColor } from "@/utils/getUpdateColor";
 import { updateDates } from "@/utils/api/updateDates";
 import { useLineItemUpdates } from "@/hooks/useLineItemUpdates";
 import { useCustomerNames } from "@/context/CustomerNamesContext";
-import { 
-  Search, 
-  RefreshCw, 
-  Package, 
-  Clock, 
-  AlertCircle,
-  CheckCircle2,
-  SortAsc,
-  SortDesc,
-  Image
-} from "lucide-react";
 
 type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand";
 type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
@@ -363,7 +352,9 @@ export default function OpBranchDelivery() {
 
   const getSortIcon = (field: keyof Row) => {
     if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />;
+    return sortDirection === 'asc' ? 
+      <i className="bi bi-sort-up text-sm"></i> : 
+      <i className="bi bi-sort-down text-sm"></i>;
   };
   
   // Calculate statistics
@@ -372,8 +363,99 @@ export default function OpBranchDelivery() {
   const overdueCount = rows.filter(row => row.dueDate < new Date()).length;
   const withImagesCount = rows.filter(row => row.before_img).length;
   
+  // Helper function to get status color
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'Incoming Branch Delivery':
+        return '#0D55F1'; // Blue
+      case 'In Process':
+        return '#FF5E5E'; // Red
+      case 'Ready for Pickup':
+        return '#0E9CFF'; // Light Blue
+      case 'For Warehouse':
+        return '#FACC15'; // Yellow
+      case 'Incoming Service':
+        return '#FB923C'; // Orange
+      case 'For Delivery':
+        return '#0BA471'; // Green
+      default:
+        return '#6B7280'; // Gray
+    }
+  };
+
   return (
     <div className="op-container">
+      {/* Top Bar - Stats on Left, Controls on Right - No card styling */}
+      <div className="flex flex-wrap items-center justify-between gap-3 py-2">
+        {/* Left side - Stats Summary */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-200">
+            <i className="bi bi-box-seam text-blue-600 text-sm"></i>
+            <span className="text-sm font-semibold text-blue-800">{rows.length}</span>
+            <span className="text-xs text-blue-600">Items</span>
+          </div>
+          
+          <div className="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-md border border-red-200">
+            <i className="bi bi-lightning-fill text-red-600 text-sm"></i>
+            <span className="text-sm font-semibold text-red-800">{rushCount}</span>
+            <span className="text-xs text-red-600">Rush</span>
+          </div>
+          
+          {overdueCount > 0 && (
+            <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-md border border-orange-200">
+              <i className="bi bi-clock text-orange-600 text-sm"></i>
+              <span className="text-sm font-semibold text-orange-800">{overdueCount}</span>
+              <span className="text-xs text-orange-600">Overdue</span>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-md border border-green-200">
+            <i className="bi bi-image text-green-600 text-sm"></i>
+            <span className="text-sm font-semibold text-green-800">{withImagesCount}</span>
+            <span className="text-xs text-green-600">With Images</span>
+          </div>
+        </div>
+        
+        {/* Right side - Controls */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <i className="bi bi-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+            <Input
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-7 h-8 w-44 text-sm border-gray-300 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Priority Filter */}
+          <select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value as 'all' | 'rush' | 'normal')}
+            className="px-2.5 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
+          >
+            <option value="all">All Priority</option>
+            <option value="rush">Rush Only</option>
+            <option value="normal">Normal Only</option>
+          </select>
+
+          {/* Customer Display Toggle */}
+          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border border-gray-300 h-8">
+            <input
+              type="checkbox"
+              id="show-customer-names-bd"
+              checked={showCustomerNames}
+              onChange={(e) => setShowCustomerNames(e.target.checked)}
+              className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
+            />
+            <label htmlFor="show-customer-names-bd" className="text-xs font-medium text-gray-700 cursor-pointer select-none whitespace-nowrap">
+              Show Names
+            </label>
+          </div>
+        </div>
+      </div>
+
       <Table className="op-table">
         <TableHeader className="op-header">
           <TableRow className="op-header-row">
@@ -435,7 +517,7 @@ export default function OpBranchDelivery() {
             <TableRow>
               <TableCell colSpan={tableColSpan} className="text-center py-8">
                 <div className="flex items-center justify-center gap-2">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <i className="bi bi-arrow-repeat animate-spin text-lg"></i>
                   <span>Loading branch delivery data...</span>
                 </div>
               </TableCell>
@@ -500,13 +582,19 @@ export default function OpBranchDelivery() {
                         </div>
                       </TableCell>
                       <TableCell className={`op-body-status op-status-bd ${getUpdateColor(row.updated)}`}>
-                        <h5>{row.status}</h5>
+                        <div className="flex items-center gap-2">
+                          <span 
+                            className="inline-block w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: getStatusColor(row.status) }}
+                          ></span>
+                          <h5>{row.status}</h5>
+                        </div>
                       </TableCell>
                       <TableCell className={`op-body-rush ${getUpdateColor(row.updated)}`}>
                         {row.isRush ? (
-                          <span className="px-3 py-1 bg-red-200 text-red-800 rounded-full text-sm font-medium">Rush</span>
+                          <span className="px-3 py-1 bg-[#CE1616] text-white rounded-full text-sm font-medium">Rush</span>
                         ) : (
-                          <span className="px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-medium">Normal</span>
+                          <span className="px-1 py-1 text-sm font-medium text-black">Normal</span>
                         )}
                       </TableCell>
                       <TableCell className={`op-body-due ${getUpdateColor(row.updated)}`}>
@@ -595,133 +683,56 @@ export default function OpBranchDelivery() {
         </TableBody>
       </Table>
 
-      {/* Modernized Bottom Action Bar */}
-      <div className="op-below-container flex flex-wrap justify-between items-center gap-3 mt-2">
-        {/* Left side - Search, Filter, and Stats */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-            <Input
-              placeholder="Search items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-6 h-8 w-40 text-sm border-gray-300 focus:border-blue-500"
-            />
-          </div>
+      {/* Bottom Action Bar - Right aligned */}
+      <div className="op-below-container flex flex-wrap items-center justify-end gap-3 mt-2">
+        {/* Selection counter */}
+        <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
+          <i className="bi bi-check-circle-fill text-blue-600 text-sm"></i>
+          <span className="text-sm font-medium text-blue-800">
+            {selected.length} <span>selected</span>
+          </span>
+        </div>
 
-          {/* Priority Filter */}
-          <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value as 'all' | 'rush' | 'normal')}
-            className="px-2 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="all">All Priority</option>
-            <option value="rush">Rush Only</option>
-            <option value="normal">Normal Only</option>
-          </select>
-
-          {/* Customer Display Toggle */}
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-md border">
-            <input
-              type="checkbox"
-              id="show-customer-names-bd"
-              checked={showCustomerNames}
-              onChange={(e) => setShowCustomerNames(e.target.checked)}
-              className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500 focus:ring-1"
-            />
-            <label htmlFor="show-customer-names-bd" className="text-xs font-medium text-gray-700 cursor-pointer select-none">
-              Show Names
-            </label>
-          </div>
-
-          {/* Modern Stats with Text Labels */}
-          <div className="flex items-center gap-3 text-sm bg-gray-50 px-3 py-1 rounded-md border">
-            <span className="flex items-center gap-1 text-blue-600">
-              <Package className="w-3 h-3" />
-              <span className="font-medium">{filteredRows.length}</span>
-              <span className="hidden sm:inline text-xs text-blue-500">Items</span>
+        {/* Connection Status */}
+        <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-300 h-8">
+          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+          <span className="text-xs text-gray-600 whitespace-nowrap">
+            {isConnected ? 'Live' : 'Offline'}
+            <span className="hidden lg:inline">
+              {lastUpdate && ` • ${lastUpdate.toLocaleTimeString()}`}
             </span>
-            
-            <span className="w-px h-3 bg-gray-300"></span>
-            <span className="flex items-center gap-1 text-red-600">
-              <AlertCircle className="w-3 h-3" />
-              <span className="font-medium">{rushCount}</span>
-              <span className="hidden sm:inline text-xs text-red-500">Rush</span>
-            </span>
-            
-            {overdueCount > 0 && (
-              <>
-                <span className="w-px h-3 bg-gray-300"></span>
-                <span className="flex items-center gap-1 text-red-600">
-                  <Clock className="w-3 h-3" />
-                  <span className="font-medium">{overdueCount}</span>
-                  <span className="hidden sm:inline text-xs text-red-500">Overdue</span>
-                </span>
-              </>
-            )}
-            
-            <span className="w-px h-3 bg-gray-300"></span>
-            <span className="flex items-center gap-1 text-green-600">
-              <Image className="w-3 h-3" />
-              <span className="font-medium">{withImagesCount}</span>
-              <span className="hidden sm:inline text-xs text-green-500">With Images</span>
-            </span>
-          </div>
+          </span>
         </div>
         
-        {/* Right side - Selection count, Status, and Actions */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Modern Selection Counter */}
-          <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
-            <CheckCircle2 className="w-3 h-3 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">
-              {selected.length} <span>selected</span>
-            </span>
-          </div>
+        {/* Refresh Button */}
+        <button 
+          onClick={fetchData}
+          className="op-btn text-white button-md flex items-center gap-1 hover:opacity-90 transition-opacity"
+          title="Refresh data"
+          disabled={isLoading}
+        >
+          <i className={`bi bi-arrow-repeat ${isLoading ? 'animate-spin' : ''} text-sm`}></i>
+          <span className="text-sm font-medium hidden sm:inline">Refresh</span>
+        </button>
 
-          {/* Connection Status */}
-          <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded-md">
-            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-            <span className="text-xs text-gray-600">
-              {isConnected ? 'Live' : 'Offline'}
-              <span className="hidden sm:inline">
-                {lastUpdate && ` • ${lastUpdate.toLocaleTimeString()}`}
-              </span>
-            </span>
+        {isLoading && (
+          <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md h-8">
+            <i className="bi bi-arrow-repeat animate-spin text-sm"></i>
+            <span className="text-xs font-medium hidden xs:inline">Syncing...</span>
           </div>
+        )}
 
-          {isLoading && (
-            <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md">
-              <RefreshCw className="w-3 h-3 animate-spin" />
-              <span className="text-xs font-medium hidden xs:inline">Syncing...</span>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={fetchData}
-              className="op-btn text-white button-md flex items-center gap-1 hover:opacity-90 transition-opacity"
-              title="Refresh data"
-              disabled={isLoading}
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="text-sm font-medium hidden sm:inline">Refresh</span>
-            </button>
-            
-            <button
-              className="op-btn-bd op-btn text-white bg-[#0E9CFF] button-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0B8DE6] transition-colors flex items-center gap-1"
-              disabled={selected.length === 0}
-              onClick={() => setModalOpen(true)}
-              title={selected.length === 0 ? "Select items to mark as in process" : `Mark ${selected.length} items as in process`}
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="text-sm font-medium hidden md:inline">Mark as In Process</span>
-              <span className="text-sm font-medium md:hidden">In Process</span>
-            </button>
-          </div>
-        </div>
+        {/* CTA Button */}
+        <button
+          className="op-btn-bd op-btn text-white bg-[#0E9CFF] button-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0B8DE6] transition-colors flex items-center gap-1"
+          disabled={selected.length === 0}
+          onClick={() => setModalOpen(true)}
+          title={selected.length === 0 ? "Select items to mark as in process" : `Mark ${selected.length} items as in process`}
+        >
+          <i className="bi bi-check-circle-fill text-sm"></i>
+          <span className="text-sm font-medium hidden md:inline">Mark as In Process</span>
+          <span className="text-sm font-medium md:hidden">In Process</span>
+        </button>
       </div>
 
       <InProcessModal
