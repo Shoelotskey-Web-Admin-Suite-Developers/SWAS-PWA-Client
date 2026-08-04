@@ -68,7 +68,6 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
             <TableHead className="hide-below-1220"><h5>Dates (In/Out)</h5></TableHead>
             <TableHead className="hide-below-899"><h5>Customer / Staff</h5></TableHead>
             <TableHead className="hide-below-1369 cv-num"><h5>Pairs</h5></TableHead>
-            <TableHead className="hide-below-1369 cv-num"><h5>Released</h5></TableHead>
             <TableHead className="hide-below-1220"><h5>Branch Details</h5></TableHead>
             <TableHead className="hide-below-899"><h5>Accounting</h5></TableHead>
             <TableHead className="hide-below-767 cv-status"><h5>Status</h5></TableHead>
@@ -89,7 +88,7 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                 >
                   <TableCell className="cv-id">
                     <div className="cv-id-cell">
-                      <span className="cv-id-value">{r.id}</span>
+                      <span className="cv-id-value bold">{r.id}</span>
                     </div>
                   </TableCell>
                   <TableCell className="hide-below-1220">
@@ -102,17 +101,16 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                   </TableCell>
                   <TableCell className="hide-below-899">
                     <div className="cv-stack">
-                      <span className="cv-main-value">{r.customer}</span>
+                      <span className="cv-main-value semi-bold">{r.customer}</span>
                       <span className="cv-sub-value">{r.receivedBy}</span>
                     </div>
                   </TableCell>
                   <TableCell className="hide-below-1369 cv-num">
-                    <div className="cv-pair-stack">
-                      <span className="cv-mini-badge">{r.pairs}</span>
+                    <div className="cv-pair-container">
+                      <span className="cv-pair-value">
+                        {r.released} / {r.pairs}
+                      </span>
                     </div>
-                  </TableCell>
-                  <TableCell className="hide-below-1369 cv-num">
-                    <span className="cv-main-value">{r.released}</span>
                   </TableCell>
                   <TableCell className="hide-below-1220">
                     <div className="cv-stack">
@@ -122,7 +120,7 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                   </TableCell>
                   <TableCell className="hide-below-899">
                     <div className="cv-stack cv-money-stack">
-                      <span className="cv-money">{formatMoney(r.total)}</span>
+                      <span className="cv-money semi-bold">{formatMoney(r.total)}</span>
                       <span className={`cv-sub-value ${r.status === "PAID" ? "cv-paid" : r.status === "PARTIAL" ? "cv-partial" : "cv-unpaid"}`}>
                         {r.status === "PAID"
                           ? `Paid: ${formatMoney(r.amountPaid)}`
@@ -131,7 +129,7 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                     </div>
                   </TableCell>
                   <TableCell className={`hide-below-767 cv-status`}>
-                    <span className={`cv-status-${r.status.toLowerCase()}`}>
+                    <span className={`extra-bold cv-status-${r.status.toLowerCase()}`}>
                       {r.status}
                     </span>
                   </TableCell>
@@ -151,7 +149,7 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                 {/* Accordion details for hidden columns */}
                 {hasHiddenCols && openRow === r.id && (
                   <TableRow className="cv-row-details">
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={8}>
                       <div className="cv-details">
                         {fields.map((f) => {
                           if (!hiddenCols[f.key]) return null

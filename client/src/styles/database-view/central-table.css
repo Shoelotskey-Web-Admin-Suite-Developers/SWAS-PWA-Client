@@ -13,25 +13,26 @@
 /* Explicit column widths */
 .cv-head-id,
 .cv-id {
-  width: 14%;
+  width: 16%;
 }
 
 .cv-head-row th.hide-below-1220,
 .cv-row td.hide-below-1220 {
-  width: 11%;
+  width: 12%;
 }
 
 .cv-head-row th.hide-below-899,
 .cv-row td.hide-below-899 {
-  width: 13%;
+  width: 14%;
 }
 
-.cv-head-row th.hide-below-1369,
-.cv-row td.hide-below-1369 {
-  width: 9%;
+/* Pairs column - merged */
+.cv-head-row th.hide-below-1369.cv-num,
+.cv-row td.hide-below-1369.cv-num {
+  width: 10%;
 }
 
-/* Status column - NO FLEX */
+/* Status column */
 .cv-head-row th.hide-below-767.cv-status,
 .cv-row td.hide-below-767.cv-status {
   width: 10%;
@@ -150,40 +151,39 @@
   color: #ef4444;
 }
 
-.cv-pair-stack {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.cv-mini-badge {
-  min-width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: #eef3f9;
+/* Pairs container - gray with border and rounded corners */
+.cv-pair-container {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  color: #1f2937;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 4px 14px;
+  min-width: 60px;
+  min-height: 32px;
 }
 
-/* Status - NO FLEX, just simple block display */
+.cv-pair-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: 0.5px;
+}
+
+/* Status - NO FLEX */
 .cv-status {
   font-weight: 700;
   text-align: center;
   padding: 0 !important;
-  display: table-cell !important; /* Override any flex */
+  display: table-cell !important;
   vertical-align: middle;
 }
 
-/* Remove flex from status spans */
 .cv-status span {
   display: inline !important;
 }
 
-/* Status badges - block level with no flex */
 .cv-status-paid,
 .cv-status-partial,
 .cv-status-np {
@@ -275,6 +275,16 @@
   .cv-action {
     width: 15%;
     min-width: 70px;
+  }
+
+  .cv-pair-container {
+    padding: 3px 10px;
+    min-width: 50px;
+    min-height: 28px;
+  }
+
+  .cv-pair-value {
+    font-size: 13px;
   }
 }
 
