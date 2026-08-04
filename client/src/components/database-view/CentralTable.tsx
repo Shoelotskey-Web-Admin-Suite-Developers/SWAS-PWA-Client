@@ -130,17 +130,20 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className={`hide-below-767 cv-status cv-status-${r.status.toLowerCase()}`}>
-                    {r.status}
+                  <TableCell className={`hide-below-767 cv-status`}>
+                    <span className={`cv-status-${r.status.toLowerCase()}`}>
+                      {r.status}
+                    </span>
                   </TableCell>
-                  <TableCell className="cv-action extra-bold">
+                  <TableCell className="cv-action">
                     <Button
                       className="cv-edit-btn"
                       onClick={(e) => {
                         e.stopPropagation()
                         setSelectedReceipt(r)
                       }}
-                    >Edit
+                    >
+                      Edit
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -148,7 +151,7 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                 {/* Accordion details for hidden columns */}
                 {hasHiddenCols && openRow === r.id && (
                   <TableRow className="cv-row-details">
-                    <TableCell colSpan={8}>
+                    <TableCell colSpan={9}>
                       <div className="cv-details">
                         {fields.map((f) => {
                           if (!hiddenCols[f.key]) return null

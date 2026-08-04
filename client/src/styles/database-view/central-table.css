@@ -5,10 +5,48 @@
 
 .cv-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   table-layout: fixed;
   font-size: 14px;
+}
+
+/* Explicit column widths */
+.cv-head-id,
+.cv-id {
+  width: 14%;
+}
+
+.cv-head-row th.hide-below-1220,
+.cv-row td.hide-below-1220 {
+  width: 11%;
+}
+
+.cv-head-row th.hide-below-899,
+.cv-row td.hide-below-899 {
+  width: 13%;
+}
+
+.cv-head-row th.hide-below-1369,
+.cv-row td.hide-below-1369 {
+  width: 9%;
+}
+
+/* Status column - NO FLEX */
+.cv-head-row th.hide-below-767.cv-status,
+.cv-row td.hide-below-767.cv-status {
+  width: 10%;
+  min-width: 80px;
+  padding: 0 2px;
+  text-align: center;
+}
+
+/* Action column */
+.cv-head-action,
+.cv-action {
+  width: 10%;
+  min-width: 85px;
+  padding: 0 2px;
+  text-align: center;
 }
 
 .cv-head-row th h5 {
@@ -29,6 +67,7 @@
   color: #7b8794;
   background: linear-gradient(180deg, #fbfcfe 0%, #f0f0f0f0 100%);
   text-align: center;
+  padding: 0 4px;
 }
 
 .cv-row {
@@ -45,27 +84,17 @@
 }
 
 .cv-row td {
-  padding: 18px 16px;
+  padding: 18px 4px;
   text-align: center;
   vertical-align: middle;
 }
 
 .cv-id {
   text-align: left;
-  width: 17%;
 }
 
 .cv-head-id {
-  width: 17%;
-}
-
-.cv-action,
-.cv-head-action {
-  width: 9%;
-}
-
-.cv-action {
-  text-align: center;
+  text-align: left;
 }
 
 .cv-id-cell {
@@ -140,25 +169,33 @@
   color: #1f2937;
 }
 
+/* Status - NO FLEX, just simple block display */
 .cv-status {
   font-weight: 700;
+  text-align: center;
+  padding: 0 !important;
+  display: table-cell !important; /* Override any flex */
+  vertical-align: middle;
 }
 
-.cv-status span,
-.cv-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+/* Remove flex from status spans */
+.cv-status span {
+  display: inline !important;
 }
 
+/* Status badges - block level with no flex */
 .cv-status-paid,
 .cv-status-partial,
 .cv-status-np {
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 6px 10px;
   font-size: 12px;
   font-weight: 800;
   border: 1px solid transparent;
+  white-space: nowrap;
+  display: inline-block !important;
+  min-width: 50px;
+  text-align: center;
 }
 
 .cv-status-paid {
@@ -180,13 +217,17 @@
 }
 
 .cv-edit-btn {
-  min-width: 70px;
+  min-width: 60px;
+  width: auto;
   height: 34px;
   border-radius: 10px;
   background: #d11f2d;
   color: #fff;
   font-weight: 700;
   box-shadow: 0 6px 12px rgba(209, 31, 45, 0.18);
+  padding: 0 16px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .cv-edit-btn:hover {
@@ -218,44 +259,45 @@
 
 @media (max-width: 767px) {
   .hide-below-767 {
-    display: none;
+    display: none !important;
   }
 
   .cv-row td {
-    padding: 14px 12px;
+    padding: 14px 4px;
   }
 
   .cv-head-id,
   .cv-id {
-    width: 26%;
+    width: 35%;
   }
 
   .cv-head-action,
   .cv-action {
-    width: 14%;
+    width: 15%;
+    min-width: 70px;
   }
 }
 
 @media (max-width: 899px) {
   .hide-below-899 {
-    display: none;
+    display: none !important;
   }
 }
 
 @media (max-width: 1024px) {
   .hide-below-1024 {
-    display: none;
+    display: none !important;
   }
 }
 
 @media (max-width: 1220px) {
   .hide-below-1220 {
-    display: none;
+    display: none !important;
   }
 }
 
 @media (max-width: 1369px) {
   .hide-below-1369 {
-    display: none;
+    display: none !important;
   }
 }
