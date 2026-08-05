@@ -45,7 +45,7 @@
 /* Header row — matches Central View's gradient header */
 .payment-table thead th {
   height: 46px;
-  font-size: 12px;
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #7b8794;
@@ -168,7 +168,7 @@
 /* Scrollable body */
 .payment-table-body {
   display: block;
-  max-height: 54dvh;
+  max-height: 54.3dvh;
   overflow-y: auto;
   width: 100%;
   scrollbar-width: none;

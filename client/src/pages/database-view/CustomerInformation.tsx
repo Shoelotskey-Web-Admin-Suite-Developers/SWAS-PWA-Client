@@ -146,205 +146,205 @@ export default function CustomerInformation() {
   /* ----------------------------- render ----------------------------- */
   return (
     <div className="ci-wrap">
-      <div className="ci-header">
-        <h1>Customer Information</h1>
-      </div>
-
-      {/* Search and Sort */}
-      <div className="search-sorts">
-        <div className="ci-width-full-767 w-[70%]">
-          <Label>Search by Name, Birthday, Email, Contact</Label>
-          <SearchBar value={search} onChange={setSearch} />
-        </div>
-
-        <div className="flex gap-4 w-[30%] ci-width-full-767 items-end">
-          <div className="flex flex-col gap-1 w-full">
-            <Label className="w-fit">Sort by</Label>
-            <Select value={sortKey || "none"} onValueChange={(v) => setSortKey(v === "none" ? "" : (v as SortKey))}>
-              <SelectTrigger className="ci-select">
-                <SelectValue placeholder="Select an option" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="birthday">Birthday</SelectItem>
-                <SelectItem value="balance">Balance</SelectItem>
-                <SelectItem value="totalServices">Total Services</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="ci-filters-panel">
+        {/* Search and Sort */}
+        <div className="search-sorts">
+          <div className="ci-width-full-767 w-[70%]">
+            <Label>Search by Name, Birthday, Email, Contact</Label>
+            <SearchBar value={search} onChange={setSearch} />
           </div>
 
-          <RadioGroup
-            className="flex flex-col"
-            value={sortOrder}
-            onValueChange={(v) => setSortOrder(v as "asc" | "desc")}
-          >
-            <div className="radio-option">
-              <RadioGroupItem value="asc" id="asc" />
-              <Label htmlFor="asc">Ascending</Label>
+          <div className="flex gap-4 w-[30%] ci-width-full-767 items-end">
+            <div className="flex flex-col gap-1 w-full">
+              <Label className="w-fit">Sort by</Label>
+              <Select value={sortKey || "none"} onValueChange={(v) => setSortKey(v === "none" ? "" : (v as SortKey))}>
+                <SelectTrigger className="ci-select">
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="birthday">Birthday</SelectItem>
+                  <SelectItem value="balance">Balance</SelectItem>
+                  <SelectItem value="totalServices">Total Services</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="radio-option">
-              <RadioGroupItem value="desc" id="desc" />
-              <Label htmlFor="desc">Descending</Label>
-            </div>
-          </RadioGroup>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                className="h-10 w-10 p-0 flex items-center justify-center"
-                variant="unselected"
-                aria-label="Options"
+            <RadioGroup
+              className="flex flex-col"
+              value={sortOrder}
+              onValueChange={(v) => setSortOrder(v as "asc" | "desc")}
+            >
+              <div className="radio-option">
+                <RadioGroupItem value="asc" id="asc" />
+                <Label htmlFor="asc">Ascending</Label>
+              </div>
+              <div className="radio-option">
+                <RadioGroupItem value="desc" id="desc" />
+                <Label htmlFor="desc">Descending</Label>
+              </div>
+            </RadioGroup>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="ci-menu-btn"
+                  variant="unselected"
+                  aria-label="Options"
+                >
+                  <MoreVertical className="!w-5 !h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => exportCSV(filtered)}>
+                  Export Records
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                className="text-red-600"
+                onClick={async () => {
+                  if (!confirm("Are you sure you want to archive all visible customers? This will hide them from the main view.")) return;
+
+                  try {
+                    await exportCSV(filtered);
+                    await deleteAllCustomers();
+                    // Refresh the data after archiving
+                    const data = await getCustomerSummaries(showArchivedItems);
+                    const mapped: CustomerRow[] = data.map((c: CustomerSummaryDto) => {
+                      const status = (c.status ?? "Dormant") as CustomerStatus;
+                      return {
+                        id: c.cust_id,
+                        name: c.cust_name,
+                        birthday: c.cust_bdate ? new Date(c.cust_bdate).toISOString().split("T")[0] : "",
+                        address: c.cust_address || "",
+                        email: c.cust_email || "",
+                        contact: c.cust_contact || "",
+                        balance: Number(c.balance ?? 0),
+                        status,
+                        currentServiceCount: Number(c.currentServiceCount ?? 0),
+                        totalServices: Number(c.total_services ?? 0),
+                        isArchive: c.is_archive || false,
+                      };
+                    });
+                    setRows(mapped);
+                    toast.success("All customers archived successfully");
+                  } catch (err) {
+                    console.error(err);
+                    toast.error("Failed to archive customers. Export may have failed.");
+                  }
+                }}
               >
-                <MoreVertical className="!w-10 !h-10" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => exportCSV(filtered)}>
-                Export Records
+                Archive Records
               </DropdownMenuItem>
-              <DropdownMenuItem
-              className="text-red-600"
-              onClick={async () => {
-                if (!confirm("Are you sure you want to archive all visible customers? This will hide them from the main view.")) return;
-
-                try {
-                  await exportCSV(filtered);
-                  await deleteAllCustomers();
-                  // Refresh the data after archiving
-                  const data = await getCustomerSummaries(showArchivedItems);
-                  const mapped: CustomerRow[] = data.map((c: CustomerSummaryDto) => {
-                    const status = (c.status ?? "Dormant") as CustomerStatus;
-                    return {
-                      id: c.cust_id,
-                      name: c.cust_name,
-                      birthday: c.cust_bdate ? new Date(c.cust_bdate).toISOString().split("T")[0] : "",
-                      address: c.cust_address || "",
-                      email: c.cust_email || "",
-                      contact: c.cust_contact || "",
-                      balance: Number(c.balance ?? 0),
-                      status,
-                      currentServiceCount: Number(c.currentServiceCount ?? 0),
-                      totalServices: Number(c.total_services ?? 0),
-                      isArchive: c.is_archive || false,
-                    };
-                  });
-                  setRows(mapped);
-                  toast.success("All customers archived successfully");
-                } catch (err) {
-                  console.error(err);
-                  toast.error("Failed to archive customers. Export may have failed.");
-                }
-              }}
-            >
-              Archive Records
-            </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="ci-filters ">
-        {/* Desktop */}
-        <div className="ci-filter-row hide-below-767">
-          <div className="w-[20%] ci-width-half-767 ci-width-full-465">
-            <Label>Status</Label>
-            <Select value={status || "none"} onValueChange={(v) => setStatus(v === "none" ? "" : (v as CustomerStatus))}>
-              <SelectTrigger className="ci-select">
-                <SelectValue placeholder="Select an option" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Dormant">Dormant</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="w-[20%] ci-width-half-767 ci-width-full-465">
-            <Label>Has Balance</Label>
-            <Select
-              value={hasBalance || "none"}
-              onValueChange={(v) => setHasBalance(v === "none" ? "" : (v as "yes" | "no"))}
-            >
-              <SelectTrigger className="ci-select">
-                <SelectValue placeholder="Select an option" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="yes">Yes</SelectItem>
-                <SelectItem value="no">No</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Archive Filter - Desktop */}
-          <div className="flex items-center gap-2 ml-auto">
-            <Checkbox
-              id="show-archived"
-              checked={showArchivedItems}
-              onCheckedChange={(checked) => setShowArchivedItems(!!checked)}
-            />
-            <Label htmlFor="show-archived">Show Archived Items</Label>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        {/* Mobile */}
-        <div className="ci-show-767 ci-width-full-465">
-          {/* Archive Filter - Mobile */}
-          <div className="flex items-center gap-2 pb-4">
-            <Checkbox
-              id="show-archived-mobile"
-              checked={showArchivedItems}
-              onCheckedChange={(checked) => setShowArchivedItems(!!checked)}
-            />
-            <Label htmlFor="show-archived-mobile">Show Archived Items</Label>
-          </div>
+        <hr className="ci-filters-divider" />
 
-          <div className="flex items-center gap-2 pt-[1.5rem] pb-[1rem]">
-            <Checkbox
-              id="advanced-filters"
-              checked={showFilters}
-              onCheckedChange={(checked) => setShowFilters(!!checked)}
-            />
-            <Label htmlFor="advanced-filters">Advanced Filters</Label>
-          </div>
-
-          {showFilters && (
-            <div className="ci-filter-row">
-              <div className="ci-width-half-767 ci-width-full-465">
-                <Label>Status</Label>
-                <Select value={status} onValueChange={(v) => setStatus(v as CustomerStatus | "")}>
-                  <SelectTrigger className="ci-select">
-                    <SelectValue placeholder="Select an option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Dormant">Dormant</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="ci-width-half-767 ci-width-full-465">
-                <Label>Has Balance</Label>
-                <Select value={hasBalance} onValueChange={(v) => setHasBalance(v as "yes" | "no" | "")}>
-                  <SelectTrigger className="ci-select">
-                    <SelectValue placeholder="Select an option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Filters */}
+        <div className="ci-filters">
+          {/* Desktop */}
+          <div className="ci-filter-row hide-below-767">
+            <div className="w-[20%] ci-width-half-767 ci-width-full-465">
+              <Label>Status</Label>
+              <Select value={status || "none"} onValueChange={(v) => setStatus(v === "none" ? "" : (v as CustomerStatus))}>
+                <SelectTrigger className="ci-select">
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Dormant">Dormant</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+
+            <div className="w-[20%] ci-width-half-767 ci-width-full-465">
+              <Label>Has Balance</Label>
+              <Select
+                value={hasBalance || "none"}
+                onValueChange={(v) => setHasBalance(v === "none" ? "" : (v as "yes" | "no"))}
+              >
+                <SelectTrigger className="ci-select">
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Archive Filter - Desktop */}
+            <div className="flex items-center gap-2 ml-auto">
+              <Checkbox
+                id="show-archived"
+                checked={showArchivedItems}
+                onCheckedChange={(checked) => setShowArchivedItems(!!checked)}
+              />
+              <Label htmlFor="show-archived">Show Archived Items</Label>
+            </div>
+          </div>
+
+          {/* Mobile */}
+          <div className="ci-show-767 ci-width-full-465">
+            {/* Archive Filter - Mobile */}
+            <div className="flex items-center gap-2 pb-4">
+              <Checkbox
+                id="show-archived-mobile"
+                checked={showArchivedItems}
+                onCheckedChange={(checked) => setShowArchivedItems(!!checked)}
+              />
+              <Label htmlFor="show-archived-mobile">Show Archived Items</Label>
+            </div>
+
+            <div className="flex items-center gap-2 pt-[1.5rem] pb-[1rem]">
+              <Checkbox
+                id="advanced-filters"
+                checked={showFilters}
+                onCheckedChange={(checked) => setShowFilters(!!checked)}
+              />
+              <Label htmlFor="advanced-filters">Advanced Filters</Label>
+            </div>
+
+            {showFilters && (
+              <div className="ci-filter-row">
+                <div className="ci-width-half-767 ci-width-full-465">
+                  <Label>Status</Label>
+                  <Select value={status} onValueChange={(v) => setStatus(v as CustomerStatus | "")}>
+                    <SelectTrigger className="ci-select">
+                      <SelectValue placeholder="Select an option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Dormant">Dormant</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="ci-width-half-767 ci-width-full-465">
+                  <Label>Has Balance</Label>
+                  <Select value={hasBalance} onValueChange={(v) => setHasBalance(v as "yes" | "no" | "")}>
+                    <SelectTrigger className="ci-select">
+                      <SelectValue placeholder="Select an option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="ci-table">
+      <div className="ci-table-shell">
         {loading ? <p>Loading customers...</p> : <CustomerTable rows={tableRows} />}
       </div>
 
