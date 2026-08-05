@@ -66,10 +66,10 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
           <TableRow className="cv-head-row">
             <TableHead className="cv-head-id"><h5>Receipt ID</h5></TableHead>
             <TableHead className="hide-below-1220"><h5>Dates (In/Out)</h5></TableHead>
-            <TableHead className="hide-below-899"><h5>Customer / Staff</h5></TableHead>
+            <TableHead className="hide-below-899 cv-head-customer"><h5>Customer / Staff</h5></TableHead>
             <TableHead className="hide-below-1369 cv-num"><h5>Pairs</h5></TableHead>
-            <TableHead className="hide-below-1220"><h5>Branch Details</h5></TableHead>
-            <TableHead className="hide-below-899"><h5>Accounting</h5></TableHead>
+            <TableHead className="hide-below-1220 cv-head-branch"><h5>Branch Details</h5></TableHead>
+            <TableHead className="hide-below-899 cv-head-accounting"><h5>Accounting</h5></TableHead>
             <TableHead className="hide-below-767 cv-status"><h5>Status</h5></TableHead>
             <TableHead className="cv-head-action"><h5>Action</h5></TableHead>
           </TableRow>
@@ -99,8 +99,8 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="hide-below-899">
-                    <div className="cv-stack">
+                  <TableCell className="hide-below-899 cv-cell-customer">
+                    <div className="cv-stack cv-stack-left">
                       <span className="cv-main-value semi-bold">{r.customer}</span>
                       <span className="cv-sub-value">{r.receivedBy}</span>
                     </div>
@@ -112,14 +112,14 @@ export function CentralTable({ rows, onReceiptUpdate }: CentralTableProps) {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="hide-below-1220">
-                    <div className="cv-stack">
+                  <TableCell className="hide-below-1220 cv-cell-branch">
+                    <div className="cv-stack cv-stack-left">
                       <span className="cv-main-value">{r.branch}</span>
                       <span className="cv-sub-value">{r.branchLocation}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="hide-below-899">
-                    <div className="cv-stack cv-money-stack">
+                  <TableCell className="hide-below-899 cv-cell-accounting">
+                    <div className="cv-stack cv-money-stack cv-stack-right">
                       <span className="cv-money semi-bold">{formatMoney(r.total)}</span>
                       <span className={`cv-sub-value ${r.status === "PAID" ? "cv-paid" : r.status === "PARTIAL" ? "cv-partial" : "cv-unpaid"}`}>
                         {r.status === "PAID"

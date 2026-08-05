@@ -35,7 +35,7 @@
 /* Status column */
 .cv-head-row th.hide-below-767.cv-status,
 .cv-row td.hide-below-767.cv-status {
-  width: 10%;
+  width: 12%;
   min-width: 80px;
   padding: 0 2px;
   text-align: center;
@@ -44,18 +44,101 @@
 /* Action column */
 .cv-head-action,
 .cv-action {
-  width: 10%;
+  width: 8%;
   min-width: 85px;
   padding: 0 2px;
-  text-align: center;
 }
+
+/* ===== COLUMN ALIGNMENT ===== */
+
+/* Receipt ID column - LEFT ALIGN with left padding */
+.cv-head-id {
+  text-align: left !important;
+  padding-left: 22px !important;
+}
+
+.cv-id {
+  text-align: left !important;
+  padding-left: 22px !important;
+}
+
+.cv-head-id h5 {
+  text-align: left !important;
+}
+
+/* Customer column - LEFT ALIGN */
+.cv-head-customer {
+  text-align: left !important;
+}
+
+.cv-cell-customer {
+  text-align: left !important;
+}
+
+.cv-head-customer h5 {
+  text-align: left !important;
+}
+
+/* Branch column - LEFT ALIGN */
+.cv-head-branch {
+  text-align: left !important;
+}
+
+.cv-cell-branch {
+  text-align: left !important;
+}
+
+.cv-head-branch h5 {
+  text-align: left !important;
+}
+
+/* Accounting column - RIGHT ALIGN */
+.cv-head-accounting {
+  text-align: right !important;
+}
+
+.cv-cell-accounting {
+  text-align: right !important;
+}
+
+.cv-head-accounting h5 {
+  text-align: right !important;
+}
+
+/* Action column - RIGHT ALIGN with right padding */
+.cv-head-action {
+  text-align: right !important;
+  padding-right: 22px !important;
+}
+
+.cv-action {
+  text-align: right !important;
+  padding-right: 22px !important;
+}
+
+.cv-head-action h5 {
+  text-align: right !important;
+}
+
+/* Stack alignment overrides */
+.cv-stack-left {
+  align-items: flex-start !important;
+}
+
+.cv-stack-right {
+  align-items: flex-end !important;
+}
+
+/* ===== END COLUMN ALIGNMENT ===== */
 
 .cv-head-row th h5 {
   margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  font-family: 'Inter Bold', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 700;
 }
 
 .cv-head-row th,
@@ -90,14 +173,6 @@
   vertical-align: middle;
 }
 
-.cv-id {
-  text-align: left;
-}
-
-.cv-head-id {
-  text-align: left;
-}
-
 .cv-id-cell {
   display: flex;
   flex-direction: column;
@@ -105,7 +180,7 @@
 }
 
 .cv-id-value {
-  font-size: 15px;
+  font-size: 0.92rem;
   font-weight: 800;
   color: #1f2937;
   letter-spacing: -0.01em;
@@ -119,13 +194,13 @@
 }
 
 .cv-main-value {
-  font-size: 15px;
+  font-size: 0.92rem;
   font-weight: 700;
   color: #1f2937;
 }
 
 .cv-sub-value {
-  font-size: 12px;
+  font-size: 0.82rem;
   color: #8b96a6;
 }
 
@@ -134,7 +209,7 @@
 }
 
 .cv-money {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 800;
   color: #111827;
 }
@@ -165,7 +240,7 @@
 }
 
 .cv-pair-value {
-  font-size: 15px;
+  font-size: 1rem;
   font-weight: 700;
   color: #1f2937;
   letter-spacing: 0.5px;
@@ -189,7 +264,7 @@
 .cv-status-np {
   border-radius: 999px;
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: 0.82rem;
   font-weight: 800;
   border: 1px solid transparent;
   white-space: nowrap;
@@ -285,6 +360,29 @@
 
   .cv-pair-value {
     font-size: 13px;
+  }
+  
+  /* Mobile alignment overrides */
+  .cv-cell-customer,
+  .cv-cell-branch,
+  .cv-cell-accounting {
+    text-align: center !important;
+  }
+  
+  .cv-stack-left,
+  .cv-stack-right {
+    align-items: center !important;
+  }
+  
+  /* Mobile padding adjustments */
+  .cv-head-id,
+  .cv-id {
+    padding-left: 8px !important;
+  }
+  
+  .cv-head-action,
+  .cv-action {
+    padding-right: 8px !important;
   }
 }
 

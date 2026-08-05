@@ -18,17 +18,33 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
-import { Archive, X, RotateCcw } from "lucide-react"
-import { getLineItemsByTransact } from "@/utils/api/getLineItemsByTransact" // 👈 Import the utility
-import { getDatesByLineItem } from "@/utils/api/getDatesByLineItem" // 👈 Add this import
-import { getCustomerById } from "@/utils/api/getCustomerById" // 👈 Import the customer fetch utility
+import { 
+  Archive, 
+  X, 
+  RotateCcw, 
+  Upload, 
+  Calendar, 
+  User, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Home, 
+  Building, 
+  CreditCard, 
+  Clock,
+  Image,
+  ImageIcon,
+} from "lucide-react"
+import { getLineItemsByTransact } from "@/utils/api/getLineItemsByTransact"
+import { getDatesByLineItem } from "@/utils/api/getDatesByLineItem"
+import { getCustomerById } from "@/utils/api/getCustomerById"
 import { updateTransaction } from "@/utils/api/updateTransaction"
 import { updateLineItem } from "@/utils/api/updateLineItem"
-import { updateDates } from "@/utils/api/updateDates" // 👈 Add this import
+import { updateDates } from "@/utils/api/updateDates"
 import { archiveTransaction } from "@/utils/api/archiveTransaction"
 import { restoreTransaction } from "@/utils/api/restoreTransaction"
 import { getTransactionById } from "@/utils/api/getTransactionById"
-import { toast } from "sonner" // Assuming you have toast set up
+import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,10 +58,8 @@ import {
 import OpBfrImg from "@/components/operations/modals/OpBfrImg";
 import OpAfrImg from "@/components/operations/modals/OpAfrImg";
 
-// ✅ Import shared types
 import { ReceiptRow, TxStatusDates, PaymentStatus, Transaction} from "./central-view.types"
 
-// Add this legend at the top of the file (or import from a shared file)
 const BRANCH_LEGEND: Record<
   string,
   { branch: string; location: string }
@@ -57,16 +71,68 @@ const BRANCH_LEGEND: Record<
   "HUBV-W-NCR": { branch: "Valenzuela Hub", location: "Valenzuela City" },
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  queued: "bg-yellow-100 text-yellow-800",
+  readyForDelivery: "bg-blue-100 text-blue-800",
+  toWarehouse: "bg-indigo-100 text-indigo-800",
+  inProcess: "bg-purple-100 text-purple-800",
+  returnToBranch: "bg-orange-100 text-orange-800",
+  received: "bg-teal-100 text-teal-800",
+  readyForPickup: "bg-green-100 text-green-800",
+  pickedUp: "bg-gray-100 text-gray-800",
+}
+
+// Payment status badge styles
+const PAYMENT_STATUS_STYLES = {
+  PAID: {
+    background: "#d1fae5",
+    color: "#15803d",
+    borderColor: "#a7f3d0",
+    label: "PAID"
+  },
+  PARTIAL: {
+    background: "#ffedd5",
+    color: "#ea580c",
+    borderColor: "#fdba74",
+    label: "PARTIAL"
+  },
+  NP: {
+    background: "#fee2e2",
+    color: "#dc2626",
+    borderColor: "#fecaca",
+    label: "NP"
+  }
+}
+
+// Custom Sneaker Icon - using the SVG from the top of your request
+const SneakerIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M14.1 7.9 12.5 10"/>
+    <path d="M17.4 10.1 16 12"/>
+    <path d="M2 16a2 2 0 0 0 2 2h13c2.8 0 5-2.2 5-5a2 2 0 0 0-2-2c-.8 0-1.6-.2-2.2-.7l-6.2-4.2c-.4-.3-.9-.2-1.3.1 0 0-.6.8-1.2 1.1a3.5 3.5 0 0 1-4.2.1C4.4 7 3.7 6.3 3.7 6.3A.92.92 0 0 0 2 7Z"/>
+    <path d="M2 11c0 1.7 1.3 3 3 3h7"/>
+  </svg>
+);
+
 export function EditReceiptDialog({
   open,
   onOpenChange,
   receipt,
-  onReceiptUpdate, // Add this new prop
+  onReceiptUpdate,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   receipt: ReceiptRow;
-  onReceiptUpdate?: (updatedReceipt: ReceiptRow) => void; // Add this callback prop
+  onReceiptUpdate?: (updatedReceipt: ReceiptRow) => void;
 }) {
   const [form, setForm] = React.useState<ReceiptRow>(receipt)
   const [isLoading, setIsLoading] = React.useState(false)
@@ -74,12 +140,11 @@ export function EditReceiptDialog({
   const [customerLoading, setCustomerLoading] = React.useState(false)
   const [customerError, setCustomerError] = React.useState<string | null>(null)
   const [isSaving, setIsSaving] = React.useState(false)
-  const [showArchiveRestoreConfirm, setShowArchiveRestoreConfirm] = React.useState(false) // Add this state
-  const [isArchivingRestoring, setIsArchivingRestoring] = React.useState(false) // Add this state
+  const [showArchiveRestoreConfirm, setShowArchiveRestoreConfirm] = React.useState(false)
+  const [isArchivingRestoring, setIsArchivingRestoring] = React.useState(false)
   const [beforeImgModal, setBeforeImgModal] = React.useState<{ open: boolean; lineItemId: string | null }>({ open: false, lineItemId: null });
   const [afterImgModal, setAfterImgModal] = React.useState<{ open: boolean; lineItemId: string | null }>({ open: false, lineItemId: null });
 
-  // Add service ID to name mappings
   const SERVICE_ID_TO_NAME: Record<string, string> = {
     "SERVICE-1": "Basic Cleaning",
     "SERVICE-2": "Minor Reglue",
@@ -95,7 +160,6 @@ export function EditReceiptDialog({
   const SERVICE_NAME_TO_ID: Record<string, string> = Object.entries(SERVICE_ID_TO_NAME)
     .reduce((acc, [id, name]) => ({...acc, [name]: id}), {})
 
-  // Updated service options to match backend
   const SERVICE_OPTIONS = ["Basic Cleaning", "Minor Reglue", "Full Reglue"]
   const ADDITIONAL_OPTIONS = [
     "Unyellowing",
@@ -107,17 +171,16 @@ export function EditReceiptDialog({
   ]
 
   const STATUS_LABELS: Array<{ key: keyof TxStatusDates; label: string }> = [
-    { key: "queued", label: "Queued" },
-    { key: "readyForDelivery", label: "Ready for delivery" },
-    { key: "toWarehouse", label: "To warehouse" },
-    { key: "inProcess", label: "In process" },
-    { key: "returnToBranch", label: "Return to branch" },
-    { key: "received", label: "Received" },
-    { key: "readyForPickup", label: "Ready for pickup" },
-    { key: "pickedUp", label: "Picked up" },
+    { key: "queued", label: "QUEUED" },
+    { key: "readyForDelivery", label: "READY FOR DELIVERY" },
+    { key: "toWarehouse", label: "TO WAREHOUSE" },
+    { key: "inProcess", label: "IN PROCESS" },
+    { key: "returnToBranch", label: "RETURN TO BRANCH" },
+    { key: "received", label: "RECEIVED" },
+    { key: "readyForPickup", label: "READY FOR PICKUP" },
+    { key: "pickedUp", label: "PICKED UP" },
   ]
 
-  // Add status mapping constant (place it with other constants)
   const STATUS_TO_DB_FIELD: Record<string, string> = {
     "queued": "srm_date",
     "readyForDelivery": "rd_date",
@@ -126,10 +189,8 @@ export function EditReceiptDialog({
     "returnToBranch": "rb_date",
     "received": "is_date",
     "readyForPickup": "rpu_date",
-    
   }
 
-  // Add status to numeric value mapping
   const STATUS_TO_NUMBER: Record<string, number> = {
     "queued": 1,
     "readyForDelivery": 2,
@@ -152,7 +213,6 @@ export function EditReceiptDialog({
     "pickedUp": "Picked Up"
   }
 
-  // 👇 Fetch line items when dialog opens
   React.useEffect(() => {
     async function fetchLineItems() {
       if (!open || !receipt.id) return
@@ -163,10 +223,8 @@ export function EditReceiptDialog({
       try {
         const lineItems = await getLineItemsByTransact(receipt.id)
         
-        // Map line items to Transaction format and fetch dates for each
         const transactions: Transaction[] = await Promise.all(
           lineItems.map(async (item: any) => {
-            // Separate services by type
             const serviceNeeded: string[] = []
             const additional: string[] = []
             
@@ -181,7 +239,6 @@ export function EditReceiptDialog({
               }
             })
 
-            // Initialize default statusDates
             let statusDates: TxStatusDates = {
               queued: null,
               readyForDelivery: null,
@@ -196,11 +253,9 @@ export function EditReceiptDialog({
             let currentStatus = ""
 
             try {
-              // Fetch dates from backend
               const dates = await getDatesByLineItem(item.line_item_id)
               
               if (dates) {
-                // Map backend date fields to frontend statusDates
                 statusDates = {
                   queued: dates.srm_date ? new Date(dates.srm_date).toISOString().slice(0, 10) : null,
                   readyForDelivery: dates.rd_date ? new Date(dates.rd_date).toISOString().slice(0, 10) : null,
@@ -209,10 +264,9 @@ export function EditReceiptDialog({
                   returnToBranch: dates.rb_date ? new Date(dates.rb_date).toISOString().slice(0, 10) : null,
                   received: dates.is_date ? new Date(dates.is_date).toISOString().slice(0, 10) : null,
                   readyForPickup: dates.rpu_date ? new Date(dates.rpu_date).toISOString().slice(0, 10) : null,
-                  pickedUp: null, // Not in backend dates model
+                  pickedUp: null,
                 }
                 
-                // Determine current status based on the most recent filled date
                 const statusOrder = ['queued', 'readyForDelivery', 'toWarehouse', 'inProcess', 'returnToBranch', 'received', 'readyForPickup', 'pickedUp']
                 for (let i = statusOrder.length - 1; i >= 0; i--) {
                   const key = statusOrder[i] as keyof TxStatusDates
@@ -224,7 +278,6 @@ export function EditReceiptDialog({
               }
             } catch (err) {
               console.warn(`Failed to fetch dates for line item ${item.line_item_id}:`, err)
-              // Continue with empty dates if fetch fails
             }
             
             return {
@@ -233,15 +286,14 @@ export function EditReceiptDialog({
               serviceNeeded,
               additional,
               rush: item.priority === "Rush",
-              status: currentStatus || "queued", // Default to queued if no status
-              statusDates, // Use the dates fetched from backend
+              status: currentStatus || "queued",
+              statusDates,
               beforeImage: item.before_img || null,
               afterImage: item.after_img || null
             }
           })
         )
         
-        // Update form with fetched transactions
         setForm(prev => ({
           ...prev,
           transactions
@@ -257,7 +309,6 @@ export function EditReceiptDialog({
     fetchLineItems()
   }, [open, receipt.id])
 
-  // 👇 Fetch customer details when dialog opens
   React.useEffect(() => {
     async function fetchCustomerDetails() {
       if (!open || !receipt.customerId) return
@@ -268,10 +319,9 @@ export function EditReceiptDialog({
       try {
         const customerData = await getCustomerById(receipt.customerId)
         
-        // Update form with customer details
         setForm(prev => ({
           ...prev,
-          customer: customerData.cust_name, // Update displayed customer name
+          customer: customerData.cust_name,
           customerBirthday: customerData.cust_bdate || undefined,
           address: customerData.cust_address || undefined,
           email: customerData.cust_email || undefined,
@@ -292,7 +342,6 @@ export function EditReceiptDialog({
     setForm(receipt)
   }, [receipt])
 
-  // Fetch complete transaction data including archive status when dialog opens
   React.useEffect(() => {
     async function fetchCompleteTransactionData() {
       if (!open || !receipt.id) return
@@ -300,18 +349,14 @@ export function EditReceiptDialog({
       try {
         const completeTransactionData = await getTransactionById(receipt.id)
         
-        // Update form with archive status from the transaction data
         if (completeTransactionData.transaction) {
           setForm(prev => ({
             ...prev,
             is_archive: completeTransactionData.transaction.is_archive || false
           }))
-          
-          console.log("Transaction archive status:", completeTransactionData.transaction.is_archive)
         }
       } catch (error) {
         console.error("Failed to fetch complete transaction data:", error)
-        // If fetch fails, assume not archived
         setForm(prev => ({
           ...prev,
           is_archive: false
@@ -335,14 +380,11 @@ export function EditReceiptDialog({
     }
   }
 
-  // Update the includesIgnoreCase function to handle service names properly
   const includesIgnoreCase = (arr: string[] | undefined, value: string) =>
     !!arr?.some((s) => s.toLowerCase().trim() === value.toLowerCase().trim())
 
-  // Get legend info for this branch
   const branchInfo = BRANCH_LEGEND[form.branch as string] || { branch: form.branch, location: form.branchLocation }
 
-  // Add this function to handle saving changes
   const handleSaveChanges = async () => {
     if (!form.id) return;
     
@@ -350,7 +392,6 @@ export function EditReceiptDialog({
     setError(null);
     
     try {
-      // 1. Prepare transaction update data
       const transactionUpdates = {
         received_by: form.receivedBy,
         date_in: form.dateIn?.toISOString(),
@@ -360,14 +401,11 @@ export function EditReceiptDialog({
         payment_status: form.status,
       };
       
-      // 2. Update the transaction record
       await updateTransaction(form.id, transactionUpdates);
       
-      // 3. Update each line item and its dates
       if (form.transactions && form.transactions.length > 0) {
         await Promise.all(
           form.transactions.map(async (tx) => {
-            // Map form services back to backend format
             const services = [
               ...(tx.serviceNeeded || []).map(serviceName => ({
                 service_id: SERVICE_NAME_TO_ID[serviceName] || "",
@@ -379,7 +417,6 @@ export function EditReceiptDialog({
               }))
             ]
             
-            // Update line item
             const lineItemUpdates = {
               shoes: tx.shoeModel,
               priority: tx.rush ? "Rush" : "Normal",
@@ -391,11 +428,9 @@ export function EditReceiptDialog({
             
             await updateLineItem(tx.id, lineItemUpdates)
             
-            // Update dates for this line item
             if (tx.statusDates) {
               const dateUpdates: Record<string, string | null> = {}
               
-              // Map UI date values to DB field names
               Object.entries(tx.statusDates).forEach(([statusKey, dateValue]) => {
                 const dbFieldName = STATUS_TO_DB_FIELD[statusKey]
                 if (dbFieldName) {
@@ -403,7 +438,6 @@ export function EditReceiptDialog({
                 }
               })
               
-              // Add current status number
               await updateDates(tx.id, {
                 ...dateUpdates,
                 current_status: STATUS_TO_NUMBER[tx.status] || 1
@@ -413,14 +447,13 @@ export function EditReceiptDialog({
         )
       }
       
-      toast.success("Transaction and line items updated successfully")
+      toast.success("Transaction updated successfully")
       
-      // Call the update callback with the updated receipt data
       if (onReceiptUpdate) {
         onReceiptUpdate(form);
       }
       
-      onOpenChange(false); // Close dialog
+      onOpenChange(false);
     } catch (err: any) {
       console.error("Failed to save changes:", err)
       setError(err.message || "Failed to save changes")
@@ -430,7 +463,6 @@ export function EditReceiptDialog({
     }
   }
 
-  // Add this function to handle archiving and restoring
   const handleArchiveRestore = async () => {
     if (!form.id) return
     
@@ -449,12 +481,11 @@ export function EditReceiptDialog({
         toast.success("Receipt archived successfully")
       }
       
-      // Call the update callback to indicate archiving/restoring
       if (onReceiptUpdate) {
         onReceiptUpdate({...receipt, deleted: true});
       }
       
-      onOpenChange(false) // Close dialog
+      onOpenChange(false)
     } catch (err: any) {
       console.error(`Failed to ${action} receipt:`, err)
       setError(err.message || `Failed to ${action} receipt`)
@@ -485,452 +516,410 @@ export function EditReceiptDialog({
     });
   }, []);
 
+  const formatDisplayDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "mm/dd/yyyy";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "mm/dd/yyyy";
+      return date.toLocaleDateString('en-US', { 
+        month: '2-digit', 
+        day: '2-digit', 
+        year: 'numeric' 
+      });
+    } catch {
+      return "mm/dd/yyyy";
+    }
+  };
+
+  // Get payment status style
+  const getPaymentStatusStyle = (status: string) => {
+    const style = PAYMENT_STATUS_STYLES[status as keyof typeof PAYMENT_STATUS_STYLES];
+    if (!style) return null;
+    return {
+      style: {
+        borderRadius: "999px",
+        padding: "6px 10px",
+        fontSize: "0.82rem",
+        fontWeight: "800",
+        border: "1px solid transparent",
+        whiteSpace: "nowrap" as const,
+        display: "inline-block",
+        minWidth: "50px",
+        textAlign: "center" as const,
+        background: style.background,
+        color: style.color,
+        borderColor: style.borderColor
+      }
+    };
+  };
+
+  // Get color for amount paid based on status
+  const getAmountPaidColor = (status: string) => {
+    const style = PAYMENT_STATUS_STYLES[status as keyof typeof PAYMENT_STATUS_STYLES];
+    return style ? style.color : "#000000";
+  };
+
+  // Bootstrap check circle with white check inside red circle
+  const BootstrapCheckCircle = () => (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="18" 
+      height="18" 
+      viewBox="0 0 16 16"
+      style={{ flexShrink: 0 }}
+    >
+      <circle cx="8" cy="8" r="7" fill="#CE1616" />
+      <path 
+        d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" 
+        fill="white"
+      />
+    </svg>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[80vh] mt-[50px] overflow-y-auto [&>button]:hidden">
-        {/* Archive/Restore button */}
-        <div className="absolute right-5 top-3 flex gap-2">
-          <Button
-            variant="destructive"
-            size="icon"
-            onClick={() => setShowArchiveRestoreConfirm(true)}
-            title={form.is_archive ? "Restore receipt" : "Archive receipt"}
-          >
-            {/* Debug: show both states clearly */}
-            {form.is_archive ? (
-              <RotateCcw className="w-5 h-5" />
-            ) : (
-              <Archive className="w-5 h-5" />
-            )}
-          </Button>
-        </div>
-
-        <DialogHeader className="items-start text-left">
-          <DialogTitle asChild>
-            <h1>Edit Receipt {form.id}</h1>
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Customer Section */}
-        <hr className="section-divider p-0 m-0" />
-        <div>
-          <h3 className="font-semibold">
-            Customer
-            {customerLoading && <span className="ml-2 text-muted-foreground text-sm">(Loading...)</span>}
-            {customerError && <span className="ml-2 text-red-500 text-sm">(Error: {customerError})</span>}
-          </h3>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-5">
-            <div>
-              <Label>Name</Label>
-              <Input
-                value={form.customer}
-                onChange={(e) =>
-                  setForm({ ...form, customer: e.target.value })
-                }
-                disabled
-              />
-            </div>
-            <div>
-              <Label>Birthday</Label>
-              <Input
-                type="date"
-                value={form.customerBirthday ? form.customerBirthday.substring(0, 10) : ""}
-                onChange={(e) =>
-                  setForm({ ...form, customerBirthday: e.target.value })
-                }
-                disabled
-              />
-            </div>
-            <div>
-              <Label>Address</Label>
-              <Input 
-                value={form.address ?? ""} 
-                disabled 
-              />
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input 
-                value={form.email ?? ""} 
-                disabled 
-              />
-            </div>
-            <div>
-              <Label>Contact</Label>
-              <Input 
-                value={form.contact ?? ""} 
-                disabled 
-              />
-            </div>
+      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto [&>button]:hidden p-0">
+        {/* Header */}
+        <div className="sticky top-0 bg-white z-10 border-b px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold">Edit Receipt {form.id}</h2>
+            <p className="text-sm text-muted-foreground">Manage transaction details and service status</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowArchiveRestoreConfirm(true)}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 extra-bold"
+            >
+              {form.is_archive ? <RotateCcw className="w-4 h-4 mr-2" /> : <Archive className="w-4 h-4 mr-2" />}
+              {form.is_archive ? "Restore" : "Archive"}
+            </Button>
           </div>
         </div>
 
-        {/* Branch Section */}
-        <hr className="section-divider p-0 m-0" />
-        <div>
-          <h3 className="font-semibold">Branch</h3>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-5">
+        <div className="px-6 pt-4 space-y-8">
+          {/* Customer Details & Branch Information - Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Customer Details */}
             <div>
-              <Label>Branch</Label>
-              <Input
-                value={branchInfo.branch}
-                disabled
-              />
-            </div>
-            <div>
-              <Label>Location</Label>
-              <Input value={branchInfo.location} disabled />
-            </div>
-            <div>
-              <Label>Received By</Label>
-              <Input
-                value={form.receivedBy}
-                onChange={(e) =>
-                  setForm({ ...form, receivedBy: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label>Date In</Label>
-              <Input
-                type="date"
-                value={fmtDateInput(form.dateIn)}
-                onChange={(e) =>
-                  setForm({ ...form, dateIn: new Date(e.target.value) })
-                }
-              />
-            </div>
-            <div>
-              <Label>Date Out</Label>
-              <Input
-                type="date"
-                value={fmtDateInput(form.dateOut ?? null)}
-                onChange={(e) =>
-                  setForm({ ...form, dateOut: new Date(e.target.value) })
-                }
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Section */}
-        <hr className="section-divider p-0 m-0" />
-        <div>
-          <h3 className="font-semibold">Payment</h3>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-4">
-            <div>
-              <Label>Status</Label>
-              <Select
-                value={form.status}
-                onValueChange={(v) =>
-                  setForm({ ...form, status: v as PaymentStatus })
-                }
-                disabled
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PAID">PAID</SelectItem>
-                  <SelectItem value="PARTIAL">PARTIAL</SelectItem>
-                  <SelectItem value="NP">NP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Total</Label>
-              <Input
-                type="number"
-                value={form.total}
-                onChange={(e) =>
-                  setForm({ ...form, total: Number(e.target.value) })
-                }
-                disabled
-              />
-            </div>
-            <div>
-              <Label>Amount Paid</Label>
-              <Input
-                type="number"
-                value={form.amountPaid}
-                onChange={(e) =>
-                  setForm({ ...form, amountPaid: Number(e.target.value) })
-                }
-                disabled
-              />
-            </div>
-            <div>
-              <Label>Remaining Balance</Label>
-              <Input value={remainingBalance} disabled />
-            </div>
-          </div>
-        </div>
-
-        {/* Transactions */}
-        <hr className="section-divider p-0 m-0" />
-        <div className="space-y-4">
-          <h3 className="font-semibold">Transactions</h3>
-          
-          {/* Show loading state */}
-          {isLoading && <p className="text-muted-foreground">Loading line items...</p>}
-          
-          {/* Show error if any */}
-          {error && <p className="text-red-500">Error: {error}</p>}
-          
-          {!isLoading && !error && (!form.transactions || form.transactions.length === 0) && (
-            <p className="text-muted-foreground">No line items found for this transaction.</p>
-          )}
-          
-          {form.transactions?.map((t, idx) => (
-            <div key={t.id} className="p-3 border rounded-md space-y-3">
-              {/* Shoe model + transaction ID */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label>Transaction ID</Label>
-                  <Input value={t.id} disabled />
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Customer Details
+              </h3>
+              {customerLoading && <p className="text-muted-foreground text-sm">Loading customer details...</p>}
+              {customerError && <p className="text-red-500 text-sm">Error: {customerError}</p>}
+              
+              <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+                {/* Customer Name and Birthday in flex row */}
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground font-medium">Customer Name</Label>
+                    <p className="font-medium text-base">{form.customer || "—"}</p>
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground font-medium">Birthday</Label>
+                    <p className="font-medium text-base">{form.customerBirthday ? formatDisplayDate(form.customerBirthday) : "—"}</p>
+                  </div>
                 </div>
                 <div>
-                  <Label>Shoe Model</Label>
-                  <Input
-                    value={t.shoeModel}
-                    onChange={(e) =>
-                      setForm((prev) => {
-                        const newTx = [...(prev.transactions ?? [])]
-                        newTx[idx].shoeModel = e.target.value
-                        return { ...prev, transactions: newTx }
-                      })
-                    }
-                  />
+                  <Label className="text-xs text-muted-foreground font-medium">Email</Label>
+                  <p className="font-medium text-base">{form.email || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground font-medium">Contact</Label>
+                  <p className="font-medium text-base">{form.contact || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground font-medium">Address</Label>
+                  <p className="font-medium text-base">{form.address || "—"}</p>
                 </div>
               </div>
+            </div>
 
-              {/* Services / Additional / Rush / Status */}
-              <div className="grid gap-4 grid-cols-3 sm:grid-cols-[1fr_1fr_0.5fr_2fr]">
-                {/* Services */}
-                <div>
-                  <Label>Services</Label>
-                  <div className="flex flex-col flex-wrap gap-1 mt-1">
-                    {SERVICE_OPTIONS.map((opt) => (
-                      <label key={opt} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={includesIgnoreCase(t.serviceNeeded, opt)}
-                          disabled
-                        />
-                        <span>{opt}</span>
-                      </label>
-                    ))}
+            {/* Branch Information */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                <Building className="w-5 h-5" />
+                Branch Information
+              </h3>
+              
+              <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+                {/* Branch and Location in flex row */}
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground font-medium">Branch</Label>
+                    <p className="font-medium text-base">{branchInfo.branch}</p>
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground font-medium">Location</Label>
+                    <p className="font-medium text-base">{branchInfo.location}</p>
                   </div>
                 </div>
-
-                {/* Additional */}
-                <div>
-                  <Label>Additional</Label>
-                  <div className="flex flex-col flex-wrap gap-1 mt-1">
-                    {ADDITIONAL_OPTIONS.map((opt) => (
-                      <label key={opt} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={includesIgnoreCase(t.additional, opt)}
-                          disabled
-                        />
-                        <span>{opt}</span>
-                      </label>
-                    ))}
+                {/* Received by with Date In and Date Out group */}
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground font-medium">Received by</Label>
+                    <p className="font-medium text-base">{form.receivedBy || "—"}</p>
+                  </div>
+                  <div className="flex-1 flex flex-col sm:flex-row gap-4 sm:gap-4">
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground font-medium">Date In</Label>
+                      <p className="font-medium text-base">{fmtDateInput(form.dateIn) ? formatDisplayDate(fmtDateInput(form.dateIn)) : "—"}</p>
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground font-medium">Date Out</Label>
+                      <p className="font-medium text-base">{form.dateOut ? formatDisplayDate(form.dateOut.toISOString()) : "—"}</p>
+                    </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
 
-                {/* Rush */}
-                <div>
-                  <Label>Rush</Label>
-                  <RadioGroup
-                    value={t.rush ? "yes" : "no"}
-                    className="mt-1"
-                    disabled
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id={`rush-yes-${idx}`} />
-                      <Label htmlFor={`rush-yes-${idx}`}>Yes</Label>
+          {/* Payment Summary with status badge inside the div */}
+          <div className="border rounded-lg p-4 bg-gray-50">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Payment Summary
+              </h3>
+              {form.status && (
+                <span className="extra-bold" {...getPaymentStatusStyle(form.status)}>
+                  {PAYMENT_STATUS_STYLES[form.status as keyof typeof PAYMENT_STATUS_STYLES]?.label || form.status}
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground font-medium">Total Amount</Label>
+                <p className="text-2xl font-bold text-black">₱ {form.total?.toFixed(2) || "0.00"}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground font-medium">Amount Paid</Label>
+                <p 
+                  className="text-2xl font-bold"
+                  style={{ color: form.status ? getAmountPaidColor(form.status) : "#000000" }}
+                >
+                  ₱ {form.amountPaid?.toFixed(2) || "0.00"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground font-medium">Remaining Balance</Label>
+                <p className="text-2xl font-bold text-black">
+                  ₱ {remainingBalance.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Transactions - Shoes */}
+          <div className="space-y-6">
+            {isLoading && <p className="text-muted-foreground">Loading line items...</p>}
+            {error && <p className="text-red-500">Error: {error}</p>}
+            
+            {!isLoading && !error && (!form.transactions || form.transactions.length === 0) && (
+              <p className="text-muted-foreground">No line items found.</p>
+            )}
+            
+            {form.transactions?.map((t, idx) => (
+              <div key={t.id}>
+                {/* Shoes # with custom sneaker icon */}
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <SneakerIcon className="w-5 h-5" />
+                  Shoes #{idx + 1}
+                </h3>
+                
+                {/* Transaction container with border only, no bg */}
+                <div className="border rounded-lg p-4 space-y-4">
+                  {/* Transaction ID, Shoe Model, and Services - Now flex to column on smaller screens */}
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <Label className="text-xs text-muted-foreground">ID</Label>
+                      <p className="font-medium text-sm break-all">{t.id}</p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id={`rush-no-${idx}`} />
-                      <Label htmlFor={`rush-no-${idx}`}>No</Label>
+                    <div className="flex-1 min-w-0">
+                      <Label className="text-xs text-muted-foreground">Shoe Model</Label>
+                      <p className="font-medium text-sm break-all">{t.shoeModel}</p>
                     </div>
-                  </RadioGroup>
-                </div>
+                    <div className="flex-[2] min-w-0">
+                      <Label className="text-xs text-muted-foreground">Selected Services</Label>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {t.serviceNeeded?.map(service => (
+                          <span key={service} className="text-xs bg-gray-100 text-gray-800 px-3 py-1 rounded-full">
+                            {service}
+                          </span>
+                        ))}
+                        {t.additional?.map(service => (
+                          <span key={service} className="text-xs bg-gray-100 text-gray-800 px-3 py-1 rounded-full">
+                            {service}
+                          </span>
+                        ))}
+                        {(!t.serviceNeeded?.length && !t.additional?.length) && (
+                          <span className="text-xs text-muted-foreground">No services selected</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Status timeline */}
-                <div>
-                  <Label>Status: {t.status || "—"}</Label>
-                  <div className="mt-1 space-y-1 text-sm">
-                    {(() => {
-                      const statusEntries = STATUS_LABELS.map(({ key, label }) => ({
-                        key,
-                        label,
-                        value: t.statusDates?.[key],
-                      }))
-                      const lastFilledIndex = statusEntries
-                        .map((e) => !!e.value)
-                        .lastIndexOf(true)
-
-                      return statusEntries.slice(0, lastFilledIndex + 1).map(({ key, label, value }, i) => {
-                        const isCurrent = i === lastFilledIndex
+                  {/* Status Timeline - flex column with title above date input, 4 grid */}
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Status Timeline</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-1">
+                      {STATUS_LABELS.map(({ key, label }) => {
+                        const value = t.statusDates?.[key];
+                        const hasData = !!value;
+                        const isEditable = key === "queued" || 
+                          (key === "readyForDelivery" && t.statusDates?.queued) ||
+                          (key === "toWarehouse" && t.statusDates?.readyForDelivery) ||
+                          (key === "inProcess" && t.statusDates?.toWarehouse) ||
+                          (key === "returnToBranch" && t.statusDates?.inProcess) ||
+                          (key === "received" && t.statusDates?.returnToBranch) ||
+                          (key === "readyForPickup" && t.statusDates?.received);
+                        
                         return (
-                          <div key={key} className="relative flex items-center gap-2">
-                            {/* Remove last status - don't show for queued status */}
-                            {isCurrent && key !== "queued" && (
-                              <Button
-                                type="button"
-                                variant="unselected"
-                                size="icon"
-                                className="absolute -left-3"
-                                onClick={async () => {
-                                  // Get previous status key
-                                  const prevKey = statusEntries[lastFilledIndex - 1]?.key || "queued"
-                                  
-                                  // Update local state
-                                  setForm((prev) => {
-                                    const newTx = [...(prev.transactions ?? [])]
-                                    newTx[idx].statusDates = {
-                                      ...newTx[idx].statusDates,
-                                      [key]: null,
-                                    }
-                                    newTx[idx].status = prevKey
-                                    return { ...prev, transactions: newTx }
-                                  })
-                                  
-                                  try {
-                                    // Update database - remove current date and set previous status
-                                    const dbFieldName = STATUS_TO_DB_FIELD[key]
-                                    if (dbFieldName) {
-                                      await updateDates(t.id, {
-                                        [dbFieldName]: null,
-                                        current_status: STATUS_TO_NUMBER[prevKey] || 1
-                                      })
-                                      toast.success(`${label} date removed successfully`)
-                                    }
-                                  } catch (err: any) {
-                                    console.error(`Failed to remove ${label} date:`, err)
-                                    toast.error(`Failed to remove ${label} date: ${err.message || "Unknown error"}`)
-                                  }
-                                }}
+                          <div 
+                            key={key} 
+                            className="flex flex-col p-2 rounded-md transition-colors duration-200"
+                            style={{
+                              backgroundColor: hasData ? "#FEF2F2" : "transparent",
+                              border: hasData ? "1px solid #FECACA" : "1px solid #E5E7EB",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (hasData) {
+                                e.currentTarget.style.backgroundColor = "#FECACA";
+                                e.currentTarget.style.borderColor = "#CE1616";
+                              } else if (isEditable) {
+                                e.currentTarget.style.backgroundColor = "#F3F4F6";
+                                e.currentTarget.style.borderColor = "#9CA3AF";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (hasData) {
+                                e.currentTarget.style.backgroundColor = "#FEF2F2";
+                                e.currentTarget.style.borderColor = "#FECACA";
+                              } else {
+                                e.currentTarget.style.backgroundColor = "transparent";
+                                e.currentTarget.style.borderColor = "#E5E7EB";
+                              }
+                            }}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span 
+                                className="text-xs extra-bold uppercase"
+                                style={{ color: hasData ? "#CE1616" : "#9CA3AF" }}
                               >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            )}
-
-                            <span className="ml-8 min-w-[120px]">{label}:</span>
+                                {label}
+                              </span>
+                              {hasData && <BootstrapCheckCircle />}
+                            </div>
                             <Input
                               type="date"
                               value={value ?? ""}
                               onChange={async (e) => {
                                 const updatedDate = e.target.value
                                 
-                                // Update local state
                                 setForm((prev) => {
                                   const newTx = [...(prev.transactions ?? [])]
                                   newTx[idx].statusDates = {
                                     ...newTx[idx].statusDates,
                                     [key]: updatedDate,
                                   }
-                                  newTx[idx].status = key
+                                  if (updatedDate) {
+                                    newTx[idx].status = key
+                                  }
                                   return { ...prev, transactions: newTx }
                                 })
                                 
                                 try {
-                                  // Update date in database
                                   const dbFieldName = STATUS_TO_DB_FIELD[key]
                                   if (dbFieldName) {
                                     await updateDates(t.id, {
                                       [dbFieldName]: updatedDate ? new Date(updatedDate).toISOString() : null,
-                                      current_status: STATUS_TO_NUMBER[key] || 1
+                                      current_status: updatedDate ? (STATUS_TO_NUMBER[key] || 1) : (STATUS_TO_NUMBER[Object.keys(t.statusDates || {}).filter(k => t.statusDates?.[k as keyof TxStatusDates]).pop() || "queued"] || 1)
                                     })
-                                    toast.success(`${label} date updated successfully`)
+                                    toast.success(`${label} date updated`)
                                   }
                                 } catch (err: any) {
                                   console.error(`Failed to update ${label} date:`, err)
-                                  toast.error(`Failed to update ${label} date: ${err.message || "Unknown error"}`)
+                                  toast.error(`Failed to update ${label} date`)
                                 }
                               }}
+                              className="w-full"
+                              disabled={!isEditable}
                             />
                           </div>
-                        )
-                      })
-                    })()}
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Images */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <Image className="w-3.5 h-3.5" />
+                          Before Service
+                        </Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setBeforeImgModal({ open: true, lineItemId: t.id })}
+                          className="bg-[#FEF2F2] border-[#FECACA] text-[#CE1616] hover:bg-[#CE1616] hover:border-[#CE1616] hover:text-white extra-bold w-full sm:w-auto transition-colors duration-200"
+                        >
+                          <Upload className="w-3.5 h-3.5 mr-1" />
+                          Upload
+                        </Button>
+                      </div>
+                      <Input
+                        value={t.beforeImage || "Link will appear after upload..."}
+                        disabled
+                        className="text-sm mt-1"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <Image className="w-3.5 h-3.5" />
+                          After Service
+                        </Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAfterImgModal({ open: true, lineItemId: t.id })}
+                          className="bg-[#FEF2F2] border-[#FECACA] text-[#CE1616] hover:bg-[#CE1616] hover:border-[#CE1616] hover:text-white extra-bold w-full sm:w-auto transition-colors duration-200"
+                        >
+                          <Upload className="w-3.5 h-3.5 mr-1" />
+                          Upload
+                        </Button>
+                      </div>
+                      <Input
+                        value={t.afterImage || "Link will appear after upload..."}
+                        disabled
+                        className="text-sm mt-1"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
 
-              {/* Images */}
-              <div className="flex items-center gap-2">
-                <Label className="min-w-[120px]">Before Image</Label>
-                <Input
-                  value={t.beforeImage ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    setForm((prev) => {
-                      const newTx = [...(prev.transactions ?? [])]
-                      newTx[idx].beforeImage = val
-                      return { ...prev, transactions: newTx }
-                    })
-                  }}
-                />
-                <Button variant="outline" size="icon">
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Label className="min-w-[120px]">After Image</Label>
-                <Input
-                  value={t.afterImage ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    setForm((prev) => {
-                      const newTx = [...(prev.transactions ?? [])]
-                      newTx[idx].afterImage = val
-                      return { ...prev, transactions: newTx }
-                    })
-                  }}
-                />
-                <Button variant="outline" size="icon">
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {/* Upload buttons for before and after images */}
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setBeforeImgModal({ open: true, lineItemId: t.id })}
-                >
-                  Upload BFR
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setAfterImgModal({ open: true, lineItemId: t.id })}
-                >
-                  Upload AFT
-                </Button>
-              </div>
-            </div>
-          ))}
+          {/* Footer */}
+          <div className="sticky bottom-0 bg-white pt-4 border-t flex flex-col sm:flex-row justify-end gap-2 pb-4">
+            <Button variant="outline" className="extra-bold w-full sm:w-auto" onClick={() => onOpenChange(false)} disabled={isSaving}>
+              Close
+            </Button>
+            <Button 
+              className="bg-[#CE1616] hover:bg-[#A00000] text-white extra-bold w-full sm:w-auto transition-colors duration-200"
+              onClick={handleSaveChanges}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
         </div>
-
-        {/* Footer */}
-        <div className="mt-6 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-            Close
-          </Button>
-          <Button 
-            className="bg-[#CE1616] hover:bg-[#E64040] text-white"
-            onClick={handleSaveChanges}
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
-
       </DialogContent>
       
       {/* Archive/Restore confirmation dialog */}
