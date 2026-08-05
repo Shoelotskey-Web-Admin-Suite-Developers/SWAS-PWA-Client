@@ -13,14 +13,20 @@ html, body {
   }
 }
 
-
-
 .srm-container {
+  --sidebar-width: 65px;
+
   position: relative;
   display: flex;
   height: calc(100vh);
   flex-direction: column;
-  width: calc(100vw - 65px);
+  width: calc(100vw - var(--sidebar-width));
+}
+
+@media (max-width: 899px) {
+  .srm-container {
+    --sidebar-width: 0px;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -52,17 +58,18 @@ html, body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  .payment-radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding-left: 0.5rem;
-  }
-
-  .radio-inline-label {
-    margin: 0;
-  }
   gap: 0.85rem;
+}
+
+.srm-form .payment-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+.srm-form .radio-inline-label {
+  margin: 0;
 }
 
 @media (min-width: 1024px) {
@@ -77,19 +84,17 @@ html, body {
   gap: 0.5rem;
 }
 
-.customer-button{
+.customer-button {
   width: 45%;
   padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* subtle shadow */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-
 
 .form-card-content {
   padding-top: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  
 }
 
 .top-panel-label {
@@ -118,13 +123,27 @@ html, body {
   padding-left: 2.25rem;
 }
 
+/* ---------- Top strip (customer / active shoe / date / rush) ---------- */
+
 .srm-top-strip {
   display: grid;
-  grid-template-columns: 1.15fr 1.15fr 1.15fr 0.3fr;
+  grid-template-columns: 1fr; /* mobile-first: stacked */
   gap: 0.85rem;
   align-items: stretch;
   padding: 1.5rem;
   padding-bottom: 0;
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .srm-top-strip {
+    grid-template-columns: 1fr 1fr; /* 2-up while sidebar competes for space */
+  }
+}
+
+@media (min-width: 1280px) {
+  .srm-top-strip {
+    grid-template-columns: 1.15fr 1.15fr 1.15fr 0.3fr;
+  }
 }
 
 .srm-top-panel {
@@ -155,6 +174,8 @@ html, body {
   gap: 0.5rem;
 }
 
+/* Base badge = active/red. Used by default everywhere except
+   receipt-summary rows for shoes that are NOT the active shoe. */
 .active-shoe-badge {
   font-size: 0.62rem;
   line-height: 1;
@@ -164,12 +185,18 @@ html, body {
   padding: 0.25rem 0.45rem;
 }
 
+/* Applied only to receipt-summary badges for non-active shoes */
+.active-shoe-badge.is-inactive {
+  background: #29282C;
+}
+
 .date-switch-row {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   font-size: 0.8rem;
   color: #6b7280;
+  flex-wrap: wrap;
 }
 
 .date-input-wrap {
@@ -204,6 +231,12 @@ html, body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+@media (max-width: 480px) {
+  .customer-info-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
 .customer-info-pair > * {
   width: 100%;
 }
@@ -229,8 +262,11 @@ html, body {
   background: #fee2e2;
 }
 
+/* ---------- Modals ---------- */
+
 .customer-modal-content {
   max-width: 640px;
+  width: 92vw;
 }
 
 .customer-modal-grid {
@@ -245,6 +281,7 @@ html, body {
 
 .checkout-modal-content {
   max-width: 980px;
+  width: 92vw;
 }
 
 .modal-head-row {
@@ -295,16 +332,33 @@ html, body {
 
 .checkout-modal-body {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.2fr);
+  grid-template-columns: 1fr; /* mobile-first stacked */
   gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .checkout-modal-body {
+    grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.2fr);
+  }
 }
 
 .checkout-discount-column {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding-right: 1rem;
-  border-right: 1px solid #e5e7eb;
+  padding-right: 0;
+  border-right: none;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .checkout-discount-column {
+    padding-right: 1rem;
+    border-right: 1px solid #e5e7eb;
+    border-bottom: none;
+    padding-bottom: 0;
+  }
 }
 
 .checkout-cashier-row,
@@ -315,7 +369,13 @@ html, body {
 }
 
 .checkout-discount-type {
-  padding-left: 1.75rem;
+  padding-left: 0;
+}
+
+@media (min-width: 640px) {
+  .checkout-discount-type {
+    padding-left: 1.75rem;
+  }
 }
 
 .checkout-payment-column {
@@ -340,6 +400,21 @@ html, body {
   font-weight: 700;
 }
 
+@media (max-width: 480px) {
+  .checkout-totals-grid {
+    grid-template-columns: 1fr;
+    row-gap: 0.35rem;
+  }
+
+  .checkout-totals-grid p {
+    margin-top: 0.5rem;
+  }
+
+  .modal-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 639px) {
   .customer-modal-grid {
     grid-template-columns: 1fr;
@@ -348,22 +423,9 @@ html, body {
   .customer-modal-address {
     grid-column: auto;
   }
-
-  .checkout-modal-body {
-    grid-template-columns: 1fr;
-  }
-
-  .checkout-discount-column {
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-    padding-right: 0;
-    padding-bottom: 0.75rem;
-  }
-
-  .checkout-discount-type {
-    padding-left: 0;
-  }
 }
+
+/* ---------- Misc / totals ---------- */
 
 .section-divider {
   margin: 0.35rem 0;
@@ -371,7 +433,7 @@ html, body {
 
 .total {
   width: 30%;
-  margin-left: auto; /* pushes it to the right */
+  margin-left: auto;
   display: flex;
   height: 2px;
   background-color: #d3d3d3;
@@ -379,10 +441,12 @@ html, body {
 
 .shoe-info-grid {
   display: flex;
-  flex-direction: column; /* mobile: stacked */
+  flex-direction: column;
   gap: 2rem;
   width: 100%;
 }
+
+/* ---------- Shoe selector row ---------- */
 
 .shoe-selector-row {
   display: flex;
@@ -403,6 +467,7 @@ html, body {
   overflow-x: auto;
   max-width: 1000px;
   padding-bottom: 0.25rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .shoe-chip {
@@ -413,6 +478,7 @@ html, body {
   border-radius: 999px;
   background: #ffffff;
   font-family: 'Inter Bold';
+  flex-shrink: 0;
 }
 
 .shoe-chip-main {
@@ -472,6 +538,25 @@ html, body {
   -webkit-text-stroke: 0.6px currentColor;
 }
 
+.shoe-add-circle:hover {
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+@media (max-width: 767px) {
+  .shoe-selector-row {
+    align-items: stretch;
+  }
+
+  .shoe-add-circle {
+    width: 2.3rem;
+    height: 2.3rem;
+    margin-top: 0.15rem;
+  }
+}
+
+/* ---------- Shoe editor / service cards ---------- */
+
 .shoe-editor-pane {
   display: flex;
   flex-direction: column;
@@ -485,6 +570,8 @@ html, body {
   border-bottom: 1px solid #eceff3;
   padding-bottom: 0.45rem;
   padding-left: 1.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .service-tab:focus,
@@ -504,7 +591,8 @@ html, body {
   font-family: 'Inter Bold';
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem; /* Space between icon and text */
+  gap: 0.5rem;
+  white-space: nowrap;
 }
 
 .service-tab.active {
@@ -591,11 +679,9 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-
   border: 1px solid #d1d5db;
   border-radius: 0.35rem;
   background: #f3f4f6;
-
   width: 1.45rem;
   height: 1.45rem;
   padding: 0;
@@ -659,49 +745,29 @@ html, body {
   color: #fff;
 }
 
-.shoe-add-circle:hover {
-  border-color: #ef4444;
-  color: #dc2626;
-}
-
-/* Tablet: stack or row, depending on your needs */
 @media (min-width: 768px) {
   .shoe-info-grid {
-    flex-direction: column; /* keep stacked until large desktop */
+    flex-direction: column;
   }
 }
 
-/* Large desktop: side by side */
 @media (min-width: 1368px) {
   .shoe-info-grid {
     flex-direction: row;
-    align-items: flex-start; /* keep tops aligned */
+    align-items: flex-start;
   }
 
   .shoe-model {
-    flex: 0 0 40%; /* fixed to 30% */
+    flex: 0 0 40%;
     max-width: 40%;
   }
 
   .services {
-    flex: 1;       /* take the rest */
+    flex: 1;
     max-width: 60%;
-    width: auto;   /* prevent fixed width from earlier rules */
+    width: auto;
   }
 }
-
-@media (max-width: 767px) {
-  .shoe-selector-row {
-    align-items: stretch;
-  }
-
-  .shoe-add-circle {
-    width: 2.3rem;
-    height: 2.3rem;
-    margin-top: 0.15rem;
-  }
-}
-
 
 .bottom-space {
   background-color: transparent;
@@ -709,8 +775,6 @@ html, body {
   margin-top: 0.5rem;
   margin-bottom: -3rem;
 }
-
-
 
 .services {
   display: flex;
@@ -754,12 +818,12 @@ html, body {
   background-color: transparent;
 }
 
-/* New modern Add Shoe button */
-.add-shoe-wrapper { 
-  margin-top: 0.75rem; 
+/* ---------- Add Shoe button ---------- */
+
+.add-shoe-wrapper {
+  margin-top: 0.75rem;
   width: 100%;
 }
-
 
 .add-shoe-modern {
   --addshoe-border: 2px;
@@ -770,8 +834,8 @@ html, body {
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   background: linear-gradient(135deg, #fafafa 0%, #f5f5f6 55%, #f2f2f2 100%);
-  border: var(--addshoe-border) dashed #9ca3af !important; /* gray-400 */
-  color: #6b7280; /* gray-500 text */
+  border: var(--addshoe-border) dashed #9ca3af !important;
+  color: #6b7280;
   font-weight: 600;
   border-radius: 0.875rem;
   position: relative;
@@ -781,9 +845,9 @@ html, body {
 
 .add-shoe-modern:hover {
   background: linear-gradient(135deg, #f5f6f7 0%, #eef0f2 55%, #eceef0 100%);
-  border-color: #6b7280 !important; /* gray-500 */
+  border-color: #6b7280 !important;
   box-shadow: 0 4px 18px -4px rgba(156, 163, 175, 0.25);
-  color: #4b5563; /* gray-600 */
+  color: #4b5563;
 }
 
 .add-shoe-modern:active {
@@ -795,21 +859,21 @@ html, body {
   outline-offset: 3px;
 }
 
-.add-shoe-icon { 
-  width: 1.25rem; 
-  height: 1.25rem; 
+.add-shoe-icon {
+  width: 1.25rem;
+  height: 1.25rem;
   stroke-width: 2.25;
   color: currentColor;
   flex-shrink: 0;
 }
 
-.add-shoe-text { 
-  letter-spacing: 0.5px; 
+.add-shoe-text {
+  letter-spacing: 0.5px;
 }
 
 .add-shoe-kbd {
   margin-left: auto;
-  font-size: 0.625rem; /* 10px */
+  font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.5px;
   padding: 0.25rem 0.5rem;
@@ -827,11 +891,11 @@ html, body {
 }
 
 @media (min-width: 640px) {
-  .add-shoe-modern { 
-    width: 100%; /* stay full width even on larger screens */
+  .add-shoe-modern {
+    width: 100%;
   }
-  .add-shoe-text { 
-    font-size: 0.95rem; 
+  .add-shoe-text {
+    font-size: 0.95rem;
   }
 }
 
@@ -848,18 +912,18 @@ html, body {
   .add-shoe-modern:hover::after { opacity: 1; }
 }
 
-/* Dark mode support (if using dark class) */
 html.dark .add-shoe-modern {
   background: linear-gradient(135deg, #283241 0%, #1f2732 70%, #192028 100%);
-  border-color: #6b7280 !important; /* gray-500 */
-  color: #9ca3af; /* gray-400 */
+  border-color: #6b7280 !important;
+  color: #9ca3af;
 }
 html.dark .add-shoe-modern:hover {
   background: linear-gradient(135deg, #313d4d 0%, #252f3b 70%, #202a34 100%);
-  border-color: #9ca3af !important; /* gray-400 */
-  color: #d1d5db; /* gray-300 */
+  border-color: #9ca3af !important;
+  color: #d1d5db;
 }
 
+/* ---------- Payment section ---------- */
 
 .payment-section {
   padding-top: 1.5rem;
@@ -883,14 +947,11 @@ html.dark .add-shoe-modern:hover {
   gap: 1rem;
 }
 
-
 .payment-summary-section {
   flex: 2.5;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-
-  /* Border style */
   border-left: 2px solid #C7C7C7;
   padding-left: 1rem;
 }
@@ -909,24 +970,36 @@ html.dark .add-shoe-modern:hover {
   flex-direction: row;
   gap: 0.5rem;
   justify-content: center;
-  background-color: #D9D9D9; /* gray-200 */
+  background-color: #D9D9D9;
   border: 2px solid #C7C7C7;
   padding: 0.75rem;
   border-radius: 999px;
   margin-bottom: 1rem;
 }
 
-.payment-button{
+.payment-button {
   width: 45%;
   padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* subtle shadow */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border-radius: 999px;
 }
 
+@media (max-width: 480px) {
+  .payment-type-buttons {
+    flex-wrap: wrap;
+    border-radius: 1rem;
+  }
+
+  .payment-button {
+    width: 100%;
+  }
+}
+
+/* ---------- Receipt / summary panel ---------- */
 
 .srm-summary {
-  position: sticky;
-  top: 97px; /* sticks below your header/nav height */
+  position: static; /* mobile/tablet: flows normally in the stack */
+  top: auto;
   width: 100%;
   display: flex;
   border-left: 0px solid #e5e7eb;
@@ -934,7 +1007,15 @@ html.dark .add-shoe-modern:hover {
 
 @media (min-width: 1024px) {
   .srm-summary {
+    position: sticky;
+    top: 97px;
     height: calc(100vh);
+    width: 460px; /* narrower between 1024-1279px so form isn't squeezed */
+  }
+}
+
+@media (min-width: 1280px) {
+  .srm-summary {
     width: 595px;
   }
 }
@@ -995,32 +1076,32 @@ html.dark .add-shoe-modern:hover {
 
 .summary-grid {
   background: #F0F0F0;
-  border:#C7C7C7 1px solid; 
+  border: #C7C7C7 1px solid;
   padding: 0.9rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-  .summary-customer-info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0rem 1rem;
-  }
+.summary-customer-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0rem 1rem;
+}
 
-  .summary-customer-info > * {
-    flex: 1 1 50%;
-  }
+.summary-customer-info > * {
+  flex: 1 1 50%;
+}
 
-  .customer-name {
-    font-family: 'Inter Bold';
-    font-size: 14px;
-  }
+.customer-name {
+  font-family: 'Inter Bold';
+  font-size: 14px;
+}
 
-  .customer-id {
-    font-size: 12px;
-    color: #797979;
-  }
+.customer-id {
+  font-size: 12px;
+  color: #797979;
+}
 
 .summary-date-row {
   display: flex;
@@ -1106,17 +1187,48 @@ html.dark .add-shoe-modern:hover {
   color: #DC2626;
 }
 
+/* Base = active shoe (red-tinted). Non-active shoes get .is-inactive
+   applied in the JSX when i !== activeShoeIndex. */
 .summary-list {
   border-left: 3px solid #FEE2E2;
 }
 
-@media (max-width: 1220px) {
-  .srm-top-strip {
-    grid-template-columns: 1fr;
+.summary-list.is-inactive {
+  border-left: 3px solid #C7C7C7;
+}
+
+/* ---------- Small phone tightening ---------- */
+
+@media (max-width: 480px) {
+  .srm-top-strip,
+  .shoe-selector-row,
+  .service-card-grid,
+  .srm-summary-header,
+  .srm-summary-body,
+  .summary-footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .service-tabs {
+    gap: 1.25rem;
+    padding-left: 1rem;
   }
 
   .service-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    grid-template-columns: 1fr;
+  }
+
+  .srm-summary-header h1 {
+    font-size: 1.1rem;
   }
 }
 
+@media (max-width: 359px) {
+  .service-card-grid {
+    padding: 0.45rem 0.75rem;
+  }
+  .service-card {
+    padding: 1rem 0.85rem;
+  }
+}

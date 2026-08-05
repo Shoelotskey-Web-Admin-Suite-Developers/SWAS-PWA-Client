@@ -1090,10 +1090,23 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
               {/* Services with actual prices */}
               <div className="summary-service-list">
                 {shoes.map((shoe, i) => (
-                  <div className="summary-service-entry mb-5" key={i}>
-                    <p className="font-medium shoe-name"><span className="active-shoe-badge mr-1">Shoe #{i + 1}</span>{shoe.model || 'Unnamed Shoe'}</p>
+                <div className="summary-service-entry mb-5" key={i}>
+                  <p className="font-medium shoe-name">
+                    <span
+                      className={`active-shoe-badge mr-1 ${
+                        i === activeShoeIndex ? '' : 'is-inactive'
+                      }`}
+                    >
+                      Shoe #{i + 1}
+                    </span>
+                    {shoe.model || 'Unnamed Shoe'}
+                  </p>
 
-                    <div className="summary-list">
+                  <div
+                    className={`summary-list ${
+                      i === activeShoeIndex ? '' : 'is-inactive'
+                    }`}
+                  >
                     {shoe.services.map((srvId) => {
                       const svc = serviceById.get(srvId);
                       return (
