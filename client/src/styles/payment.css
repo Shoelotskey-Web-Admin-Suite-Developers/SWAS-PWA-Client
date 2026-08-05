@@ -42,7 +42,7 @@ html, body {
   flex-direction: column;
   width: 100%;
   padding: 1.5rem;
-  gap: 1rem;
+  gap: 1.125rem;
 }
 
 @media (min-width: 1024px) {
@@ -51,11 +51,40 @@ html, body {
   }
 }
 
-.form-card-content {
-  padding-top: 1.5rem;
+/* ---------------------------------------------------------------- */
+/* Card 1 — Options panel (search / sort)                           */
+/* Matches Central View's .cv-filters-panel treatment                */
+/* ---------------------------------------------------------------- */
+.payment-options-card {
+  border: 1px solid #c7c7c7c7;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+}
+
+.payment-options-content {
+  padding: 22px 22px 20px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* ---------------------------------------------------------------- */
+/* Card 2 — Results table shell                                     */
+/* Matches Central View's .cv-table-shell treatment                  */
+/* ---------------------------------------------------------------- */
+.payment-table-card {
+  border: 1px solid #d8e0ea;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+  overflow-y: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.payment-table-content {
+  padding: 0;
 }
 
 .customer-info-grid {
@@ -95,6 +124,13 @@ html, body {
   width: 100%;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.payment-sort-trigger {
+  height: 42px;
+  border-radius: 12px;
+  border-color: #cfd8e3;
+  background: #fff;
 }
 
 .radio-option {
@@ -205,6 +241,11 @@ html, body {
     padding-top: 1rem;
   }
 }
+
+/* ==================================================================
+   Everything below (receipt panel + payment modal) is UNCHANGED —
+   left exactly as-is per request.
+   ================================================================== */
 
 .payment-receipt-panel {
   position: sticky;

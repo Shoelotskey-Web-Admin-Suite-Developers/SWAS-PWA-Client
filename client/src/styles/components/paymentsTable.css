@@ -4,7 +4,7 @@
 
 .payment-cell-shoe-sub {
   margin: 0.15rem 0 0;
-  color: #9ca3af;
+  color: #8b96a6;
   font-size: 0.76rem;
   font-weight: 600;
 }
@@ -17,6 +17,7 @@
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
+  font-size: 14px;
 }
 
 .payment-table th,
@@ -26,41 +27,47 @@
   white-space: normal;
   word-break: break-word;
   padding: 0.9rem 0.75rem;
-  text-align: left;
+  text-align: center;
 }
 
 .payment-table th:first-child,
 .payment-table td:first-child {
-  padding-left: 0;
+  padding-left: 1.25rem;
+  text-align: left;
 }
 
 .payment-table th:last-child,
 .payment-table td:last-child {
-  padding-right: 0;
-  text-align: right;
+  padding-right: 1.25rem;
+  text-align: center;
 }
 
-/* Header row */
+/* Header row — matches Central View's gradient header */
 .payment-table thead th {
-  font-size: 0.68rem;
+  height: 46px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: #7b8794;
   font-weight: 700;
-  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(180deg, #fbfcfe 0%, #f0f0f0f0 100%);
+  border-bottom: 1px solid #e7edf5;
 }
 
 /* Body rows */
 .payment-table tbody tr {
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #e7edf5;
+  background: #fff;
+  transition: background 0.18s ease;
 }
 
 .payment-table tbody tr:hover {
-  background-color: #fafafa;
+  background-color: #f9fbff;
 }
 
 .payment-table tbody tr.selected-row {
   background-color: #fef2f2;
+  box-shadow: inset 3px 0 0 #dc2626;
 }
 
 .payment-table td {
@@ -70,66 +77,73 @@
 
 /* Specific cell styles */
 .payment-cell-receipt {
-  font-weight: 700;
-  color: #111827;
+  font-weight: 800;
+  font-size: 15px;
+  color: #1f2937;
+  letter-spacing: -0.01em;
 }
 
 .payment-cell-date {
-  color: #9ca3af;
+  color: #8b96a6;
   font-weight: 500;
 }
 
 .payment-cell-customer {
   font-weight: 700;
-  color: #111827;
+  color: #1f2937;
 }
 
 .payment-cell-pairs-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
+  padding: 4px 14px;
+  min-width: 60px;
+  min-height: 32px;
+  border-radius: 8px;
   background: #f3f4f6;
-  color: #374151;
-  font-size: 0.8rem;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  font-size: 0.85rem;
   font-weight: 700;
+  letter-spacing: 0.5px;
   white-space: nowrap;
 }
 
 .payment-cell-total {
-  font-weight: 700;
+  font-weight: 800;
   color: #111827;
 }
 
 .payment-cell-paid {
-  font-weight: 700;
+  font-weight: 800;
   color: #16a34a;
 }
 
 .payment-cell-balance {
-  font-weight: 700;
+  font-weight: 800;
   color: #dc2626;
 }
 
-/* Action button */
+/* Action button — matches Central View's edit-button styling */
 .payment-select-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.65rem 1.4rem;
-  border-radius: 0.85rem;
-  background: #dc2626;
+  min-width: 96px;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: #d11f2d;
   color: #fff;
-  font-size: 0.78rem;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 10px 20px -14px rgba(220, 38, 38, 0.7);
+  box-shadow: 0 6px 12px rgba(209, 31, 45, 0.18);
 }
 
 .payment-select-btn:hover {
@@ -138,6 +152,7 @@
 
 .payment-select-btn.payment-select-btn-active {
   background: #111827;
+  box-shadow: 0 6px 12px rgba(17, 24, 39, 0.18);
 }
 
 /* Column widths */
@@ -153,7 +168,7 @@
 /* Scrollable body */
 .payment-table-body {
   display: block;
-  max-height: 35dvh;
+  max-height: 54dvh;
   overflow-y: auto;
   width: 100%;
   scrollbar-width: none;
@@ -199,7 +214,7 @@
   .hide-below-535 { display: none !important; }
 }
 
-/* Accordion detail row (kept from original, restyled) */
+/* Accordion detail row — neutral tone matching Central View's expanded row */
 .accordion-row {
   display: none;
 }
@@ -213,9 +228,9 @@
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 0.85rem 1rem;
-  background-color: #fef2f2;
-  border-top: 1px solid #fecaca;
+  padding: 0.85rem 1.25rem;
+  background-color: #f7f9fc;
+  border-top: 1px solid #e7edf5;
 }
 
 .accordion-content {

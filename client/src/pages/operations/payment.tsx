@@ -1158,54 +1158,59 @@ export default function Payments() {
 
   return (
     <div className="payment-container">
-      {/* Left: Form + Table */}
+      {/* Left: Options card + Table card */}
       <div className="payment-form-container">
         <div className="payment-form">
-          <Card>
-            <CardContent className="pt-6 form-card-content">
+          {/* Card 1: Search / sort options — matches Central View's filters panel */}
+          <Card className="payment-options-card">
+            <CardContent className="payment-options-content">
               <div className="payment-header-row">
-              <div>
-                <h1>Update Payment</h1>
-                <p className="payment-header-subtitle">Search and manage pending balances</p>
-              </div>
-            </div>
-
-            <div className="payment-filter-pair flex items-end">
-              <div className="w-[45%]">
-                <SearchBar value={searchQuery} onChange={(val) => setSearchQuery(val)} />
-              </div>
-              <div className="w-[30%]">
-                <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
-                  <SelectTrigger id="branch">
-                    <SelectValue placeholder="Sort by Date" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">None</SelectItem>
-                    <SelectItem value="receiptId">Transaction ID</SelectItem>
-                    <SelectItem value="pairs"># Pairs</SelectItem>
-                    <SelectItem value="customerName">Customer Name</SelectItem>
-                    <SelectItem value="total">Total Amount</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <RadioGroup
-                value={sortOrder}
-                onValueChange={(val) => setSortOrder(val as "Ascending" | "Descending")}
-                className="flex flex-row gap-4 mb-[10px]"
-              >
-                <div className="radio-option">
-                  <RadioGroupItem value="Ascending" />
-                  <Label>ASC</Label>
+                <div>
+                  <h1>Update Payment</h1>
+                  <p className="payment-header-subtitle">Search and manage pending balances</p>
                 </div>
-                <div className="radio-option">
-                  <RadioGroupItem value="Descending" />
-                  <Label>DESC</Label>
-                </div>
-              </RadioGroup>
-            </div>  
+              </div>
 
-              {/* Table */}
-              <div className="mt-6 overflow-x-auto payment-table">
+              <div className="payment-filter-pair flex items-end">
+                <div className="w-[45%]">
+                  <SearchBar value={searchQuery} onChange={(val) => setSearchQuery(val)} />
+                </div>
+                <div className="w-[30%]">
+                  <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+                    <SelectTrigger id="branch" className="payment-sort-trigger">
+                      <SelectValue placeholder="Sort by Date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">None</SelectItem>
+                      <SelectItem value="receiptId">Transaction ID</SelectItem>
+                      <SelectItem value="pairs"># Pairs</SelectItem>
+                      <SelectItem value="customerName">Customer Name</SelectItem>
+                      <SelectItem value="total">Total Amount</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <RadioGroup
+                  value={sortOrder}
+                  onValueChange={(val) => setSortOrder(val as "Ascending" | "Descending")}
+                  className="flex flex-row gap-4 mb-[10px]"
+                >
+                  <div className="radio-option">
+                    <RadioGroupItem value="Ascending" />
+                    <Label>ASC</Label>
+                  </div>
+                  <div className="radio-option">
+                    <RadioGroupItem value="Descending" />
+                    <Label>DESC</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Results table — matches Central View's table shell */}
+          <Card className="payment-table-card">
+            <CardContent className="payment-table-content">
+              <div className="payment-table">
                 {loading ? (
                   <div className="p-4 text-center text-gray-600">Loading payments...</div>
                 ) : filteredRequests.length === 0 ? (
@@ -1259,13 +1264,10 @@ export default function Payments() {
               </div>
             </CardContent>
           </Card>
-
-          <hr />
         </div>
       </div>
 
-      {/* Right: Request Summary */}
-      {/* Right: Request Summary */}
+      {/* Right: Request Summary — unchanged */}
 <div className="payment-receipt-panel">
   <div className="payment-receipt-card">
     <div className="payment-receipt-content">
