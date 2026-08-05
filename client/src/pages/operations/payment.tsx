@@ -1164,45 +1164,57 @@ export default function Payments() {
           {/* Card 1: Search / sort options — matches Central View's filters panel */}
           <Card className="payment-options-card">
             <CardContent className="payment-options-content">
-              <div className="payment-header-row">
-                <div>
-                  <h1>Update Payment</h1>
-                  <p className="payment-header-subtitle">Search and manage pending balances</p>
-                </div>
-              </div>
+              <div className="payment-options-content">
 
-              <div className="payment-filter-pair flex items-end">
-                <div className="w-[45%]">
-                  <SearchBar value={searchQuery} onChange={(val) => setSearchQuery(val)} />
-                </div>
-                <div className="w-[30%]">
-                  <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
-                    <SelectTrigger id="branch" className="payment-sort-trigger">
-                      <SelectValue placeholder="Sort by Date" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">None</SelectItem>
-                      <SelectItem value="receiptId">Transaction ID</SelectItem>
-                      <SelectItem value="pairs"># Pairs</SelectItem>
-                      <SelectItem value="customerName">Customer Name</SelectItem>
-                      <SelectItem value="total">Total Amount</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <RadioGroup
-                  value={sortOrder}
-                  onValueChange={(val) => setSortOrder(val as "Ascending" | "Descending")}
-                  className="flex flex-row gap-4 mb-[10px]"
-                >
-                  <div className="radio-option">
-                    <RadioGroupItem value="Ascending" />
-                    <Label>ASC</Label>
+                <div className="payment-filter-grid">
+                  <div className="payment-filter-block payment-filter-block--search">
+                    <Label htmlFor="payment-search">Search</Label>
+                    <SearchBar
+                      value={searchQuery} onChange={(val) => setSearchQuery(val)}
+                    />
                   </div>
-                  <div className="radio-option">
-                    <RadioGroupItem value="Descending" />
-                    <Label>DESC</Label>
+
+                  <div className="payment-filter-block">
+                    <Label htmlFor="payment-sort">Sort By</Label>
+                    <Select
+                      value={sortBy}
+                      onValueChange={(v) => setSortBy(v as any)}
+                    >
+                      <SelectTrigger
+                        id="payment-sort"
+                        className="payment-sort-trigger"
+                      >
+                        <SelectValue placeholder="Default" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default</SelectItem>
+                        <SelectItem value="receiptId">Receipt ID</SelectItem>
+                        <SelectItem value="dateIn">Date In</SelectItem>
+                        <SelectItem value="customerName">Customer</SelectItem>
+                        <SelectItem value="total">Total</SelectItem>
+                        <SelectItem value="remainingBalance">Remaining Balance</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </RadioGroup>
+
+                  <div className="payment-filter-block">
+                    <Label>Order</Label>
+                    <RadioGroup
+                      value={sortOrder}
+                      onValueChange={(v) => setSortOrder(v as any)}
+                      className="payment-sort-order"
+                    >
+                      <div className="radio-option">
+                        <RadioGroupItem value="Ascending" id="asc" />
+                        <Label htmlFor="asc">Ascending</Label>
+                      </div>
+                      <div className="radio-option">
+                        <RadioGroupItem value="Descending" id="desc" />
+                        <Label htmlFor="desc">Descending</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
