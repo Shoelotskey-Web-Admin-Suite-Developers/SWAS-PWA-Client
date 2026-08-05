@@ -1,310 +1,318 @@
 /* ========== Root Layout ========== */
 .ci-wrap {
-  padding: 24px 40px;
-  width: calc(100vw - 8px);
-  margin: 0 auto;
-  background-color: white;
-
+  min-height: 100vh;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 77px); /* take full screen height */
+  gap: 18px;
 }
 
 .ci-header {
-  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
 }
 
-.ci-kebab {
+/* ========== Filters Panel (matches cv-filters-panel) ========== */
+.ci-filters-panel {
+  border: 1px solid #c7c7c7c7;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+  padding: 22px 22px 20px;
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
-  gap: 0;
-  color: #9ca3af; /* gray-400 */
-  margin: 0 -20px -8px -20px;
+  flex-direction: column;
+  gap: 14px;
 }
 
-/* Responsive width helpers */
-@media (max-width: 767px) {
-  .ci-width-full-767 { width: 100% !important; }
-  .ci-width-half-767 { width: 50% !important; }
+.ci-filters-panel label,
+.ci-filter-block label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  font-family: 'Inter Bold';
 }
 
-@media (max-width: 465px) {
-  .ci-width-full-465 { width: 100% !important; }
+.search-sorts {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-end;
 }
 
-/* Mobile-only toggle */
-.ci-show-767 {
-  display: none;
-}
-@media (max-width: 767px) {
-  .ci-show-767 { display: block; }
+.ci-select,
+.ci-date-btn {
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+  border-color: #cfd8e3;
+  background: #fff;
 }
 
-/* Filters row */
+.ci-filters-divider {
+  width: 100%;
+  height: 1px;
+  background: #c7c7c7c7;
+  margin: 4px 0;
+  border: none;
+}
+
 .ci-filter-row {
   width: 100%;
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
 }
-@media (max-width: 465px) {
-  .ci-filter-row {
-    flex-direction: column;
-    width: 100%;
-  }
-}
 
-
-/* ========== Card & Controls ========== */
-.ci-card { margin-bottom: 18px; }
-
-.ci-card-header { padding: 16px 16px 0; }
-
-.ci-card-title {
-  font-weight: 500;
-  color: #6b7280; /* gray-500 */
-}
-
-.ci-controls { padding-top: 8px; }
-
-.search-sort {
+.radio-option {
   display: flex;
-  gap: 2rem;
-  align-items: flex-end;
-}
-@media (max-width: 767px) {
-  .search-sort {
-    flex-direction: column;
-    gap: 0;
-    width: 100%;
-  }
-  .width-full-767 {
-    width: 100%;
-    align-self: flex-start;
-  }
-  .width-half-767 {
-    width: 50%;
-  }
-}
-
-.sort-kebab,
-.date-advanced,
-.date-filter{
-  display: flex;
-  align-items: flex-end;
-  gap: 2rem;
-}
-
-.sort-kebab { gap: 1rem; }
-
-@media (max-width: 1088px) {
-  .date-advanced {
-    flex-direction: column;
-    gap: 0;
-    width: 100%;
-  }
-  .width-full-1088 {
-    width: 100%;
-    align-self: flex-start;
-  }
-}
-
-@media (max-width: 767px) {
-  .date-filter {
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-  }
-}
-
-@media (max-width: 465px) {
-  .ci-filter-row {
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-  }
-  .width-full-465 { width: 100%; }
-}
-
-.ci-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ci-select { width: 100%; }
-
-.ci-date-btn {
-  width: 100%;
-  justify-content: flex-start;
+  align-items: center;
   gap: 8px;
-  border-color: #111827;
 }
 
-.ci-date-icon { opacity: 0.8; }
-
-/* ========== Advanced Filters ========== */
-.ci-advanced-toggle {
-  display: flex;
-  align-items: flex-start;
-}
-@media (max-width: 1088px) {
-  .ci-advanced-toggle {
-    flex-direction: column;
-    width: 100%;
-  }
-}
-
-.ci-advanced { display: flex; gap: 0.5rem; }
-
-.ci-advanced-checkbox {
-  display: flex;
-  gap: 0.5rem;
-  padding: 1.5rem 0 1rem;
-}
-
-.ci-advanced-label {
+.ci-menu-btn,
+.ci-filters-panel button[aria-label="Options"] {
+  height: 44px;
+  width: 44px;
+  border-radius: 999px;
+  border: 1px solid #d8e0ea;
   color: #111827;
+  background: #fff;
+  padding: 0;
 }
 
-/* Sort sits at far right on wide screens */
-.ci-sort { grid-column: span 1 / span 1; }
-
-/* Action buttons area */
-.ci-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
+/* Responsive width helpers */
+@media (max-width: 767px) {
+  .ci-width-full-767 { width: 100% !important; }
+  .ci-width-half-767 { width: 50% !important; }
+  .search-sorts { flex-direction: column; gap: 14px; }
+  .ci-filter-row { flex-direction: column; width: 100%; }
 }
 
-/* ========== Table Styling ========== */
-.ci-table-card { overflow: hidden; }
+@media (max-width: 465px) {
+  .ci-width-full-465 { width: 100% !important; }
+}
 
-.ci-thead { background: white; }
+.ci-show-767 { display: none; }
+@media (max-width: 767px) {
+  .ci-show-767 { display: block; }
+}
 
-.ci-head-row th { white-space: nowrap; }
+/* ========== Table Shell (matches cv-table-shell) ========== */
+.ci-table-shell {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d8e0ea;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
 
-/* Scrollable container */
+/* FIX: this div wraps <Table> directly — it must be forced to 100% width,
+   otherwise it shrink-wraps to the table's intrinsic content width instead
+   of stretching to fill ci-table-shell, which is what was causing the gap. */
 .ci-table-container {
   width: 100%;
-  margin-top: 20px;
-  max-height: 100dvh;
-  overflow-x: auto;
-  overflow-y: none;
-  border-radius: 8px;
+  box-sizing: border-box;
 }
 
-/* Table reset */
 .ci-table {
-  width: 100%;
+  width: 100% !important;
+  min-width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  font-size: 14px;
 }
 
-/* Sticky header */
-.ci-header { /* override flex header name collision */
-  display: table;
-  width: 100%;
-  table-layout: fixed;
+.ci-head-row th h5 {
   margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .ci-head-row th,
-.ci-header th {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: #fff;
-  text-align: center;
-  padding: 8px 12px;
-  font-weight: bold;
-  border-bottom: 1px solid #ddd;
-  color: #111827;
+.ci-row td {
+  border-bottom: 1px solid #e7edf5;
 }
 
-/* Body */
-.ci-body {
-  display: block;
-  max-height: calc(100vh - 360px); /* subtract header height */
-  overflow-y: auto;
-  width: 100%;
-  
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+.ci-head-row th {
+  height: 46px;
+  color: #7b8794;
+  background: linear-gradient(180deg, #fbfcfe 0%, #f0f0f0f0 100%);
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .ci-row {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
-  border-bottom: 1px solid #dcfce7; /* green-100 */
   background: #fff;
+  transition: background 0.18s ease;
   cursor: pointer;
-  transition: background 0.2s;
 }
-.ci-row:last-child { border-bottom: 1px solid #dcfce7; }
 
-.ci-row:hover { background: #f7f7f7; }
-
-.ci-row-open { background: #fafafa; }
+.ci-row:hover { background: #f9fbff; }
+.ci-row-open { background: #f7f9fc; }
 
 .ci-row td {
-  padding: 8px 12px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 18px 4px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ci-body {
+  max-height: calc(100vh - 360px);
+  overflow-y: auto;
+}
+
+/* ===== Column widths — redefined per breakpoint so visible columns always sum to 100% ===== */
+
+/* Full width: all 11 columns visible */
+.ci-head-id, .ci-id         { width: 12%; text-align: left; }
+.ci-col-name                 { width: 9%;  }
+.ci-col-contact              { width: 8%;  }
+.ci-col-email                { width: 12%; }
+.ci-col-address              { width: 10%; }
+.ci-col-birthday             { width: 8%;  }
+.ci-col-balance              { width: 8%;  }
+.ci-col-status               { width: 8%;  }
+.ci-col-current-services     { width: 8%;  }
+.ci-col-total-services       { width: 8%;  }
+.ci-head-action, .ci-action  { width: 9%; min-width: 85px; padding: 0 2px; text-align: center; }
+
+.ci-id h5,
+.ci-id-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1f2937;
+  letter-spacing: -0.01em;
+}
+
+.ci-row td small {
+  font-size: 13px;
+  color: #4b5563;
+}
+
+/* Status pill (matches cv-status-*) */
+.ci-status-active,
+.ci-status-dormant {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  display: inline-block;
+  min-width: 50px;
   text-align: center;
 }
 
-/* Column widths */
-.ci-head-id, .ci-id { width: 11%; }
-.ci-head-action, .ci-action { width: 10%; }
-.ci-num { text-align: center; width: 6.5%; }
-
-/* Cell-specific */
-.ci-id { font-weight: 700; color: #111827; }
-.ci-received { white-space: nowrap; }
-.ci-num { text-align: center; tab-size: 2; }
-.ci-status { font-weight: 600; }
-.ci-action-col, .ci-action { text-align: center; }
-
-/* Edit button */
-.ci-edit-btn {
-  background: #CE1616;
-  color: white;
-  border-radius: 0.5rem;
-  padding: 0 18px;
+.ci-status-active {
+  background: #d1fae5;
+  color: #15803d;
+  border-color: #a7f3d0;
 }
-.ci-edit-btn:hover { background: #E64040; }
+
+.ci-status-dormant {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+/* Edit button (matches cv-edit-btn) */
+.ci-edit-btn {
+  min-width: 60px;
+  width: auto;
+  height: 34px;
+  border-radius: 10px;
+  background: #d11f2d;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 6px 12px rgba(209, 31, 45, 0.18);
+  padding: 0 16px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.ci-edit-btn:hover { background: #b91c1c; }
 
 .ci-row-details td {
-  padding: 12px;
-  white-space: normal;
-  width: 100%;
-  padding: 0px 3%;
+  padding: 0 18px 18px;
+  border-bottom: 1px solid #e7edf5;
 }
 
 .ci-details {
-  columns: 1;
   width: 100%;
   text-align: left;
+  padding: 12px 0 0;
+  columns: 2;
+  column-gap: 2rem;
 }
 
 .ci-details > * { break-inside: avoid; }
 
-/* --- RESPONSIVE HIDING SYSTEM --- */
+/* --- RESPONSIVE HIDING SYSTEM + PER-BREAKPOINT WIDTHS --- */
+/* Each breakpoint hides a column group AND redistributes width across
+   whatever remains visible, so the table always fills the full card
+   instead of bunching up on one side. */
 
-/* ≤1369px */
-@media (max-width: 1369px) { .hide-below-1369 { display: none; } }
-/* ≤1220px */
-@media (max-width: 1220px) { .hide-below-1220 { display: none; } }
-/* ≤1024px */
-@media (max-width: 1024px) {
-  .hide-below-1024 { display: none; }
-  .ci-details { columns: 2; column-gap: 5rem; }
+/* <=1369px: Current/Total Services hidden */
+@media (max-width: 1369px) {
+  .hide-below-1369 { display: none !important; }
+
+  .ci-head-id, .ci-id         { width: 15%; }
+  .ci-col-name                 { width: 10%; }
+  .ci-col-contact              { width: 9%;  }
+  .ci-col-email                { width: 15%; }
+  .ci-col-address              { width: 12%; }
+  .ci-col-birthday             { width: 9%;  }
+  .ci-col-balance              { width: 9%;  }
+  .ci-col-status               { width: 9%;  }
+  .ci-head-action, .ci-action  { width: 12%; }
 }
-/* ≤899px */
-@media (max-width: 899px) { .hide-below-899 { display: none; } }
-/* ≤767px */
-@media (max-width: 767px) { .hide-below-767 { display: none; } }
+
+/* <=1220px: Balance/Status also hidden */
+@media (max-width: 1220px) {
+  .hide-below-1220 { display: none !important; }
+
+  .ci-head-id, .ci-id         { width: 18%; }
+  .ci-col-name                 { width: 13%; }
+  .ci-col-contact              { width: 11%; }
+  .ci-col-email                { width: 18%; }
+  .ci-col-address              { width: 14%; }
+  .ci-col-birthday             { width: 11%; }
+  .ci-head-action, .ci-action  { width: 15%; }
+}
+
+/* <=1024px: details accordion collapses to a single column */
+@media (max-width: 1024px) {
+  .hide-below-1024 { display: none !important; }
+  .ci-details { columns: 1; }
+}
+
+/* <=899px: Address/Birthday also hidden */
+@media (max-width: 899px) {
+  .hide-below-899 { display: none !important; }
+
+  .ci-head-id, .ci-id         { width: 24%; }
+  .ci-col-name                 { width: 18%; }
+  .ci-col-contact              { width: 15%; }
+  .ci-col-email                { width: 23%; }
+  .ci-head-action, .ci-action  { width: 20%; }
+}
+
+/* <=767px: Name/Contact/Email also hidden — only ID + Action remain */
+@media (max-width: 767px) {
+  .hide-below-767 { display: none !important; }
+  .ci-row td { padding: 14px 4px; }
+
+  .ci-head-id, .ci-id         { width: 70%; }
+  .ci-head-action, .ci-action { width: 30%; min-width: 70px; }
+}
