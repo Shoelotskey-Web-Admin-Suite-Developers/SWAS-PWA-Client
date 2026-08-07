@@ -1,6 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import '@/styles/components/branchStorage.css'
-import { Card, CardContent } from '@/components/ui/card'
+import { getBranches } from '@/utils/api/getBranches';
+import { getBranchType } from '@/utils/api/getBranchType';
+import { getLineItemsByBranch } from '@/utils/api/getLineItemsByBranch';
+import { getLineItemsByLocation } from '@/utils/api/getLineItemsByLocation';
+import { useLineItemUpdates } from '@/hooks/useLineItemUpdates';
 import {
   Carousel,
   CarouselContent,
@@ -8,9 +12,16 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import { getLineItemsByBranch } from '@/utils/api/getLineItemsByBranch';
-import { getLineItemsByLocation } from '@/utils/api/getLineItemsByLocation';
-import { useLineItemUpdates } from '@/hooks/useLineItemUpdates';
+
+type BranchApi = {
+  branch_id: string;
+  branch_name?: string;
+  name?: string;
+  location?: string;
+  branch_location?: string;
+  type?: string;
+  branch_type?: string;
+}
 
 type BranchData = {
   name: string;
@@ -27,21 +38,8 @@ type WarehouseData = {
 const BRANCH_MAX_CAPACITY = 300;
 const WAREHOUSE_MAX_CAPACITY = 1000;
 
-// Define branch IDs outside component to avoid recreations
-const BRANCH_CONFIG = [
-  { name: "SM Grand", branchId: "SMGRA-B-NCR" },
-  { name: "SM Valenzuela", branchId: "SMVAL-B-NCR" },
-  { name: "SM Baliwag", branchId: "SMBAL-B-NCR" },
-];
-
 export default function BranchStorage() {
-  const [branchData, setBranchData] = useState<BranchData[]>(
-    BRANCH_CONFIG.map(branch => ({
-      ...branch,
-      shoeCount: 0,
-      storageFilled: 0
-    }))
-  );
+  const [branchData, setBranchData] = useState<BranchData[]>([]);
   const [warehouseData, setWarehouseData] = useState<WarehouseData>({
     shoeCount: 0,
     storageFilled: 0,
@@ -51,31 +49,46 @@ export default function BranchStorage() {
   // Use our socket hook to get real-time updates
   const { changes } = useLineItemUpdates();
 
-  // Function to fetch all storage data - remove branchData from dependencies
+  const normalizeBranch = (branch: BranchApi): BranchData => ({
+    name: branch.branch_name || branch.name || branch.branch_id,
+    branchId: branch.branch_id,
+    shoeCount: 0,
+    storageFilled: 0,
+  });
+
+  const getNormalizedBranchType = async (branch: BranchApi) => {
+    const branchType = (branch.type || branch.branch_type || (await getBranchType(branch.branch_id)) || "").trim().toUpperCase();
+    return branchType;
+  }
+
+  // Function to fetch all storage data
   const fetchStorageData = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Fetch data for all branches using fixed BRANCH_CONFIG instead of state
-      const branchPromises = BRANCH_CONFIG.map(async (branch) => {
-        // Get all items assigned to this branch
+      const branches = (await getBranches()) as BranchApi[];
+      const typeBBranches = (await Promise.all(
+        branches.map(async (branch) => {
+          const branchType = await getNormalizedBranchType(branch);
+          return branchType === "B" ? normalizeBranch(branch) : null;
+        })
+      )).filter((branch): branch is BranchData => branch !== null);
+
+      const branchPromises = typeBBranches.map(async (branch) => {
         const items = await getLineItemsByBranch(branch.branchId);
-        
-        // Only count items that BOTH:
-        // 1. Have the correct branch ID (already filtered by API)
-        // 2. Are physically located at the branch (current_location === "Branch")
-        const itemsPhysicallyAtBranch = items.filter(item => 
-          item.branch_id === branch.branchId && 
+
+        const itemsPhysicallyAtBranch = items.filter(item =>
+          item.branch_id === branch.branchId &&
           item.current_location === "Branch"
         );
-        
+
         const shoeCount = itemsPhysicallyAtBranch.length;
         const storageFilled = Math.round((shoeCount / BRANCH_MAX_CAPACITY) * 100);
-        
+
         return {
           ...branch,
           shoeCount,
-          storageFilled: Math.min(100, storageFilled), // Ensure it doesn't go above 100
+          storageFilled: Math.min(100, storageFilled),
         };
       });
 
@@ -97,7 +110,7 @@ export default function BranchStorage() {
     } finally {
       setLoading(false);
     }
-  }, []); // Remove branchData from dependencies!
+  }, []);
 
   // Initial data fetch on component mount
   useEffect(() => {
@@ -169,46 +182,59 @@ export default function BranchStorage() {
     </div>
   );
 
+  const createGroups = useCallback((items: BranchData[], groupSize: number) => {
+    if (groupSize <= 0) return []
+
+    return Array.from(
+      { length: Math.ceil(items.length / groupSize) },
+      (_, index) => items.slice(index * groupSize, index * groupSize + groupSize)
+    )
+  }, [])
+
+  const renderBranchCarousel = useCallback(
+    (groupSize: number, keyPrefix: string) => {
+      const groups = createGroups(branchData, groupSize)
+
+      return (
+        <Carousel className='carousel'>
+          <CarouselContent className='carousel-content'>
+            {groups.length > 0
+              ? groups.map((group, index) => (
+                  <CarouselItem className='carousel-item' key={`${keyPrefix}-branch-group-${index}`}>
+                    {group.map(renderBranchStats)}
+                    {index === groups.length - 1 && renderWarehouseStats()}
+                  </CarouselItem>
+                ))
+              : !loading && (
+                <CarouselItem className='carousel-item'>
+                  {renderWarehouseStats()}
+                </CarouselItem>
+              )}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
+      )
+    },
+    [branchData, createGroups, loading]
+  )
+
+  const desktopCarousel = useMemo(() => renderBranchCarousel(4, 'pc'), [renderBranchCarousel])
+  const landscapeCarousel = useMemo(() => renderBranchCarousel(2, 'landscape'), [renderBranchCarousel])
+  const mobileCarousel = useMemo(() => renderBranchCarousel(1, 'mobile'), [renderBranchCarousel])
+
   return (
     <div>
       <div className='pc-tablet'>
-        <div className='op-branch-card-contents'>
-          {branchData.map(renderBranchStats)}
-          {renderWarehouseStats()}
-        </div>
+        {desktopCarousel}
       </div>
 
       <div className='landscape-mobile'>
-        <Carousel className='carousel'>
-          <CarouselContent className='carousel-content'>
-            <CarouselItem className='carousel-item'>
-              {branchData.slice(0, 2).map(renderBranchStats)}
-            </CarouselItem>
-            <CarouselItem className='carousel-item'>
-              {renderBranchStats(branchData[2])}
-              {renderWarehouseStats()}
-            </CarouselItem>
-          </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
-        </Carousel>
+        {landscapeCarousel}
       </div>
 
       <div className='mobile'>
-        <Carousel className='carousel'>
-          <CarouselContent className='carousel-content'>
-            {branchData.map(branch => (
-              <CarouselItem className='carousel-item' key={branch.branchId}>
-                {renderBranchStats(branch)}
-              </CarouselItem>
-            ))}
-            <CarouselItem className='carousel-item'>
-              {renderWarehouseStats()}
-            </CarouselItem>
-          </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
-        </Carousel>
+        {mobileCarousel}
       </div>
     </div>
   );

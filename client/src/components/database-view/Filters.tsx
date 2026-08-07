@@ -21,8 +21,8 @@ import {
 import { MoreVertical } from "lucide-react"
 
 type PaymentStatus = "PAID" | "PARTIAL" | "NP"
-type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand"
-type BranchLocation = "Baliwag City" | "Valenzuela City" | "Caloocan City"
+type Branch = string
+type BranchLocation = string
 type SortKey = "dateIn" | "dateOut" | "total" | "amountPaid" | "remaining" | "customer" | ""
 
 type FiltersProps = {
@@ -46,6 +46,8 @@ type FiltersProps = {
   setShowCustomerNames: (v: boolean) => void
   showArchivedItems?: boolean
   setShowArchivedItems?: (v: boolean) => void
+  branchOptions?: string[]
+  branchLocationOptions?: string[]
   onClearFilters: () => void
   onExportRecords: () => void
   onArchiveRecords: () => void
@@ -72,10 +74,19 @@ export function Filters({
   setShowCustomerNames,
   showArchivedItems = false,
   setShowArchivedItems,
+  branchOptions,
+  branchLocationOptions,
   onClearFilters,
   onExportRecords,
   onArchiveRecords,
 }: FiltersProps) {
+  const branchSelectOptions = branchOptions && branchOptions.length > 0
+    ? branchOptions
+    : []
+  const branchLocationSelectOptions = branchLocationOptions && branchLocationOptions.length > 0
+    ? branchLocationOptions
+    : []
+
   return (
     <div className="cv-filters-panel">
       <div className="cv-filters-top">
@@ -186,9 +197,9 @@ export function Filters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">All</SelectItem>
-                <SelectItem value="SM Baliwag">SM Baliwag</SelectItem>
-                <SelectItem value="SM Valenzuela">SM Valenzuela</SelectItem>
-                <SelectItem value="SM Grand">SM Grand</SelectItem>
+                {branchSelectOptions.map((branchName) => (
+                  <SelectItem key={branchName} value={branchName}>{branchName}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -206,9 +217,9 @@ export function Filters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">All</SelectItem>
-                <SelectItem value="Baliwag City">Baliwag City</SelectItem>
-                <SelectItem value="Valenzuela City">Valenzuela City</SelectItem>
-                <SelectItem value="Caloocan City">Caloocan City</SelectItem>
+                {branchLocationSelectOptions.map((locationName) => (
+                  <SelectItem key={locationName} value={locationName}>{locationName}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

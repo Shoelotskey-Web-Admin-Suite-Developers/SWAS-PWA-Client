@@ -13,6 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 
 import ToWarehouseModal from "@/components/operations/modals/OpRDModal"
+import { getBranches } from "@/utils/api/getBranches"
+import { getBranchType } from "@/utils/api/getBranchType"
 import { getLineItems } from "@/utils/api/getLineItems";
 import { editLineItemStatus } from "@/utils/api/editLineItemStatus";
 import { updateDates } from "@/utils/api/updateDates";
@@ -21,7 +23,7 @@ import { updateLineItemLocation } from "@/utils/api/editLocation";
 import { useLineItemUpdates } from "@/hooks/useLineItemUpdates";
 import { useCustomerNames } from "@/context/CustomerNamesContext";
 
-type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand";
+type Branch = string;
 type Location = "Branch" | "Hub" | "To Branch" | "To Hub";
 
 type Row = {
@@ -67,6 +69,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filterBranch, setFilterBranch] = useState<'all' | Branch>('all');
   const [showCustomerNames, setShowCustomerNames] = useState(false); // Start unchecked for faster loading
+  const [branchNameMap, setBranchNameMap] = useState<Record<string, string>>({});
   
   const { changes, isConnected, lastUpdate } = useLineItemUpdates();
   const { getCustomerDisplayName } = useCustomerNames();
@@ -79,7 +82,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
     customer: item.cust_id,
     shoe: item.shoes,
     service: item.services?.map((s: any) => SERVICE_ID_TO_NAME[s.service_id] || s.service_id).join(", ") || "",
-    branch: item.branch_id as Branch,
+    branch: branchNameMap[item.branch_id] || item.branch_id,
     Location: item.current_location as Location,
     status: item.current_status,
     isRush: item.priority === "Rush",
@@ -88,8 +91,6 @@ export default function OpReadyDelivery({ readOnly = false }) {
     customerId: item.cust_id,
     customerName: null, // Will be handled by getCustomerDisplayName
   });
-
-  const mapItems = (items: any[]): Row[] => items.map(mapItem);
 
   const sortByDueDate = (items: Row[]) =>
     [...items].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
@@ -140,8 +141,43 @@ export default function OpReadyDelivery({ readOnly = false }) {
   // Fetch line items from API -- Initial fetch
   const fetchData = async () => {
     try {
-      const data = await getLineItems("Ready for Delivery");
-      const mappedItems = mapItems(data);
+      const [data, branches] = await Promise.all([
+        getLineItems("Ready for Delivery"),
+        getBranches(),
+      ])
+
+      const branchWithTypes = await Promise.all(
+        branches.map(async (branch: any) => ({
+          ...branch,
+          branchType: (branch.type || branch.branch_type || await getBranchType(branch.branch_id) || "").trim().toUpperCase(),
+        }))
+      )
+
+      const typeBBranches = branchWithTypes.filter((branch) => branch.branchType === "B")
+
+      const nameMap = typeBBranches.reduce((acc: Record<string, string>, branch: any) => {
+        acc[branch.branch_id] = branch.branch_name || branch.name || branch.branch_id
+        return acc
+      }, {})
+
+      setBranchNameMap(nameMap)
+
+      const mappedItems = data.map((item: any) => ({
+        _id: item._id,
+        lineItemId: item.line_item_id,
+        date: new Date(item.latest_update),
+        customer: item.cust_id,
+        shoe: item.shoes,
+        service: item.services?.map((s: any) => SERVICE_ID_TO_NAME[s.service_id] || s.service_id).join(", ") || "",
+        branch: nameMap[item.branch_id] || item.branch_id,
+        Location: item.current_location as Location,
+        status: item.current_status,
+        isRush: item.priority === "Rush",
+        dueDate: item.due_date ? new Date(item.due_date) : new Date(),
+        updated: new Date(item.latest_update),
+        customerId: item.cust_id,
+        customerName: null,
+      })) as Row[];
       const sortedItems = sortByDueDate(mappedItems);
       setRows(sortedItems);
     } catch (error) {
@@ -309,7 +345,7 @@ export default function OpReadyDelivery({ readOnly = false }) {
       // For other operations or cases we can't handle specifically, refresh all data
       fetchData();
     }
-  }, [changes]); // Removed customerNames and showCustomerNames since context handles this
+  }, [changes, branchNameMap]); // Removed customerNames and showCustomerNames since context handles this
 
   // Helper function to get status color
   const getStatusColor = (status: string) => {
@@ -390,9 +426,9 @@ export default function OpReadyDelivery({ readOnly = false }) {
               className="px-2.5 py-1 border border-gray-300 rounded text-xs bg-white h-8 focus:border-blue-500 focus:outline-none"
             >
               <option value="all">All Branches</option>
-              <option value="SMBAL-B-NCR">SM Baliwag</option>
-              <option value="SMVAL-B-NCR">SM Valenzuela</option>
-              <option value="SMGRA-B-NCR">SM Grand</option>
+              {Object.entries(branchNameMap).map(([branchId, branchName]) => (
+                <option key={branchId} value={branchName}>{branchName}</option>
+              ))}
             </select>
 
             {/* Customer Display Toggle */}

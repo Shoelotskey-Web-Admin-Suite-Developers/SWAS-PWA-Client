@@ -5,6 +5,8 @@ import { Filters } from "@/components/database-view/Filters"
 import { CentralTable } from "@/components/database-view/CentralTable"
 // Use shared types instead of redefining to ensure compatibility with dialog
 import type { Transaction as SharedTransaction } from "@/components/database-view/central-view.types"
+import { getBranches } from "@/utils/api/getBranches"
+import { getBranchType } from "@/utils/api/getBranchType"
 import { getTransactions } from "@/utils/api/getTransactions"
 import { getCustomerName } from "@/utils/api/getCustomerName"
 import { exportRecordsToCSV } from "@/utils/exportToCSV"
@@ -23,8 +25,8 @@ import {
 
 /* ----------------------------- types ----------------------------- */
 export type PaymentStatus = "PAID" | "PARTIAL" | "NP"
-export type Branch = "SM Baliwag" | "SM Valenzuela" | "SM Grand"
-export type BranchLocation = "Baliwag City" | "Valenzuela City" | "Caloocan City"
+export type Branch = string
+export type BranchLocation = string
 type SortKey = "dateIn" | "dateOut" | "total" | "amountPaid" | "remaining" | "customer" | ""
 
 // Transaction type comes from shared types file (SharedTransaction)
@@ -60,6 +62,8 @@ export default function CentralView() {
   const [rows, setRows] = React.useState<Row[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  const [branchOptions, setBranchOptions] = React.useState<string[]>([])
+  const [branchLocationOptions, setBranchLocationOptions] = React.useState<string[]>([])
   
   // Customer name state
   const [customerNames, setCustomerNames] = React.useState<Record<string, string | null>>({})
@@ -79,50 +83,86 @@ export default function CentralView() {
   const [showArchivedItems, setShowArchivedItems] = React.useState(false)
 
   React.useEffect(() => {
-    setLoading(true)
-    getTransactions(showArchivedItems)
-      .then((data) => {
-        // Map backend transactions to Row[]
-        const mapped: Row[] = data.map((tx: any) => {
-          const legend = BRANCH_LEGEND[tx.branch_id] || { branch: tx.branch_id, location: "" }
+    let isMounted = true
+
+    const loadData = async () => {
+      setLoading(true)
+      try {
+        const [transactions, branches] = await Promise.all([
+          getTransactions(showArchivedItems),
+          getBranches(),
+        ])
+
+        const branchWithTypes = await Promise.all(
+          branches.map(async (branch: any) => ({
+            ...branch,
+            branchType: (branch.type || branch.branch_type || await getBranchType(branch.branch_id) || "").trim().toUpperCase(),
+          }))
+        )
+
+        const typeBBranches = branchWithTypes.filter((branch) => branch.branchType === "B")
+
+        const branchLookup = new Map(
+          typeBBranches.map((branch: any) => [
+            branch.branch_id,
+            {
+              name: branch.branch_name || branch.name || branch.branch_id,
+              location: branch.location || branch.branch_location || "",
+            },
+          ])
+        )
+
+        const mapped: Row[] = transactions
+          .filter((tx: any) => branchLookup.has(tx.branch_id))
+          .map((tx: any) => {
+          const branchMeta = branchLookup.get(tx.branch_id)
           return {
             id: tx.transaction_id,
-            customerId: tx.cust_id,  // Store the raw customer ID
-            customer: tx.cust_id,    // Will be replaced with name once fetched
+            customerId: tx.cust_id,
+            customer: tx.cust_id,
             customerBirthday: undefined,
             address: undefined,
             email: undefined,
             contact: undefined,
-
-            branch: legend.branch,
-            branchLocation: legend.location as BranchLocation,
+            branch: branchMeta?.name || tx.branch_id,
+            branchLocation: branchMeta?.location || "",
             receivedBy: tx.received_by,
             dateIn: new Date(tx.date_in),
             dateOut: tx.date_out ? new Date(tx.date_out) : null,
-
             status: tx.payment_status,
             total: tx.total_amount,
             amountPaid: tx.amount_paid,
             remaining: (tx.total_amount || 0) - (tx.amount_paid || 0),
-
             pairs: tx.no_pairs,
             released: tx.no_released,
-
             transactions: [],
           }
         })
+
+        const uniqueBranchNames = [...new Set(typeBBranches.map((branch: any) => branch.branch_name || branch.name || branch.branch_id))]
+        const uniqueBranchLocations = [...new Set(typeBBranches.map((branch: any) => branch.location || branch.branch_location || "").filter(Boolean))]
+
+        if (!isMounted) return
+
         setRows(mapped)
-        
-        // Fetch customer names for all transactions
+        setBranchOptions(uniqueBranchNames)
+        setBranchLocationOptions(uniqueBranchLocations)
+
         const uniqueCustomerIds = [...new Set(mapped.map(row => row.customerId))]
         fetchCustomerNames(uniqueCustomerIds)
-        
-        setLoading(false)
-      })
-      .catch((err) => {
+      } catch (err: any) {
+        if (!isMounted) return
         setError(err.message || "Failed to fetch transactions")
-        setLoading(false)
-      })
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+
+    loadData()
+
+    return () => {
+      isMounted = false
+    }
   }, [showArchivedItems])
 
   // Fetch customer names function
@@ -245,8 +285,27 @@ export default function CentralView() {
       if (result.success) {
         // Refresh the data to reflect the changes (this will hide archived items unless checkbox is checked)
         const data = await getTransactions(showArchivedItems);
-        const mapped: Row[] = data.map((tx: any) => {
-          const legend = BRANCH_LEGEND[tx.branch_id] || { branch: tx.branch_id, location: "" }
+        const branches = await getBranches()
+        const branchWithTypes = await Promise.all(
+          branches.map(async (branch: any) => ({
+            ...branch,
+            branchType: (branch.type || branch.branch_type || await getBranchType(branch.branch_id) || "").trim().toUpperCase(),
+          }))
+        )
+        const typeBBranches = branchWithTypes.filter((branch) => branch.branchType === "B")
+        const branchLookup = new Map(
+          typeBBranches.map((branch: any) => [
+            branch.branch_id,
+            {
+              branch: branch.branch_name || branch.name || branch.branch_id,
+              location: branch.location || branch.branch_location || "",
+            },
+          ])
+        )
+        const mapped: Row[] = data
+          .filter((tx: any) => branchLookup.has(tx.branch_id))
+          .map((tx: any) => {
+          const legend = branchLookup.get(tx.branch_id) || { branch: tx.branch_id, location: "" }
           return {
             id: tx.transaction_id,
             customerId: tx.cust_id,
@@ -335,6 +394,8 @@ export default function CentralView() {
           setShowCustomerNames={setShowCustomerNames}
           showArchivedItems={showArchivedItems}
           setShowArchivedItems={setShowArchivedItems}
+          branchOptions={branchOptions}
+          branchLocationOptions={branchLocationOptions}
           onClearFilters={clearFilters}
           onExportRecords={() => exportRecordsToCSV(filtered)}
           onArchiveRecords={() => setIsArchiveDialogOpen(true)}
@@ -375,15 +436,5 @@ function sameDay(a?: Date | null, b?: Date | null) {
   )
 }
 
-/* ----------------------------- constants ----------------------------- */
-const BRANCH_LEGEND: Record<
-  string,
-  { branch: string; location: string }
-> = {
-  "SMBAL-B-NCR": { branch: "SM Baliwag", location: "Baliwag City" },
-  "SMVAL-B-NCR": { branch: "SM Valenzuela", location: "Valenzuela City" },
-  "SMGRA-B-NCR": { branch: "SM Grand", location: "Caloocan City" },
-  "SWAS-SUPERADMIN": { branch: "Super Admin", location: "N/A" },
-  "HUBV-W-NCR": { branch: "Valenzuela", location: "Valenzuela City" },
-}
+// branch metadata is now resolved dynamically from the branch API
 

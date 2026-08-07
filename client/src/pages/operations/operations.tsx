@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { getBranchType } from '@/utils/api/getBranchType';
 import '@/styles/operations/operations.css'
 import BranchStorage from '@/components/BranchStorage'
@@ -16,11 +16,11 @@ import { PickupProvider } from '@/context/PickupContext';
 import { CustomerNamesProvider } from '@/context/CustomerNamesContext';
 
 export default function Operations() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [showAdminUpper, setShowAdminUpper] = useState(true);
-  const [branchType, setBranchType] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = React.useState(0);
+  const [showAdminUpper, setShowAdminUpper] = React.useState(true);
+  const [branchType, setBranchType] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Fetch branch type on mount
     getBranchType().then(type => {
       setBranchType(type);

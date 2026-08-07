@@ -3,37 +3,17 @@ import * as React from "react"
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
 import { 
   Archive, 
-  X, 
   RotateCcw, 
-  Upload, 
-  Calendar, 
   User, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Home, 
   Building, 
   CreditCard, 
-  Clock,
   Image,
-  ImageIcon,
 } from "lucide-react"
 import { getLineItemsByTransact } from "@/utils/api/getLineItemsByTransact"
 import { getDatesByLineItem } from "@/utils/api/getDatesByLineItem"
@@ -44,6 +24,7 @@ import { updateDates } from "@/utils/api/updateDates"
 import { archiveTransaction } from "@/utils/api/archiveTransaction"
 import { restoreTransaction } from "@/utils/api/restoreTransaction"
 import { getTransactionById } from "@/utils/api/getTransactionById"
+import { getBranchType } from "@/utils/api/getBranchType"
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -57,30 +38,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import OpBfrImg from "@/components/operations/modals/OpBfrImg";
 import OpAfrImg from "@/components/operations/modals/OpAfrImg";
+import { getBranches } from "@/utils/api/getBranches"
 
-import { ReceiptRow, TxStatusDates, PaymentStatus, Transaction} from "./central-view.types"
-
-const BRANCH_LEGEND: Record<
-  string,
-  { branch: string; location: string }
-> = {
-  "SMBAL-B-NCR": { branch: "SM Baliwag Branch", location: "Baliwag" },
-  "SMVAL-B-NCR": { branch: "SM Valenzuela Branch", location: "Valenzuela" },
-  "SMGRA-B-NCR": { branch: "SM Grand Branch", location: "Caloocan" },
-  "SWAS-SUPERADMIN": { branch: "Super Admin", location: "N/A" },
-  "HUBV-W-NCR": { branch: "Valenzuela Hub", location: "Valenzuela City" },
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  queued: "bg-yellow-100 text-yellow-800",
-  readyForDelivery: "bg-blue-100 text-blue-800",
-  toWarehouse: "bg-indigo-100 text-indigo-800",
-  inProcess: "bg-purple-100 text-purple-800",
-  returnToBranch: "bg-orange-100 text-orange-800",
-  received: "bg-teal-100 text-teal-800",
-  readyForPickup: "bg-green-100 text-green-800",
-  pickedUp: "bg-gray-100 text-gray-800",
-}
+import { ReceiptRow, TxStatusDates, Transaction} from "./central-view.types"
 
 // Payment status badge styles
 const PAYMENT_STATUS_STYLES = {
@@ -144,6 +104,7 @@ export function EditReceiptDialog({
   const [isArchivingRestoring, setIsArchivingRestoring] = React.useState(false)
   const [beforeImgModal, setBeforeImgModal] = React.useState<{ open: boolean; lineItemId: string | null }>({ open: false, lineItemId: null });
   const [afterImgModal, setAfterImgModal] = React.useState<{ open: boolean; lineItemId: string | null }>({ open: false, lineItemId: null });
+  const [branchOptions, setBranchOptions] = React.useState<Record<string, { branch: string; location: string }>>({})
 
   const SERVICE_ID_TO_NAME: Record<string, string> = {
     "SERVICE-1": "Basic Cleaning",
@@ -212,6 +173,35 @@ export function EditReceiptDialog({
     "readyForPickup": "Ready for Pickup",
     "pickedUp": "Picked Up"
   }
+
+  React.useEffect(() => {
+    async function fetchBranchMetadata() {
+      try {
+        const branches = await getBranches()
+        const branchWithTypes = await Promise.all(
+          branches.map(async (branch: any) => ({
+            ...branch,
+            branchType: (branch.type || branch.branch_type || await getBranchType(branch.branch_id) || "").trim().toUpperCase(),
+          }))
+        )
+        const lookup = branchWithTypes
+          .filter((branch) => branch.branchType === "B")
+          .reduce((acc: Record<string, { branch: string; location: string }>, branch: any) => {
+            acc[branch.branch_id] = {
+              branch: branch.branch_name || branch.name || branch.branch_id,
+              location: branch.location || branch.branch_location || "",
+            }
+            return acc
+          }, {})
+        setBranchOptions(lookup)
+      } catch (error) {
+        console.error("Failed to fetch branch metadata:", error)
+      }
+    }
+
+    fetchBranchMetadata()
+
+  }, [])
 
   React.useEffect(() => {
     async function fetchLineItems() {
@@ -380,10 +370,10 @@ export function EditReceiptDialog({
     }
   }
 
-  const includesIgnoreCase = (arr: string[] | undefined, value: string) =>
-    !!arr?.some((s) => s.toLowerCase().trim() === value.toLowerCase().trim())
-
-  const branchInfo = BRANCH_LEGEND[form.branch as string] || { branch: form.branch, location: form.branchLocation }
+  const branchInfo = branchOptions[form.branch as string] || {
+    branch: form.branch || "—",
+    location: form.branchLocation || "",
+  }
 
   const handleSaveChanges = async () => {
     if (!form.id) return;

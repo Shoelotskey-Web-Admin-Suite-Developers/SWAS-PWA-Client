@@ -177,6 +177,62 @@
   display: block;
 }
 
+.pc-tablet .carousel {
+  margin: 15px 0;
+  padding: 10px 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible !important;
+  position: relative;
+}
+
+.pc-tablet .carousel .overflow-hidden,
+.pc-tablet [data-embla-carousel],
+.pc-tablet .embla__viewport {
+  overflow: visible !important;
+}
+
+.pc-tablet .carousel-content {
+  display: flex;
+  padding: 0 18px !important;
+  margin: 0 !important;
+  gap: 16px;
+}
+
+.pc-tablet .carousel-item {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 5px;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.pc-tablet .carousel button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.pc-tablet .carousel button:hover {
+  background: #f8fafc;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.pc-tablet .carousel button:first-of-type {
+  left: -8px;
+}
+
+.pc-tablet .carousel button:last-of-type {
+  right: -8px;
+}
+
 /* ============================================ */
 /* LANDSCAPE MOBILE CAROUSEL STYLES */
 /* ============================================ */
