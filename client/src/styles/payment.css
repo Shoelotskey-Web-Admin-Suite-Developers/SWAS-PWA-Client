@@ -13,7 +13,7 @@ html, body {
   position: relative;
   display: flex;
   flex-direction: column;
-  width: calc(100vw - 70px);
+  width: 100%;
 }
 
 @media (min-width: 1024px) {
