@@ -367,8 +367,8 @@ export default function OpWarehouse() {
   const overdueCount = rows.filter(row => row.dueDate < new Date()).length;
   
   // Add image statistics
-  const beforeImagesCount = rows.filter(row => row.before_img).length;
-  const afterImagesCount = rows.filter(row => row.after_img).length;
+  // const beforeImagesCount = rows.filter(row => row.before_img).length;
+  // const afterImagesCount = rows.filter(row => row.after_img).length;
   const bothImagesCount = rows.filter(row => row.before_img && row.after_img).length;
   
   return (
