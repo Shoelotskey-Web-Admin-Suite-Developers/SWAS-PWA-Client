@@ -1,4 +1,3 @@
-// NotifSheet.tsx
 import React, { useEffect, useState } from "react"
 import {
   Sheet,
@@ -14,7 +13,7 @@ import { updateAppointmentStatus } from "@/utils/api/updateAppointmentStatus"
 import { getCustomerName } from "@/utils/api/getCustomerName"
 import { getBranchByBranchId } from "@/utils/api/getBranchByBranchId"
 import { useAppointmentUpdates } from "@/hooks/useAppointmentUpdates"
-import { usePickupRows } from "@/context/PickupContext" // <-- import context
+import { usePickupRows } from "@/context/PickupContext"
 
 type Appointment = {
   appointment_id: string

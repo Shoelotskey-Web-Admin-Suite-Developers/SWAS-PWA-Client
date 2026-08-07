@@ -20,6 +20,12 @@
   --nb-red-hover: #b01313;
   --nb-red-subtle: #fdf2f2;
   
+  /* Notification badge colors */
+  --nb-badge-warning: #CE1616; /* Brand red for warnings */
+  --nb-badge-warning-hover: #b01313;
+  --nb-badge-pending: #3b82f6; /* Blue for pending appointments */
+  --nb-badge-pending-hover: #2563eb;
+  
   /* Spacing scale (4px/8dp system) */
   --nb-space-1: 4px;
   --nb-space-2: 8px;
@@ -619,6 +625,149 @@
 }
 
 /* ==========================================================================
+   Notification Button Styles - UPDATED with separate badge positions
+   ========================================================================== */
+
+.nav-footer-btn.notification-btn {
+  position: relative !important;
+}
+
+.notification-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-icon-wrapper .bi-bell {
+  font-size: 1.2rem;
+  line-height: 1;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Notification Badge Stack - UPDATED with separate positions */
+.notification-badge-stack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+}
+
+/* Warning badge - TOP LEFT */
+.notification-badge-stack .badge-warning {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: white;
+  background-color: var(--nb-badge-warning);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  transition: all var(--nb-transition-fast);
+}
+
+/* Pending badge - TOP RIGHT */
+.notification-badge-stack .badge-pending {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: white;
+  background-color: var(--nb-badge-pending);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  transition: all var(--nb-transition-fast);
+}
+
+/* Hover effects for badges */
+.nav-footer-btn.notification-btn:hover .badge-warning {
+  background-color: var(--nb-badge-warning-hover);
+  transform: scale(1.1);
+}
+
+.nav-footer-btn.notification-btn:hover .badge-pending {
+  background-color: var(--nb-badge-pending-hover);
+  transform: scale(1.1);
+}
+
+/* Animation for badge updates */
+.notification-badge-stack .badge-warning,
+.notification-badge-stack .badge-pending {
+  animation: badgePop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes badgePop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Collapsed State - Notification Badges
+   ========================================================================== */
+
+.navBar.collapsed .notification-badge-stack .badge-warning {
+  top: -4px;
+  left: -4px;
+  min-width: 14px;
+  height: 14px;
+  font-size: 8px;
+}
+
+.navBar.collapsed .notification-badge-stack .badge-pending {
+  top: -4px;
+  right: -4px;
+  min-width: 14px;
+  height: 14px;
+  font-size: 8px;
+}
+
+.navBar.collapsed .notification-icon-wrapper .bi-bell {
+  font-size: 1.3rem;
+  width: 24px;
+  height: 24px;
+}
+
+.navBar.collapsed .nav-footer-btn.notification-btn {
+  padding: 0;
+  width: 100%;
+  justify-content: center;
+}
+
+/* ==========================================================================
    User Section with Avatar
    ========================================================================== */
 
@@ -1077,6 +1226,27 @@
     display: inline-block;
   }
 
+  /* Mobile Notification Badge Styles - UPDATED */
+  .navBar.mobile-open .notification-badge-stack .badge-warning {
+    top: -5px;
+    left: -5px;
+    min-width: 15px;
+    height: 15px;
+    font-size: 8px;
+  }
+
+  .navBar.mobile-open .notification-badge-stack .badge-pending {
+    top: -5px;
+    right: -5px;
+    min-width: 15px;
+    height: 15px;
+    font-size: 8px;
+  }
+
+  .navBar.mobile-open .notification-icon-wrapper .bi-bell {
+    font-size: 1.1rem;
+  }
+
   /* Mobile Footer User Section - Updated for container */
   .navBar.mobile-open .nav-footer-user {
     padding: 0;
@@ -1267,6 +1437,17 @@
 
   .dropdown-menu {
     border-width: 2px;
+  }
+
+  /* High contrast badge styles */
+  .notification-badge-stack .badge-warning {
+    background-color: #dc2626;
+    border: 2px solid #fff;
+  }
+
+  .notification-badge-stack .badge-pending {
+    background-color: #2563eb;
+    border: 2px solid #fff;
   }
 }
 

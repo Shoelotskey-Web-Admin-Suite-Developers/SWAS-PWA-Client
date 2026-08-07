@@ -8,8 +8,10 @@ import avatarBranch from '@/assets/images/avatarBranch.png'
 import avatarWarehouse from '@/assets/images/avatarWarehouse.png'
 import { NotifSheet } from '@/components/NotifSheet'
 import { getBranchNameForNavbar } from '@/utils/api/getBranchName'
-import { PickupProvider } from '@/context/PickupContext'
+import { PickupProvider, usePickupRows } from '@/context/PickupContext'
 import { NAV_ITEMS, type NavPage } from '@/constants/navigation'
+import { useAppointmentUpdates } from '@/hooks/useAppointmentUpdates'
+import { getAppointmentsPending } from '@/utils/api/getAppointmentsPending'
 
 type NavbarProps = {
   activePage: NavPage
@@ -27,6 +29,28 @@ type Visibility = {
   showAnalytics: boolean
   showUserManagement: boolean
   showNotifSheet: boolean
+}
+
+// Badge component for stacked notifications
+const NotificationBadgeStack: React.FC<{
+  warningCount: number
+  pendingCount: number
+}> = ({ warningCount, pendingCount }) => {
+  const hasWarnings = warningCount > 0
+  const hasPending = pendingCount > 0
+  
+  if (!hasWarnings && !hasPending) return null
+
+  return (
+    <div className="notification-badge-stack">
+      {hasWarnings && (
+        <span className="badge-warning">{warningCount > 99 ? '99+' : warningCount}</span>
+      )}
+      {hasPending && (
+        <span className="badge-pending">{pendingCount > 99 ? '99+' : pendingCount}</span>
+      )}
+    </div>
+  )
 }
 
 const NavLink: React.FC<{
@@ -55,8 +79,65 @@ const NavLink: React.FC<{
   )
 }
 
-// Main component
-export default function Navbar({ activePage, setActivePage, isCollapsed, onToggleCollapse, onLogout }: NavbarProps) {
+// Component that provides warning count to Navbar
+function NavbarWithWarnings(props: NavbarProps) {
+  const pickupRows = usePickupRows()
+  const [pendingCount, setPendingCount] = useState(0)
+  const { changes: appointmentChanges } = useAppointmentUpdates()
+
+  // Calculate warnings count
+  const warnings = pickupRows.filter(row =>
+    row.pickupNotice &&
+    (row.allowanceDays < 0 || row.allowanceDays <= 3)
+  )
+
+  const warningCount = warnings.length
+
+  // Fetch pending appointments count
+  const fetchPendingCount = useCallback(async () => {
+    try {
+      const data = await getAppointmentsPending()
+      const items = data || []
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const upcoming = items.filter((appt: any) => {
+        if (!appt.date_for_inquiry) return true
+        const d = new Date(appt.date_for_inquiry)
+        d.setHours(0, 0, 0, 0)
+        return d >= today
+      })
+      setPendingCount(upcoming.length)
+    } catch (err) {
+      console.error("Failed to fetch pending appointments count:", err)
+    }
+  }, [])
+
+  // Initial fetch and refresh on changes
+  useEffect(() => {
+    fetchPendingCount()
+  }, [fetchPendingCount])
+
+  useEffect(() => {
+    if (appointmentChanges) {
+      const t = setTimeout(() => fetchPendingCount(), 300)
+      return () => clearTimeout(t)
+    }
+  }, [appointmentChanges, fetchPendingCount])
+
+  // Render Navbar with counts
+  return <NavbarComponent {...props} warningCount={warningCount} pendingCount={pendingCount} />
+}
+
+// Main Navbar Component
+function NavbarComponent({ 
+  activePage, 
+  setActivePage, 
+  isCollapsed, 
+  onToggleCollapse, 
+  onLogout,
+  warningCount = 0,
+  pendingCount = 0
+}: NavbarProps & { warningCount?: number; pendingCount?: number }) {
   const [branchName, setBranchName] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -110,8 +191,14 @@ export default function Navbar({ activePage, setActivePage, isCollapsed, onToggl
   const visibleItems = NAV_ITEMS.filter(item => visibility[item.visibilityKey])
 
   // Determine if labels should be shown
-  // Labels are shown when: (not collapsed on desktop) OR (mobile menu is open)
   const showLabels = !isCollapsed || isMobileMenuOpen
+
+  // Determine which badges to show based on role
+  const showWarningBadge = true // Warnings shown for all roles
+  const showPendingBadge = visibility.showPendingAppointments !== false // Default true
+
+  const warningCountToShow = showWarningBadge ? warningCount : 0
+  const pendingCountToShow = showPendingBadge ? pendingCount : 0
 
   return (
     <PickupProvider>
@@ -197,8 +284,14 @@ export default function Navbar({ activePage, setActivePage, isCollapsed, onToggl
             {visibility.showNotifSheet && (
               <div className="nav-footer-item">
                 <NotifSheet>
-                  <button className="nav-footer-btn" aria-label="Notifications">
-                    <i className="bi-bell"></i>
+                  <button className="nav-footer-btn notification-btn" aria-label="Notifications">
+                    <div className="notification-icon-wrapper">
+                      <i className="bi-bell"></i>
+                      <NotificationBadgeStack 
+                        warningCount={warningCountToShow}
+                        pendingCount={pendingCountToShow}
+                      />
+                    </div>
                     <span className="nav-label">Notifications</span>
                   </button>
                 </NotifSheet>
@@ -248,13 +341,22 @@ export default function Navbar({ activePage, setActivePage, isCollapsed, onToggl
   )
 }
 
+// Export the wrapped component
+export default function Navbar(props: NavbarProps) {
+  return (
+    <PickupProvider>
+      <NavbarWithWarnings {...props} />
+    </PickupProvider>
+  )
+}
+
 // Custom hook for visibility rules
-function useVisibility(): Visibility {
+function useVisibility(): Visibility & { showPendingAppointments?: boolean } {
   const sessionPosition = (sessionStorage.getItem('position') || '').toLowerCase()
   const sessionBranchType = (sessionStorage.getItem('branch_type') || '').toUpperCase()
 
   // Default: show everything
-  let visibility: Visibility = {
+  let visibility: Visibility & { showPendingAppointments?: boolean } = {
     showServiceRequest: true,
     showOperations: true,
     showPayments: true,
@@ -262,6 +364,7 @@ function useVisibility(): Visibility {
     showAnalytics: true,
     showUserManagement: true,
     showNotifSheet: true,
+    showPendingAppointments: true,
   }
 
   const pos = sessionPosition
@@ -283,6 +386,7 @@ function useVisibility(): Visibility {
       showServiceRequest: false,
       showPayments: false,
       showUserManagement: false,
+      showPendingAppointments: false,
     }
   } else if (pos === 'staff' && bt === 'W') {
     visibility = {
@@ -291,6 +395,7 @@ function useVisibility(): Visibility {
       showPayments: false,
       showDatabaseView: false,
       showUserManagement: false,
+      showPendingAppointments: false,
     }
   }
 
