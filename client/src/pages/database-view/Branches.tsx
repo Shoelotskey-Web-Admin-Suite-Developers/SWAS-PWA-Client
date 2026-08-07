@@ -2,27 +2,28 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import "@/styles/database-view/branches.css"
 import { EditUserDialog } from "@/components/database-view/EditUserDialog"
 import { AddUserDialog } from "@/components/database-view/AddUserDialog"
+import { EditBranchDialog, BranchRow } from "@/components/database-view/EditBranchDialog"
+import { AddBranchDialog } from "@/components/database-view/AddBranchDialog"
 import { getBranches } from "@/utils/api/getBranches"
 import { getUsers, User as APIUser } from "@/utils/api/getUser"
 import { addUser } from "@/utils/api/addUser"
 import { toast, Toaster } from "sonner"
+import { Search, Plus, ChevronRight } from "lucide-react"
 
+// Updated Branch type with all fields
 type Branch = {
   branch_id: string
   branch_name: string
   location: string
+  branch_code?: string
+  branch_number?: number
+  type?: string
+  fb_link?: string | null
 }
 
 type User = {
@@ -38,6 +39,10 @@ export default function Branches() {
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [addUserOpen, setAddUserOpen] = useState(false)
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null)
+  const [addBranchOpen, setAddBranchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [userSearchQuery, setUserSearchQuery] = useState("")
 
   useEffect(() => {
     async function fetchBranches() {
@@ -47,6 +52,10 @@ export default function Branches() {
       try {
         const data = await getBranches()
         setBranches(data)
+        // Auto-select first branch if none selected
+        if (data.length > 0 && !selectedBranchId) {
+          setSelectedBranchId(data[0].branch_id)
+        }
       } catch (err) {
         console.error("Error fetching branches:", err)
       }
@@ -76,6 +85,20 @@ export default function Branches() {
   const selectedBranch = branches.find((b) => b.branch_id === selectedBranchId)
   const filteredUsers = users.filter((u) => u.branchId === selectedBranchId)
 
+  // Filter users based on search query
+  const searchedUsers = filteredUsers.filter((user) =>
+    user.id.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+    (user.userName && user.userName.toLowerCase().includes(userSearchQuery.toLowerCase())) ||
+    (user.position && user.position.toLowerCase().includes(userSearchQuery.toLowerCase()))
+  )
+
+  // Filter branches based on search query
+  const filteredBranches = branches.filter((branch) =>
+    branch.branch_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    branch.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    branch.branch_id.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   const formatPosition = (pos?: string | null) => {
     if (!pos) return "—"
     const lower = pos.toLowerCase()
@@ -86,6 +109,21 @@ export default function Branches() {
     if (!name) return "—"
     const trimmed = name.trim()
     return trimmed.length > 0 ? trimmed : "—"
+  }
+
+  const getPositionBadgeClass = (position?: string | null) => {
+    if (!position) return 'position-badge-default'
+    const lower = position.toLowerCase()
+    if (lower === 'superadmin') return 'position-badge-superadmin'
+    if (lower === 'manager') return 'position-badge-manager'
+    if (lower === 'staff') return 'position-badge-staff'
+    return 'position-badge-default'
+  }
+
+  // Validate branch ID format
+  const validateBranchId = (id: string) => {
+    const pattern = /^[A-Za-z0-9]{5}-[BW]-[A-Za-z0-9]{3}$/
+    return pattern.test(id)
   }
 
   // Add User handler
@@ -107,13 +145,13 @@ export default function Branches() {
       }
 
       setUsers((prev) => [...prev, mappedUser])
-      toast.success("User added successfully") // Success toast
+      toast.success("User added successfully")
     } catch (err) {
       console.error("Failed to add user:", err)
       if (err instanceof Error) {
-        toast.error(`Could not add user: ${err.message}`) // Error toast
+        toast.error(`Could not add user: ${err.message}`)
       } else {
-        toast.error("Could not add user: Unknown error") // Error toast
+        toast.error("Could not add user: Unknown error")
       }
     }
   }
@@ -139,144 +177,237 @@ export default function Branches() {
     )
   }
 
+  // Add Branch handler
+  const handleBranchAdded = (newBranch: Branch) => {
+    setBranches((prev) => [...prev, newBranch])
+    setSelectedBranchId(newBranch.branch_id)
+  }
+
+  // Edit Branch handler
+  const handleEditBranch = (updatedBranch: BranchRow) => {
+    // Check if it's the super admin branch
+    if (updatedBranch.branchId === "SWAS-SUPERADMIN") {
+      toast.error("SWAS-SUPERADMIN branch cannot be modified")
+      return
+    }
+
+    // Validate format
+    if (!validateBranchId(updatedBranch.branchId)) {
+      toast.error("Branch ID format is invalid")
+      return
+    }
+
+    setBranches((prev) =>
+      prev.map((b) =>
+        b.branch_id === updatedBranch.branchId 
+          ? {
+              branch_id: updatedBranch.branchId,
+              branch_name: updatedBranch.branchName,
+              location: updatedBranch.location,
+              branch_code: updatedBranch.branchCode || b.branch_code,
+              type: updatedBranch.type || b.type,
+              fb_link: updatedBranch.fbLink !== undefined ? updatedBranch.fbLink : b.fb_link,
+            }
+          : b
+      )
+    )
+    toast.success("Branch updated successfully")
+  }
+
+  // Delete Branch handler
+  const handleBranchDeleted = (branchId: string) => {
+    // Check if it's the super admin branch
+    if (branchId === "SWAS-SUPERADMIN") {
+      toast.error("SWAS-SUPERADMIN branch cannot be deleted")
+      return
+    }
+
+    setBranches((prev) => prev.filter((b) => b.branch_id !== branchId))
+    if (selectedBranchId === branchId) {
+      setSelectedBranchId(branches.length > 1 ? branches[0].branch_id : null)
+    }
+    toast.success("Branch deleted successfully")
+  }
+
+  const getUserCount = (branchId: string) => {
+    return users.filter((u) => u.branchId === branchId).length
+  }
+
   return (
     <div className="branches-wrapper">
-      {/* Branches Table */}
-      <Card className="branches-cards">
-        <CardHeader className="flex flex-row justify-between pb-0">
-          <CardTitle>
-            <h1 className="mt-3">Branches</h1>
+      {/* Branches - 1/3 width */}
+      <Card className="branches-cards branches-list-card">
+        <CardHeader className="branches-card-header flex flex-row justify-between items-center">
+          <CardTitle className="flex items-center gap-2">
+            <i className="bi bi-shop-window header-icon"></i>
+            <h1 className="text-xl font-bold">Branches</h1>
           </CardTitle>
+          <Button 
+            className="add-branch-btn extra-bold"
+            onClick={() => setAddBranchOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add Branch
+          </Button>
         </CardHeader>
 
-        <CardContent className="branch-card-contents">
-          <div className="branches-table-container">
-            <Table className="branches-table">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="branches-col-id text-center text-black">
-                    <h5>Branch ID</h5>
-                  </TableHead>
-                  <TableHead className="branches-col-name text-center text-black">
-                    <h5>Branch</h5>
-                  </TableHead>
-                  <TableHead className="branches-col-location text-center text-black">
-                    <h5>Location</h5>
-                  </TableHead>
-                  <TableHead className="branches-col-action text-black">
-                    <h5>Action</h5>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
+        <CardContent className="branches-card-content">
+          {/* Search Bar */}
+          <div className="search-container mb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Search branches..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-4 py-2 w-full border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
 
-              <TableBody>
-                {branches.map((branch) => (
-                  <TableRow key={branch.branch_id} className="branches-row">
-                    <TableCell className="branches-col-id text-center">
-                      <small className="bold">{branch.branch_id}</small>
-                    </TableCell>
-                    <TableCell className="branches-col-name">
-                      <small>{branch.branch_name}</small>
-                    </TableCell>
-                    <TableCell className="branches-col-location">
-                      <small>{branch.location}</small>
-                    </TableCell>
-                    <TableCell className="branches-col-action">
-                      <Button
-                        className={`branches-btn extra-bold ${
-                          selectedBranchId === branch.branch_id ? "branches-btn-active" : ""
-                        }`}
-                        variant={selectedBranchId === branch.branch_id ? "default" : "outline"}
-                        size="sm"
-                        onClick={() =>
-                          setSelectedBranchId(selectedBranchId === branch.branch_id ? null : branch.branch_id)
-                        }
-                      >
-                        View Users
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          {/* Branch Cards */}
+          <div className="branches-list">
+            {filteredBranches.map((branch) => {
+              const isSelected = selectedBranchId === branch.branch_id
+              const userCount = getUserCount(branch.branch_id)
+              const isSystemBranch = branch.branch_id === "SWAS-SUPERADMIN"
+              
+              return (
+                <div
+                  key={branch.branch_id}
+                  className={`branch-card ${isSelected ? 'branch-card-selected' : ''}`}
+                  onClick={() => setSelectedBranchId(branch.branch_id)}
+                >
+                  <div className="branch-card-content">
+                    <div className="branch-card-header">
+                      <div className="branch-name-wrapper">
+                        <h3 className={`branch-name ${isSystemBranch ? 'branch-name-system' : ''}`}>
+                          {branch.branch_name}
+                        </h3>
+                      </div>
+                    </div>
+                    
+                    <div className="branch-details">
+                      <div className="branch-location">
+                        <span className="dot-separator"></span>
+                        <span>{branch.location}</span>
+                      </div>
+                      <div className="branch-users">
+                        <span className="dot-separator"></span>
+                        <span>{userCount} {userCount === 1 ? 'User' : 'Users'}</span>
+                      </div>
+                      <div className="branch-id">
+                        <span className="dot-separator"></span>
+                        <span className="branch-id-label">ID:</span>
+                        <span className="branch-id-value">{branch.branch_id}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="branch-card-actions">
+                    <button
+                      className={`edit-branch-btn ${isSelected ? 'edit-branch-btn-selected' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditingBranch(branch)
+                      }}
+                    >
+                      <i className="bi bi-pencil-square"></i>
+                    </button>
+                    <ChevronRight className="chevron-icon" />
+                  </div>
+                </div>
+              )
+            })}
+            
+            {filteredBranches.length === 0 && (
+              <div className="no-branches">
+                <p className="text-gray-500 text-sm">No branches found</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Users in Selected Branch */}
-      <Card className="branches-cards">
-        <CardHeader className="flex flex-row justify-between pb-0">
-          <CardTitle>
-            <h1 className="mt-3">
-              {selectedBranch ? `Users in ${selectedBranch.branch_name}` : "Select a Branch"}
+      {/* Users in Selected Branch - 2/3 width */}
+      <Card className="branches-cards users-list-card">
+        <CardHeader className="branches-card-header flex flex-row justify-between items-center">
+          <div className="flex items-center gap-2">
+            <i className="bi bi-people header-icon"></i>
+            <h1 className="text-xl font-bold">
+              {selectedBranch ? selectedBranch.branch_name : "Select a Branch"}
             </h1>
-          </CardTitle>
-          {selectedBranch && (
-            <Button className="extra-bold" onClick={() => setAddUserOpen(true)}>
-              Add User
-            </Button>
-          )}
+          </div>
+          <div className="flex items-center gap-3 !mt-1">
+            {selectedBranch && (
+              <div className="search-container user-search">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    type="text"
+                    placeholder="Search users..."
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    className="pl-9 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  />
+                </div>
+              </div>
+            )}
+            {selectedBranch && selectedBranch.branch_id !== "SWAS-SUPERADMIN" && (
+              <Button className="add-user-btn extra-bold" onClick={() => setAddUserOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add User
+              </Button>
+            )}
+          </div>
         </CardHeader>
 
-        <CardContent className="branch-card-contents">
+        <CardContent className="branches-card-content">
           {selectedBranch ? (
-            filteredUsers.length > 0 ? (
-              <div className="branches-table-container">
-                <Table className="branches-table">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="users-col-id text-center text-black">
-                        <h5>User ID</h5>
-                      </TableHead>
-                      <TableHead className="users-col-name text-center text-black">
-                        <h5>Username</h5>
-                      </TableHead>
-                      <TableHead className="users-col-branch text-center text-black">
-                        <h5>Branch ID</h5>
-                      </TableHead>
-                      <TableHead className="users-col-position text-center text-black">
-                        <h5>Position</h5>
-                      </TableHead>
-                      <TableHead className="users-col-action text-black text-right">
-                        <h5>Action</h5>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id} className="branches-row">
-                        <TableCell className="users-col-id">
-                          <small>{user.id}</small>
-                        </TableCell>
-                        <TableCell className="users-col-name text-center">
-                          <small>{formatUserName(user.userName)}</small>
-                        </TableCell>
-                        <TableCell className="users-col-branch text-center">
-                          <small>{user.branchId}</small>
-                        </TableCell>
-                        <TableCell className="users-col-position text-center">
-                          <small>{formatPosition(user.position)}</small>
-                        </TableCell>
-                        <TableCell className="users-col-action">
-                          <Button
-                            className="bg-[#CE1616] hover:bg-[#E64040] text-white extra-bold"
-                            size="sm"
+            searchedUsers.length > 0 ? (
+              <div className="users-table-container">
+                <table className="users-table">
+                  <thead className="users-table-header">
+                    <tr>
+                      <th className="users-col-id">User ID</th>
+                      <th className="users-col-name">Username</th>
+                      <th className="users-col-position">Position</th>
+                      <th className="users-col-action">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchedUsers.map((user) => (
+                      <tr key={user.id} className="users-row">
+                        <td className="users-col-id bold">{user.id}</td>
+                        <td className="users-col-name">{formatUserName(user.userName)}</td>
+                        <td className="users-col-position">
+                          <span className={`extra-bold position-badge ${getPositionBadgeClass(user.position)}`}>
+                            {formatPosition(user.position)}
+                          </span>
+                        </td>
+                        <td className="users-col-action">
+                          <button
+                            className="edit-user-btn"
                             onClick={() => setEditingUser(user)}
                           >
-                            Edit
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                            <i className="bi bi-pencil-square"></i>
+                          </button>
+                        </td>
+                      </tr>
                     ))}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No users available for this branch.</p>
+              <div className="no-users">
+                <p className="text-sm text-gray-500">No users found</p>
+              </div>
             )
           ) : (
-            <p className="text-sm text-gray-500">Please select a branch to view its users.</p>
+            <div className="no-selection">
+              <p className="text-sm text-gray-500">Please select a branch to view its users.</p>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -287,7 +418,7 @@ export default function Branches() {
           open={!!editingUser}
           onOpenChange={(open) => !open && setEditingUser(null)}
           user={{
-            userId: editingUser.id, // map id -> userId
+            userId: editingUser.id,
             branchId: editingUser.branchId,
             userName: editingUser.userName ?? null,
             position: editingUser.position ?? null,
@@ -295,7 +426,6 @@ export default function Branches() {
           branchIds={branches.map((b) => b.branch_id)}
           onUserDeleted={handleUserDeleted}
           onUserEdited={(updatedUserRow) => {
-            // map back to User type for state
             handleUserEdited({
               id: updatedUserRow.userId,
               branchId: updatedUserRow.branchId,
@@ -316,7 +446,30 @@ export default function Branches() {
         />
       )}
 
-      <Toaster position="top-center" richColors />
+      {editingBranch && (
+        <EditBranchDialog
+          open={!!editingBranch}
+          onOpenChange={(open) => !open && setEditingBranch(null)}
+          branch={{
+            branchId: editingBranch.branch_id,
+            branchName: editingBranch.branch_name,
+            location: editingBranch.location,
+            branchCode: editingBranch.branch_code,
+            type: editingBranch.type,
+            fbLink: editingBranch.fb_link,
+          }}
+          onBranchDeleted={handleBranchDeleted}
+          onBranchEdited={handleEditBranch}
+        />
+      )}
+
+      <AddBranchDialog
+        open={addBranchOpen}
+        onOpenChange={setAddBranchOpen}
+        onBranchAdded={handleBranchAdded}
+      />
+      
+      <Toaster />
     </div>
   )
 }

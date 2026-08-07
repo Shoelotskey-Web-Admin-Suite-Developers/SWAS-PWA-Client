@@ -206,7 +206,7 @@ export default function Announcements() {
   };
 
   return (
-    <div className="p-6 flex flex-col justify-between gap-8" style={{ minHeight: "calc(100dvh - 77px)" }}>
+    <div className="flex flex-col justify-between gap-8" style={{ minHeight: "calc(100dvh - 77px)" }}>
       {/* Create Announcement Form */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
         <Card className="order-1 md:order-2 h-fit">

@@ -6,22 +6,6 @@
   flex-direction: column;
   min-height: 100vh;
   background: transparent;
-  padding: 20px 0;
-}
-
-.analyticsContent.with-header {
-  padding-top: 24px;
-}
-
-.analyticsContent.without-header {
-  padding-top: 24px;
-}
-
-/* Enhanced responsive grid utilities */
-@media (min-width: 1024px) {
-  .analyticsContent {
-    padding: 32px 0;
-  }
 }
 
 .card {

@@ -564,7 +564,7 @@ export default function Appointments() {
 
 
   return (
-    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 w-full h-full">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full h-full">
       {/* Real-time Update Indicator */}
       {isUpdating && (
         <div className="fixed top-20 right-4 z-50 bg-blue-500 text-white px-3 py-1 rounded-md shadow-lg text-sm flex items-center gap-2">
@@ -938,8 +938,6 @@ export default function Appointments() {
           </div>
         </CardContent>
       </Card>
-
-      <hr className="mt-3" />
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>

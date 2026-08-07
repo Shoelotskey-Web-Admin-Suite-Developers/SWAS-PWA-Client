@@ -142,7 +142,7 @@ function Analytics() {
 
 
       {/* Controls Section */}
-      <div className="w-full px-8 mb-6">
+      <div className="w-full mb-6">
         {/* Branch Selector - Only for admin */}
         {isAdminBranch && !isWarehouseBranch && (
           <Card className="rounded-3xl w-full">
@@ -234,7 +234,7 @@ function Analytics() {
       </div>
 
       {/* Main Content Area */}
-      <div className="w-full px-8">
+      <div className="w-full">
         <div className="space-y-6">
           {/* Daily Revenue Trend - Full Width */}
           <div className="w-full">
