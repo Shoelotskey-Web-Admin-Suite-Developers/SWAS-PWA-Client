@@ -567,7 +567,7 @@ export default function Appointments() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full h-full">
       {/* Real-time Update Indicator */}
       {isUpdating && (
-        <div className="fixed top-20 right-4 z-50 bg-blue-500 text-white px-3 py-1 rounded-md shadow-lg text-sm flex items-center gap-2">
+        <div className="fixed top-20 right-4 z-50 bg-blue-500 text-white px-3 py-1 rounded-3xl shadow-lg text-sm flex items-center gap-2">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
           Updating...
         </div>
@@ -578,7 +578,7 @@ export default function Appointments() {
           mode="single"
           selected={calendarDate}
           onSelect={setCalendarDate}
-          className="rounded-2xl border-[1px] border-[#C7C7C7] h-full w-full p-[2rem]"
+          className="rounded-3xl border-[1px] border-[#C7C7C7] h-full w-full p-[2rem]"
           classNames={{
             caption_label: "text-2xl bold text-center mb-2",
             day: "h-[3rem] w-[14.28%] pl-[0.5%] pr-[0.5%] p-0 text-sm",
@@ -883,7 +883,7 @@ export default function Appointments() {
           {/* Full Day Table */}
           <div>
             <h3 className="font-semibold mb-2">Full-Day Unv</h3>
-            <ScrollArea className="h-32 border rounded-md bg-[#F0F0F0]">
+            <ScrollArea className="h-32 border rounded-3xl bg-[#F0F0F0]">
               <div className="p-2 space-y-2">
                 {isLoadingUnavailability ? (
                   <div className="flex items-center justify-center py-8">
@@ -911,7 +911,7 @@ export default function Appointments() {
           {/* Partial Day Table */}
           <div>
             <h3 className="font-semibold mb-2">Partial-Day Unv</h3>
-            <ScrollArea className="h-32 border rounded-md bg-[#F0F0F0]">
+            <ScrollArea className="h-32 border rounded-3xl bg-[#F0F0F0]">
               <div className="p-2 space-y-2">
                 {isLoadingUnavailability ? (
                   <div className="flex items-center justify-center py-8">
@@ -949,7 +949,7 @@ export default function Appointments() {
               <p>
                 Adding this unavailability will cancel affected existing appointments on this day.
               </p>
-              <div className="mt-3 p-3 bg-blue-50 rounded-md border-l-4 border-blue-400">
+              <div className="mt-3 p-3 bg-blue-50 rounded-3xl border-l-4 border-blue-400">
                 <p className="text-sm text-blue-800">
                   📱 <strong>Customers will be automatically notified</strong> via push notifications about the cancellation and the reason for unavailability.
                 </p>

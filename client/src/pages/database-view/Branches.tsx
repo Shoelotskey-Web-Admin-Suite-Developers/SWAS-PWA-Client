@@ -12,7 +12,7 @@ import { AddBranchDialog } from "@/components/database-view/AddBranchDialog"
 import { getBranches } from "@/utils/api/getBranches"
 import { getUsers, User as APIUser } from "@/utils/api/getUser"
 import { addUser } from "@/utils/api/addUser"
-import { toast, Toaster } from "sonner"
+import { toast} from "sonner"
 import { Search, Plus, ChevronRight } from "lucide-react"
 
 // Updated Branch type with all fields
@@ -211,7 +211,6 @@ export default function Branches() {
           : b
       )
     )
-    toast.success("Branch updated successfully")
   }
 
   // Delete Branch handler
@@ -226,7 +225,6 @@ export default function Branches() {
     if (selectedBranchId === branchId) {
       setSelectedBranchId(branches.length > 1 ? branches[0].branch_id : null)
     }
-    toast.success("Branch deleted successfully")
   }
 
   const getUserCount = (branchId: string) => {
@@ -468,8 +466,6 @@ export default function Branches() {
         onOpenChange={setAddBranchOpen}
         onBranchAdded={handleBranchAdded}
       />
-      
-      <Toaster />
     </div>
   )
 }

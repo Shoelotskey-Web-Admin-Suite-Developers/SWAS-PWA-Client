@@ -284,7 +284,7 @@ export default function Announcements() {
             announcements.map((a) => (
               <Card
                 key={a._id}
-                className="rounded-xl p-4 flex flex-col justify-between shadow-sm border"
+                className="rounded-3xl p-4 flex flex-col justify-between shadow-sm border"
               >
                 <div className="flex flex-col gap-2">
                   <span className="text-xs text-gray-500">
@@ -457,7 +457,7 @@ export default function Announcements() {
             </Card>
           ) : (
             promos.map((p) => (
-              <Card key={p.promo_id} className="rounded-xl p-4 flex flex-col justify-between shadow-sm border">
+              <Card key={p.promo_id} className="rounded-3xl p-4 flex flex-col justify-between shadow-sm border">
                 <div className="flex flex-col gap-2">
                   <span className="text-xs text-gray-500">{p.promo_duration}</span>
                   <h3 className="font-semibold text-base">{p.promo_title}</h3>
