@@ -62,8 +62,8 @@ export default function OperationsNav({ onChange, visibleTabs }: OperationsNavPr
   return (
     <div className="main-wrapper">
       <div className="pc-tab-nav">
-        <Card className="!rounded-[0px] card-nav operations-nav-card">
-          <CardContent className="!p-0card-content operations-nav-content" ref={containerRef}>
+        <Card className="!rounded-none card-nav operations-nav-card">
+          <CardContent className="!p-0 card-content operations-nav-content" ref={containerRef}>
             <div
               className="highlight-bar"
               style={{ left: highlightStyle.left, width: highlightStyle.width }}
