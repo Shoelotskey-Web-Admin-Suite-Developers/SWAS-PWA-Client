@@ -89,7 +89,7 @@ export default function Operations() {
 
           <div className='main-content operations-content'>
             <Card className='rounded-3xl main-card operations-card'>
-              <CardContent className='operations-card-content'>
+              <CardContent className='!p-0 operations-card-content'>
                 <OperationsNav
                   onChange={setActiveIndex}
                   visibleTabs={getVisibleTabs()}

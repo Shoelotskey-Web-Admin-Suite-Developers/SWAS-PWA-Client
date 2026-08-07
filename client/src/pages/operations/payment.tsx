@@ -1221,7 +1221,7 @@ export default function Payments() {
 
           {/* Card 2: Results table — matches Central View's table shell */}
           <Card className="payment-table-card">
-            <CardContent className="payment-table-content">
+            <CardContent className="!p-0 payment-table-content">
               <div className="payment-table">
                 {loading ? (
                   <div className="p-4 text-center text-gray-600">Loading payments...</div>
