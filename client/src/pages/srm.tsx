@@ -1190,12 +1190,14 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
       </div>
 
       <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
-        <DialogContent className="customer-modal-content" style={{ 
-          width: 'fit-content !important', 
-          maxWidth: '90vw !important',
-          minWidth: '300px !important'
-        }}>
-          <DialogHeader className="modal-head-row">
+        <DialogContent className="customer-modal-content" >
+          <DialogHeader className="modal-head-row" style={{ 
+            display: 'flex', 
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            gap: '12px' 
+          }}>
             <div className="modal-head-icon customer">
               <UserRound className="h-4 w-4" aria-hidden="true" />
             </div>
