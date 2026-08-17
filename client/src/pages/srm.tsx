@@ -1191,13 +1191,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
 
       <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
         <DialogContent className="customer-modal-content" >
-          <DialogHeader className="modal-head-row" style={{ 
-            display: 'flex', 
-            flexDirection: 'row', 
-            alignItems: 'center', 
-            justifyContent: 'flex-start',
-            gap: '12px' 
-          }}>
+          <div className="modal-head-row" >
             <div className="modal-head-icon customer">
               <UserRound className="h-4 w-4" aria-hidden="true" />
             </div>
@@ -1207,7 +1201,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
                 Fill in customer details for this service request.
               </DialogDescription>
             </div>
-          </DialogHeader>
+          </div>
 
           <div className="customer-modal-grid">
             <div>
