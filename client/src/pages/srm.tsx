@@ -1283,7 +1283,13 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
           maxWidth: '90vw !important',
           minWidth: '300px !important'
         }}>
-          <DialogHeader className="modal-head-row">
+          <DialogHeader className="modal-head-row" style={{ 
+            display: 'flex', 
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            gap: '12px' 
+          }}>
             <div className="modal-head-icon checkout">
               <ReceiptText className="h-4 w-4" aria-hidden="true" />
             </div>
