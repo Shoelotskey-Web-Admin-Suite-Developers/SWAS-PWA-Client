@@ -177,6 +177,11 @@ export default function SRM() {
   >([])
   const populatingFromLookup = useRef(false)
   const lastAutoMatchedName = useRef<string>('')
+  const [duplicateCustomers, setDuplicateCustomers] = useState<
+    CustomerLookupResult[]
+  >([])
+
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false)
 
   interface CustomerLookupResult {
     cust_id?: string
@@ -381,43 +386,71 @@ export default function SRM() {
       return
     }
 
-    const n = name.trim();
+    const n = name.trim()
 
     if (!n) {
-      setCustomerId("NEW");
+      setCustomerId("NEW")
+      setDuplicateCustomers([])
+      setIsDuplicateModalOpen(false)
       lastAutoMatchedName.current = ''
-      return;
+      return
     }
 
-    const handler = setTimeout(async () => {
+    const handler = setTimeout(() => {
       try {
         const normalized = n.toLowerCase()
+
         const matches = customerSummaries.filter((customer) => {
           if (customer.is_archive) return false
-          return (customer.cust_name || '').trim().toLowerCase() === normalized
+
+          return (
+            (customer.cust_name || '').trim().toLowerCase() === normalized
+          )
         })
 
         if (matches.length === 1) {
+          // Exactly one customer → automatically select
           const found = matches[0]
+
+          setDuplicateCustomers([])
+          setIsDuplicateModalOpen(false)
+
           populateCustomerFields(found, { guardEffect: false })
+
           if (lastAutoMatchedName.current !== normalized) {
-            toast.success(`Customer found: ${found.cust_name || found.cust_id || ''}`)
+            toast.success(
+              `Customer found: ${found.cust_name || found.cust_id || ''}`
+            )
             lastAutoMatchedName.current = normalized
           }
+
+        } else if (matches.length > 1) {
+          // Multiple customers with same name → ask cashier to choose
+          setCustomerId("NEW")
+          setDuplicateCustomers(matches)
+          setIsDuplicateModalOpen(true)
+          lastAutoMatchedName.current = ''
+
         } else {
-          setCustomerId("NEW");
+          // No customer found → treat as new
+          setCustomerId("NEW")
+          setDuplicateCustomers([])
+          setIsDuplicateModalOpen(false)
           lastAutoMatchedName.current = ''
         }
+
       } catch (err) {
-        console.error("Error fetching customer:", err);
-        setCustomerId("NEW");
+        console.error("Error searching customer:", err)
+        setCustomerId("NEW")
+        setDuplicateCustomers([])
+        setIsDuplicateModalOpen(false)
         lastAutoMatchedName.current = ''
       }
-    }, 1000); // debounce delay
+    }, 1000)
 
-    return () => clearTimeout(handler);
+    return () => clearTimeout(handler)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, customerSummaries]);
+  }, [name, customerSummaries])
 
   const [discountValue, setDiscountValue] = useState<string>('0')
 
@@ -1188,6 +1221,90 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Duplicate Customer Selection */}
+    <Dialog
+      open={isDuplicateModalOpen}
+      onOpenChange={setIsDuplicateModalOpen}
+    >
+      <DialogContent className="customer-modal-content">
+        <DialogHeader className="modal-head-row">
+          <div className="modal-head-icon customer">
+            <UserRound className="h-4 w-4" aria-hidden="true" />
+          </div>
+
+          <div>
+            <DialogTitle>Select Customer</DialogTitle>
+            <DialogDescription>
+              Multiple customers were found with this name. Select the correct
+              customer below.
+            </DialogDescription>
+          </div>
+        </DialogHeader>
+
+        <div className="customer-modal-grid">
+          {duplicateCustomers.map((customer) => (
+            <button
+              key={customer.cust_id}
+              type="button"
+              className="w-full rounded-xl border border-gray-200 bg-white p-4 text-left text-gray-900 transition-all hover:bg-gray-50 hover:border-gray-300"
+              onClick={() => {
+                populateCustomerFields(customer)
+                setDuplicateCustomers([])
+                setIsDuplicateModalOpen(false)
+                lastAutoMatchedName.current = customer.cust_name ?? ''
+              }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-base">
+                    {customer.cust_name}
+                  </p>
+
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Customer ID: #{customer.cust_id}
+                  </p>
+                </div>
+
+                <i className="bi-chevron-right text-muted-foreground" />
+              </div>
+
+              <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                <p>
+                  <span className="font-medium">Phone:</span>{' '}
+                  {customer.cust_contact || 'Not provided'}
+                </p>
+
+                <p>
+                  <span className="font-medium">Email:</span>{' '}
+                  {customer.cust_email || 'Not provided'}
+                </p>
+
+                <p>
+                  <span className="font-medium">Address:</span>{' '}
+                  {customer.cust_address || 'Not provided'}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <DialogFooter className="modal-actions">
+          <Button
+            type="button"
+            variant="outline"
+            className="modal-cancel"
+            onClick={() => {
+              setIsDuplicateModalOpen(false)
+              setDuplicateCustomers([])
+              setCustomerId("NEW")
+            }}
+          >
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
       <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
         <DialogContent className="customer-modal-content" >
