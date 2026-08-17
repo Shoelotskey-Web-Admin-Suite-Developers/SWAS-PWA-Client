@@ -1066,8 +1066,8 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
 
       {/* Right: Request Summary */}
       <div className="srm-summary">
-        <Card className="srm-summary-card">
-          <CardContent className="pt-6 srm-summary-content">
+        <Card className="!rounded-none srm-summary-card">
+          <CardContent className="!p-0 !pt-6 srm-summary-content">
             <div className="srm-summary-header">
             <h1>Current Ticket</h1>
                 {/* Customer Info */}
@@ -1190,7 +1190,11 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
       </div>
 
       <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
-        <DialogContent className="customer-modal-content">
+        <DialogContent className="customer-modal-content" style={{ 
+          width: 'fit-content !important', 
+          maxWidth: '90vw !important',
+          minWidth: '300px !important'
+        }}>
           <DialogHeader className="modal-head-row">
             <div className="modal-head-icon customer">
               <UserRound className="h-4 w-4" aria-hidden="true" />
@@ -1272,7 +1276,11 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
       </Dialog>
 
       <Dialog open={isCheckoutModalOpen} onOpenChange={setIsCheckoutModalOpen}>
-        <DialogContent className="checkout-modal-content">
+        <DialogContent className="checkout-modal-content" style={{ 
+          width: 'fit-content !important', 
+          maxWidth: '90vw !important',
+          minWidth: '300px !important'
+        }}>
           <DialogHeader className="modal-head-row">
             <div className="modal-head-icon checkout">
               <ReceiptText className="h-4 w-4" aria-hidden="true" />
