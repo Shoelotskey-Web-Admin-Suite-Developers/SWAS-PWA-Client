@@ -38,6 +38,77 @@ type WarehouseData = {
 const BRANCH_MAX_CAPACITY = 300;
 const WAREHOUSE_MAX_CAPACITY = 1000;
 
+// Skeleton loader components
+const BranchStatsSkeleton = () => (
+  <div className='branch-storage-stats skeleton'>
+    <div className='branch-header'>
+      <div className='branch-info'>
+        <div className='skeleton-title'></div>
+        <div className='branch-metric-row'>
+          <div className='skeleton-value'></div>
+          <div className='skeleton-unit'></div>
+        </div>
+      </div>
+      <div className='skeleton-icon'></div>
+    </div>
+    <div className='storage-row'>
+      <div className='skeleton-label'></div>
+      <div className='skeleton-percent'></div>
+    </div>
+    <div className='capacity-bar-container'>
+      <div className='capacity-bar skeleton-bar'></div>
+    </div>
+  </div>
+);
+
+const WarehouseStatsSkeleton = () => (
+  <div className='branch-storage-stats warehouse skeleton'>
+    <div className='branch-header'>
+      <div className='branch-info'>
+        <div className='skeleton-title'></div>
+        <div className='branch-metric-row'>
+          <div className='skeleton-value'></div>
+          <div className='skeleton-unit'></div>
+        </div>
+      </div>
+      <div className='skeleton-icon'></div>
+    </div>
+    <div className='storage-row'>
+      <div className='skeleton-label'></div>
+      <div className='skeleton-percent'></div>
+    </div>
+    <div className='capacity-bar-container'>
+      <div className='capacity-bar skeleton-bar'></div>
+    </div>
+  </div>
+);
+
+// Skeleton carousel renderer
+const renderSkeletonCarousel = (itemsPerSlide: number) => {
+  const skeletonItems = Array(itemsPerSlide).fill(null);
+  const groups = [];
+  for (let i = 0; i < Math.ceil(4 / itemsPerSlide); i++) {
+    groups.push(skeletonItems);
+  }
+
+  return (
+    <Carousel className='carousel'>
+      <CarouselContent className='carousel-content'>
+        {groups.map((group, index) => (
+          <CarouselItem className='carousel-item' key={`skeleton-group-${index}`}>
+            {group.map((_, idx) => (
+              <BranchStatsSkeleton key={`skeleton-branch-${index}-${idx}`} />
+            ))}
+            <WarehouseStatsSkeleton />
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
+  );
+};
+
 export default function BranchStorage() {
   const [branchData, setBranchData] = useState<BranchData[]>([]);
   const [warehouseData, setWarehouseData] = useState<WarehouseData>({
@@ -138,7 +209,7 @@ export default function BranchStorage() {
         <div className='branch-info'>
           <h4 className='location-title extra-bold'>{branch.name}</h4>
           <div className='branch-metric-row'>
-            <span className='stat-value bold'>{loading ? "..." : branch.shoeCount}</span>
+            <span className='stat-value bold'>{branch.shoeCount}</span>
             <span className='shoe-unit semi-bold'>Shoes</span>
           </div>
         </div>
@@ -146,12 +217,12 @@ export default function BranchStorage() {
       </div>
       <div className='storage-row'>
         <span className='stat-label'>Storage Filled</span>
-        <span className='storage-percent bold'>{loading ? "..." : `${branch.storageFilled}%`}</span>
+        <span className='storage-percent bold'>{`${branch.storageFilled}%`}</span>
       </div>
       <div className='capacity-bar-container'>
         <div 
           className={`capacity-bar ${branch.storageFilled > 85 ? 'critical' : branch.storageFilled > 70 ? 'warning' : 'normal'}`} 
-          style={{ width: `${loading ? 0 : branch.storageFilled}%` }}
+          style={{ width: `${branch.storageFilled}%` }}
         ></div>
       </div>
     </div>
@@ -163,7 +234,7 @@ export default function BranchStorage() {
         <div className='branch-info'>
           <h4 className='location-title extra-bold'>Warehouse (Main)</h4>
           <div className='branch-metric-row'>
-            <span className='stat-value bold'>{loading ? "..." : warehouseData.shoeCount}</span>
+            <span className='stat-value bold'>{warehouseData.shoeCount}</span>
             <span className='shoe-unit semi-bold'>Shoes</span>
           </div>
         </div>
@@ -171,12 +242,12 @@ export default function BranchStorage() {
       </div>
       <div className='storage-row'>
         <span className='stat-label'>Storage Filled</span>
-        <span className='storage-percent bold'>{loading ? "..." : `${warehouseData.storageFilled}%`}</span>
+        <span className='storage-percent bold'>{`${warehouseData.storageFilled}%`}</span>
       </div>
       <div className='capacity-bar-container'>
         <div 
           className={`capacity-bar ${warehouseData.storageFilled > 85 ? 'critical' : warehouseData.storageFilled > 70 ? 'warning' : 'normal'}`} 
-          style={{ width: `${loading ? 0 : warehouseData.storageFilled}%` }}
+          style={{ width: `${warehouseData.storageFilled}%` }}
         ></div>
       </div>
     </div>
@@ -193,6 +264,11 @@ export default function BranchStorage() {
 
   const renderBranchCarousel = useCallback(
     (groupSize: number, keyPrefix: string) => {
+      // Show skeleton if loading
+      if (loading) {
+        return renderSkeletonCarousel(groupSize);
+      }
+
       const groups = createGroups(branchData, groupSize)
 
       return (
@@ -205,7 +281,7 @@ export default function BranchStorage() {
                     {index === groups.length - 1 && renderWarehouseStats()}
                   </CarouselItem>
                 ))
-              : !loading && (
+              : (
                 <CarouselItem className='carousel-item'>
                   {renderWarehouseStats()}
                 </CarouselItem>
