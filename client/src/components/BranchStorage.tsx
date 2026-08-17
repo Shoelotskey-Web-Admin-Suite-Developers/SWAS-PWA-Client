@@ -150,7 +150,8 @@ export default function BranchStorage() {
 
         const itemsPhysicallyAtBranch = items.filter(item =>
           item.branch_id === branch.branchId &&
-          item.current_location === "Branch"
+          item.current_location === "Branch" &&
+          item.current_status !== "Picked Up"
         );
 
         const shoeCount = itemsPhysicallyAtBranch.length;
