@@ -1278,11 +1278,7 @@ if (result?.lineItems && Array.isArray(result.lineItems)) {
       </Dialog>
 
       <Dialog open={isCheckoutModalOpen} onOpenChange={setIsCheckoutModalOpen}>
-        <DialogContent className="checkout-modal-content" style={{ 
-          width: 'fit-content !important', 
-          maxWidth: '90vw !important',
-          minWidth: '300px !important'
-        }}>
+        <DialogContent className="checkout-modal-content">
           <DialogHeader className="modal-head-row" style={{ 
             display: 'flex', 
             flexDirection: 'row', 
